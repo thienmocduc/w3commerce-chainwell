@@ -82,10 +82,10 @@ const SOLUTIONS = [
 
 // ─── Platform Stats ─────────────────────────────────────────
 const PLATFORM_STATS = [
-  { value: '5', label: 'Smart Contracts', suffix: '' },
-  { value: '25', label: 'API Endpoints', suffix: '+' },
-  { value: '3', label: 'AI Agents', suffix: '' },
-  { value: '11', label: 'Database Tables', suffix: '' },
+  { value: '10,000', label: 'Sản phẩm', suffix: '+' },
+  { value: '5,000', label: 'KOC hoạt động', suffix: '+' },
+  { value: '50,000', label: 'Đơn hàng thành công', suffix: '+' },
+  { value: '99.9', label: 'Giao dịch minh bạch', suffix: '%' },
 ];
 
 // ─── Tech Stack ─────────────────────────────────────────────
@@ -186,7 +186,7 @@ export default function HomePage() {
       <section className="border-b border-border py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-500">Giải pháp W3Commerce</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-green-500">Giải pháp WellKOC</h2>
             <p className="mt-2 text-3xl font-bold">Công cụ thế mạnh của nền tảng</p>
             <p className="mt-3 text-muted-foreground">
               4 pillars công nghệ kết hợp tạo nên hệ sinh thái social commerce thế hệ mới.
@@ -225,28 +225,40 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-primary">Quy trình</h2>
-            <p className="mt-2 text-3xl font-bold">Cách W3Commerce hoạt động</p>
+            <p className="mt-2 text-3xl font-bold">Cách WellKOC hoạt động</p>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-5">
             {[
               {
                 step: '01',
-                title: 'Vendor đăng sản phẩm + DPP',
-                desc: 'Upload sản phẩm, tạo Digital Product Passport trên blockchain. Stake W3C token để cam kết chất lượng.',
-                role: 'Vendor',
+                title: 'Đăng ký & Kết nối',
+                desc: 'Tạo tài khoản, chọn vai trò (Vendor, KOC, Buyer) và kết nối ví Web3 để sẵn sàng tham gia hệ sinh thái.',
+                role: 'Tất cả',
               },
               {
                 step: '02',
-                title: 'KOC promote + earn commissions',
-                desc: 'Dùng AI Agent tạo content, livestream bán hàng. Hoa hồng tự động on-chain, 5 loại commission rule.',
-                role: 'KOC/KOL',
+                title: 'Khám phá & Review',
+                desc: 'Duyệt sản phẩm verified bằng DPP, đọc review từ cộng đồng KOC và sử dụng AI Agent để tư vấn.',
+                role: 'KOC/Buyer',
               },
               {
                 step: '03',
-                title: 'Buyer mua hàng verified',
-                desc: 'Xác minh DPP trên blockchain, chat với AI advisor, thanh toán bằng card hoặc W3C token.',
-                role: 'Buyer',
+                title: 'Chia sẻ & Bán hàng',
+                desc: 'KOC tạo content với AI, livestream bán hàng. Vendor quản lý đơn hàng và theo dõi doanh số real-time.',
+                role: 'KOC/Vendor',
+              },
+              {
+                step: '04',
+                title: 'Nhận hoa hồng On-chain',
+                desc: 'Hoa hồng được tính tự động qua smart contract, minh bạch và không thể gian lận. Rút về ví bất cứ lúc nào.',
+                role: 'KOC/KOL',
+              },
+              {
+                step: '05',
+                title: 'Phát triển & Nâng cấp',
+                desc: 'Tích lũy XP, lên level trong KOC Academy, mở khóa NFT Badge và phát triển thương hiệu cá nhân.',
+                role: 'Tất cả',
               },
             ].map((item) => (
               <div key={item.step} className="relative rounded-xl border border-border bg-card p-6">
@@ -283,6 +295,30 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── PARTNERS & MEDIA ── */}
+      <section className="border-b border-border bg-muted/30 py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Đối tác & Truyền thông
+            </h2>
+            <p className="mt-2 text-2xl font-bold">Được tin tưởng bởi</p>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {['Partner 1', 'Partner 2', 'Partner 3', 'Partner 4', 'Partner 5', 'Partner 6'].map(
+              (name) => (
+                <div
+                  key={name}
+                  className="flex h-24 items-center justify-center rounded-lg border border-border bg-card grayscale transition-all hover:grayscale-0"
+                >
+                  <span className="text-sm font-medium text-muted-foreground">{name}</span>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ── TECH STACK ── */}
       <section className="border-b border-border py-16">

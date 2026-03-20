@@ -47,8 +47,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold">Welcome to W3Commerce</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
+          <h1 className="text-2xl font-bold">Chào mừng đến WellKOC</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Đăng nhập vào tài khoản của bạn</p>
         </div>
 
         <form onSubmit={handleEmailLogin} className="space-y-4">
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="password" className="mb-1 block text-sm font-medium">
-              Password
+              Mật khẩu
             </label>
             <input
               id="password"
@@ -89,28 +89,28 @@ export default function LoginPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
         </form>
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">OR</span>
+          <span className="text-xs text-muted-foreground">HOẶC</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
         <div className="space-y-3">
           <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
-            Continue with Google
+            Tiếp tục với Google
           </Button>
 
           <Web3LoginButton />
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
+          Chưa có tài khoản?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
-            Register
+            Đăng ký
           </Link>
         </p>
       </div>

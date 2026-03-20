@@ -53,7 +53,7 @@ export function Web3LoginButton() {
       const siweMessage = new SiweMessage({
         domain: window.location.host,
         address: walletAddress,
-        statement: 'Sign in to W3Commerce',
+        statement: 'Sign in to WellKOC',
         uri: window.location.origin,
         version: '1',
         chainId: walletChainId ?? 137,
@@ -137,6 +137,17 @@ export function Web3LoginButton() {
           {loading ? 'Connecting...' : 'Connect Wallet'}
         </Button>
       )}
+      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+        {`V\u00ED Web3 gi\u00FAp b\u1EA1n nh\u1EADn hoa h\u1ED3ng tr\u1EF1c ti\u1EBFp tr\u00EAn blockchain. Ch\u01B0a c\u00F3 v\u00ED?`}{' '}
+        <a
+          href="https://metamask.io"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary hover:underline"
+        >
+          {`T\u1EA3i MetaMask mi\u1EC5n ph\u00ED t\u1EA1i metamask.io`}
+        </a>
+      </p>
     </div>
   );
 }

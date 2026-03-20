@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import type { UserRole } from '@/lib/types/database.types';
 
 const ROLES: { value: UserRole; label: string; description: string }[] = [
-  { value: 'user', label: 'Buyer', description: 'Shop and purchase products' },
-  { value: 'vendor', label: 'Vendor', description: 'Sell products on the platform' },
-  { value: 'koc', label: 'KOC/KOL', description: 'Promote products and earn commissions' },
+  { value: 'user', label: 'Người mua', description: 'Mua sắm sản phẩm' },
+  { value: 'vendor', label: 'Nhà bán hàng', description: 'Bán sản phẩm trên nền tảng' },
+  { value: 'koc', label: 'KOC/KOL', description: 'Quảng bá sản phẩm và nhận hoa hồng' },
 ];
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('user');
@@ -27,12 +28,12 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Mật khẩu không khớp');
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('Mật khẩu phải có ít nhất 8 ký tự');
       return;
     }
 
@@ -42,13 +43,13 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, phone: phone || undefined, password, role }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Registration failed');
+        setError(data.error || 'Đăng ký thất bại');
         setLoading(false);
         return;
       }
@@ -59,7 +60,7 @@ export default function RegisterPage() {
       // Auto-redirect to login after 2 seconds
       setTimeout(() => router.push('/login'), 2000);
     } catch {
-      setError('Network error. Please try again.');
+      setError('Lỗi mạng. Vui lòng thử lại.');
       setLoading(false);
     }
   }
@@ -73,13 +74,13 @@ export default function RegisterPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold">Account Created!</h2>
+          <h2 className="text-xl font-bold">Tạo tài khoản thành công!</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your account has been created successfully. Redirecting to login...
+            Tài khoản của bạn đã được tạo thành công. Đang chuyển hướng đến trang đăng nhập...
           </p>
           <Link href="/login">
             <Button className="mt-6" variant="outline">
-              Go to Login
+              Đi đến trang Đăng nhập
             </Button>
           </Link>
         </div>
@@ -91,8 +92,8 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold">Create Account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Join the W3Commerce ecosystem</p>
+          <h1 className="text-2xl font-bold">Tạo tài khoản</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Tham gia hệ sinh thái WellKOC</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
@@ -116,7 +117,21 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium">Password</label>
+            <label htmlFor="phone" className="mb-1 block text-sm font-medium">
+              Số điện thoại <span className="text-xs text-muted-foreground">(không bắt buộc)</span>
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="VD: 0901234567"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-medium">Mật khẩu</label>
             <input
               id="password"
               type="password"
@@ -125,12 +140,12 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Min 8 characters"
+              placeholder="Tối thiểu 8 ký tự"
             />
           </div>
 
           <div>
-            <label htmlFor="confirm" className="mb-1 block text-sm font-medium">Confirm Password</label>
+            <label htmlFor="confirm" className="mb-1 block text-sm font-medium">Xác nhận mật khẩu</label>
             <input
               id="confirm"
               type="password"
@@ -138,12 +153,12 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Repeat password"
+              placeholder="Nhập lại mật khẩu"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">I am a...</label>
+            <label className="mb-2 block text-sm font-medium">Tôi là...</label>
             <div className="space-y-2">
               {ROLES.map((r) => (
                 <label
@@ -172,14 +187,14 @@ export default function RegisterPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
+          Đã có tài khoản?{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign In
+            Đăng nhập
           </Link>
         </p>
       </div>

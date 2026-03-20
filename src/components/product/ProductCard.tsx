@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { Product } from '@/lib/types/database.types';
 import { Button } from '@/components/ui/button';
+import { Package } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -14,8 +15,8 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
     <div className="group rounded-lg border border-border bg-card p-4 transition-all hover:shadow-md hover:border-primary/30">
       <Link href={`/products/${product.id}`}>
         <div className="mb-3 aspect-square overflow-hidden rounded-md bg-gradient-to-br from-muted to-muted/50">
-          <div className="flex h-full items-center justify-center text-4xl">
-            📦
+          <div className="flex h-full items-center justify-center">
+            <Package className="h-12 w-12 text-muted-foreground/50" />
           </div>
         </div>
 
