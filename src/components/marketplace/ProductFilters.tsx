@@ -18,12 +18,12 @@ interface Props {
 }
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'M\u1EDBi nh\u1EA5t' },
-  { value: 'price_asc', label: 'Gi\u00E1 t\u0103ng d\u1EA7n' },
-  { value: 'price_dsc', label: 'Gi\u00E1 gi\u1EA3m d\u1EA7n' },
-  { value: 'rating', label: '\u0110\u00E1nh gi\u00E1 cao' },
-  { value: 'bestsell', label: 'B\u00E1n ch\u1EA1y' },
-  { value: 'discount', label: 'Gi\u1EA3m gi\u00E1 nhi\u1EC1u' },
+  { value: 'newest', label: 'Mới nhất' },
+  { value: 'price_asc', label: 'Giá tăng dần' },
+  { value: 'price_dsc', label: 'Giá giảm dần' },
+  { value: 'rating', label: 'Đánh giá cao' },
+  { value: 'bestsell', label: 'Bán chạy' },
+  { value: 'discount', label: 'Giảm giá nhiều' },
 ]
 
 export default function ProductFilters({ categories, activeCategory, dppOnly, activeSort }: Props) {
@@ -45,7 +45,7 @@ export default function ProductFilters({ categories, activeCategory, dppOnly, ac
     <div className="space-y-6">
       {/* Categories */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Danh m\u1EE5c</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Danh mục</h3>
         <ul className="space-y-1">
           <li>
             <button
@@ -54,7 +54,7 @@ export default function ProductFilters({ categories, activeCategory, dppOnly, ac
                 !activeCategory ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              T\u1EA5t c\u1EA3
+              Tất cả
             </button>
           </li>
           {categories.map((cat) => (
@@ -75,7 +75,7 @@ export default function ProductFilters({ categories, activeCategory, dppOnly, ac
 
       {/* Sort */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">S\u1EAFp x\u1EBFp</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Sắp xếp</h3>
         <ul className="space-y-1">
           {SORT_OPTIONS.map((opt) => (
             <li key={opt.value}>
@@ -101,7 +101,7 @@ export default function ProductFilters({ categories, activeCategory, dppOnly, ac
             onChange={(e) => updateParam('dpp', e.target.checked ? 'true' : null)}
             className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
-          <span className="text-sm text-gray-700">Ch\u1EC9 s\u1EA3n ph\u1EA9m DPP</span>
+          <span className="text-sm text-gray-700">Chỉ sản phẩm DPP</span>
         </label>
       </div>
     </div>
