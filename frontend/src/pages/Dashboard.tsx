@@ -1414,6 +1414,7 @@ export default function Dashboard() {
                 { key: 'address', label: 'Địa chỉ giao hàng' },
                 { key: 'bank', label: 'Tài khoản ngân hàng' },
                 { key: 'wklink', label: 'Liên kết WK Pay' },
+                { key: 'vneid', label: 'Xac thuc VNeID' },
                 { key: 'password', label: 'Đổi mật khẩu' },
                 { key: 'preferences', label: 'Ngôn ngữ & Giao diện' },
                 { key: 'delete', label: 'Xóa tài khoản' },
@@ -1517,6 +1518,116 @@ export default function Dashboard() {
                     <span style={{ fontWeight: 700, color: 'var(--c4-500)' }}>{formatVND(wkPayData.balanceVND)}</span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* VNeID Verification */}
+            {settingsTab === 'vneid' && (
+              <div className="card" style={{ padding: 20 }}>
+                {/* Mock: toggle between verified/not verified states */}
+                {(() => {
+                  const vneidVerified = false; // TODO: fetch from /api/v1/verify/vneid/status
+                  const vneidName = 'NGUYEN VAN AN';
+                  const vneidCCCD = '***2345';
+                  const vneidMethod = 'chip_nfc';
+                  const vneidDate = '2026-03-25T10:30:00Z';
+
+                  if (vneidVerified) {
+                    return (
+                      <div>
+                        <div className="flex" style={{ alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                          <div style={{
+                            width: 48, height: 48, borderRadius: 12,
+                            background: 'linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.05))',
+                            border: '2px solid var(--c4-500, #22c55e)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.3rem',
+                          }}>
+                            <span>&#x2705;</span>
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '.92rem', color: 'var(--c4-500, #22c55e)' }}>Da xac thuc VNeID</div>
+                            <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>Dinh danh dien tu Quoc gia</div>
+                          </div>
+                        </div>
+                        <div className="flex-col gap-12">
+                          <div className="flex" style={{ justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                            <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>Ho ten (verified)</span>
+                            <span style={{ fontSize: '.82rem', fontWeight: 600 }}>{vneidName}</span>
+                          </div>
+                          <div className="flex" style={{ justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                            <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>So CCCD</span>
+                            <span className="mono" style={{ fontSize: '.82rem', fontWeight: 600 }}>{vneidCCCD}</span>
+                          </div>
+                          <div className="flex" style={{ justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                            <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>Phuong thuc</span>
+                            <span className="badge badge-c4" style={{ fontSize: '.65rem' }}>{vneidMethod === 'chip_nfc' ? 'NFC Chip' : 'Face Match'}</span>
+                          </div>
+                          <div className="flex" style={{ justifyContent: 'space-between', padding: '8px 0' }}>
+                            <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>Ngay xac thuc</span>
+                            <span style={{ fontSize: '.82rem', color: 'var(--text-2)' }}>{new Date(vneidDate).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div>
+                      <div className="flex" style={{ alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                        <div style={{
+                          width: 48, height: 48, borderRadius: 12,
+                          background: 'linear-gradient(135deg, rgba(220,38,38,.12), rgba(220,38,38,.04))',
+                          border: '2px solid #dc2626',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.3rem',
+                        }}>
+                          <span>🇻🇳</span>
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '.92rem', color: 'var(--text-1)' }}>Xac thuc qua VNeID</div>
+                          <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>Xac thuc nhanh qua Dinh danh dien tu Quoc gia</div>
+                        </div>
+                      </div>
+                      <div style={{ padding: 16, borderRadius: 12, background: 'var(--bg-2)', marginBottom: 16, fontSize: '.78rem', color: 'var(--text-3)', lineHeight: 1.6 }}>
+                        VNeID la ung dung Dinh danh dien tu Quoc gia cua Bo Cong an. Xac thuc qua VNeID giup tu dong xac minh danh tinh cua ban (ho ten, CCCD, ngay sinh) voi do tin cay cao nhat.
+                      </div>
+                      <div className="flex-col gap-8" style={{ marginBottom: 16, fontSize: '.78rem' }}>
+                        <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                          <span style={{ color: 'var(--c4-500, #22c55e)' }}>&#x2713;</span>
+                          <span style={{ color: 'var(--text-2)' }}>Xac minh danh tinh tu dong, khong can upload CCCD</span>
+                        </div>
+                        <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                          <span style={{ color: 'var(--c4-500, #22c55e)' }}>&#x2713;</span>
+                          <span style={{ color: 'var(--text-2)' }}>Nang cap Verification Level len cap 3 ngay lap tuc</span>
+                        </div>
+                        <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                          <span style={{ color: 'var(--c4-500, #22c55e)' }}>&#x2713;</span>
+                          <span style={{ color: 'var(--text-2)' }}>Mo khoa quyen tro thanh KOC va rut tien</span>
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-lg"
+                        onClick={() => {
+                          fetch('/api/v1/verify/vneid/auth-url', {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}` },
+                          })
+                            .then(r => r.json())
+                            .then(data => { if (data.auth_url) window.location.href = data.auth_url; })
+                            .catch(() => showToast('Khong the ket noi VNeID. Vui long thu lai.'));
+                        }}
+                        style={{
+                          width: '100%', padding: '12px 24px',
+                          background: '#dc2626', color: '#fff', border: 'none',
+                          fontSize: '.88rem', fontWeight: 700, borderRadius: 12,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        }}
+                      >
+                        <span>🇻🇳</span> Xac thuc qua VNeID
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
