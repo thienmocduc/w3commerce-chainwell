@@ -215,8 +215,8 @@ const notifTypeConfig: Record<string, { icon: string; badge: string }> = {
 
 /* ── Settings data ───────────────────────────────── */
 const addresses = [
-  { id: 1, label: 'Nhà riêng', name: 'Trần Minh Tuấn', phone: '0912 345 678', address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh', isDefault: true },
-  { id: 2, label: 'Công ty', name: 'Trần Minh Tuấn', phone: '0912 345 678', address: '456 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh', isDefault: false },
+  { id: 1, label: 'Nhà riêng', name: 'Chủ tài khoản', phone: '0912 345 678', address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh', isDefault: true },
+  { id: 2, label: 'Công ty', name: 'Chủ tài khoản', phone: '0912 345 678', address: '456 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh', isDefault: false },
 ];
 
 const bankAccounts = [
@@ -244,7 +244,13 @@ export default function Dashboard() {
   const [notifFilter, setNotifFilter] = useState('all');
   const [settingsTab, setSettingsTab] = useState('profile');
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
+
+  // Redirect admin to /admin
+  if (isAdmin) { navigate('/admin'); return null; }
+
+  const userName = user?.name || 'Người dùng';
+  const userEmail = user?.email || '';
 
   // Toast notifications
   const [toasts, setToasts] = useState<{ id: number; message: string }[]>([]);
@@ -293,7 +299,7 @@ export default function Dashboard() {
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopiedId(text);
-    showToast(`Da sao chep ${label}`);
+    showToast(`Đã sao chép ${label}`);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -1429,13 +1435,13 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                   <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--chakra-flow)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 700 }}>TT</div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>Trần Minh Tuấn</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{userName}</div>
                     <span className="badge badge-c6">Silver Buyer Lv.7</span>
                   </div>
                 </div>
                 <div className="flex-col gap-12">
                   {[
-                    { label: 'Họ tên', value: 'Trần Minh Tuấn' },
+                    { label: 'Họ tên', value: userName },
                     { label: 'Email', value: 'tuan@example.com' },
                     { label: 'Số điện thoại', value: '0912 345 678' },
                     { label: 'Ngày sinh', value: '15/06/1995' },
@@ -1717,7 +1723,7 @@ export default function Dashboard() {
               fontSize: '1rem', fontWeight: 700, flexShrink: 0,
             }}>TT</div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Trần Minh Tuấn</div>
+              <div style={{ fontWeight: 700, fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName}</div>
               <span className="badge badge-c6" style={{ marginTop: 2 }}>Silver Lv.7</span>
             </div>
           </div>

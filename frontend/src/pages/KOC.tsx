@@ -524,7 +524,9 @@ export default function KOC() {
     if (!openGroups[groupKey]) setOpenGroups(prev => ({ ...prev, [groupKey]: true }));
   };
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const userName = user?.name || 'KOC';
+  const userEmail = user?.email || '';
 
   const handleLogout = () => {
     logout();

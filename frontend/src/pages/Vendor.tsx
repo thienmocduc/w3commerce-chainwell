@@ -130,7 +130,9 @@ let nextDppTokenId = 1252;
 export default function Vendor() {
   const [activeNav, setActiveNav] = useState('overview');
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const userName = user?.name || 'Vendor';
+  const userEmail = user?.email || '';
 
   // Toast
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'info' | 'error' } | null>(null);

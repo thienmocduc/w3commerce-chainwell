@@ -299,7 +299,7 @@ export default function Register() {
                 {/* VNeID Quick Register */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '16px 0 0' }}>
                   <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                  <span style={{ fontSize: '.68rem', color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>hoac</span>
+                  <span style={{ fontSize: '.68rem', color: 'var(--text-4)', textTransform: 'uppercase', letterSpacing: '.08em' }}>hoặc</span>
                   <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                 </div>
                 <button
@@ -310,7 +310,7 @@ export default function Register() {
                     })
                       .then(r => r.json())
                       .then(data => { if (data.auth_url) window.location.href = data.auth_url; })
-                      .catch(() => setError('Khong the ket noi VNeID'));
+                      .catch(() => setError('Không thể kết nối VNeID'));
                   }}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -322,7 +322,7 @@ export default function Register() {
                   onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                 >
                   <span style={{ fontSize: '.9rem' }}>🇻🇳</span>
-                  Dang ky nhanh qua VNeID
+                  Đăng ký nhanh qua VNeID
                 </button>
 
                 <p style={{ textAlign: 'center', marginTop: 14, fontSize: '.82rem', color: 'var(--text-3)' }}>

@@ -126,10 +126,10 @@ export default function Login() {
         const data = await res.json();
         window.location.href = data.auth_url;
       } else {
-        setError('Khong the ket noi VNeID. Vui long thu lai.');
+        setError('Không thể kết nối VNeID. Vui lòng thử lại.');
       }
     } catch {
-      setError('Khong the ket noi VNeID. Vui long thu lai.');
+      setError('Không thể kết nối VNeID. Vui lòng thử lại.');
     }
   };
 
@@ -280,7 +280,7 @@ export default function Login() {
             >
               <span style={{ fontSize: '.9rem' }}>🇻🇳</span>
               VNeID
-              <span style={{ fontSize: '.65rem', opacity: 0.8, marginLeft: 4 }}>Dinh danh dien tu</span>
+              <span style={{ fontSize: '.65rem', opacity: 0.8, marginLeft: 4 }}>Định danh điện tử</span>
             </button>
 
             {/* Register Link */}
