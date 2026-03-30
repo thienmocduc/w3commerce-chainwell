@@ -763,6 +763,9 @@ footer {
   .stats-bar { flex-direction: column; }
   .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
   .stat-item:last-child { border-bottom: none; }
+  /* Navbar mobile: hide nav links, theme toggle, user name — only show logo + lang + avatar + hamburger */
+  .nav-desktop-only { display: none !important; }
+  .nav-mobile-spacer { display: block !important; }
 }
 
 /* ── SECTION SEPARATORS ── */

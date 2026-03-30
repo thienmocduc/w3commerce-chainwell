@@ -246,7 +246,7 @@ export default function MainLayout() {
           </span>
         </Link>
 
-        {/* Nav links (scrollable) */}
+        {/* Nav links — hidden on mobile, shown on desktop */}
         <div
           style={{
             display: 'flex',
@@ -258,7 +258,7 @@ export default function MainLayout() {
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
           }}
-          className="nav-scroll"
+          className="nav-scroll nav-desktop-only"
         >
           {NAV_LINKS.map((link) => {
             const isActive = location.pathname === link.to;
@@ -303,6 +303,9 @@ export default function MainLayout() {
             );
           })}
         </div>
+
+        {/* Spacer to push right controls */}
+        <div style={{ flex: 1 }} className="nav-mobile-spacer" />
 
         {/* Nav right controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 12 }}>
@@ -376,10 +379,11 @@ export default function MainLayout() {
             )}
           </div>
 
-          {/* Theme toggle */}
+          {/* Theme toggle — hidden on mobile */}
           <button
             onClick={toggleTheme}
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="nav-desktop-only"
             style={{
               width: 34,
               height: 34,
@@ -420,8 +424,8 @@ export default function MainLayout() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '.65rem', fontWeight: 700, color: '#fff',
                 }}>{userInitials}</div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-2)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
-                <ChevronDown size={12} style={{ color: 'var(--text-3)' }} />
+                <span className="nav-desktop-only" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-2)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
+                <ChevronDown size={12} style={{ color: 'var(--text-3)' }} className="nav-desktop-only" />
               </button>
 
               {userMenuOpen && (
