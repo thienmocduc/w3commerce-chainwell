@@ -252,7 +252,6 @@ export const commerceTranslations: TranslationMap = {
   'product.description.title': { vi: 'Mô tả sản phẩm', en: 'Product Description', zh: '产品描述', th: 'รายละเอียดสินค้า', hi: 'उत्पाद विवरण' },
   'product.dpp.desc': { vi: 'Sản phẩm này đã được xác minh nguồn gốc và chuỗi cung ứng thông qua Digital Product Passport (DPP) trên blockchain.', en: 'This product has been verified for origin and supply chain via Digital Product Passport (DPP) on blockchain.', zh: '该产品已通过区块链上的数字产品护照(DPP)验证来源和供应链。', th: 'ผลิตภัณฑ์นี้ได้รับการยืนยันแหล่งที่มาและห่วงโซ่อุปทานผ่าน Digital Product Passport (DPP) บนบล็อกเชน', hi: 'इस उत्पाद की उत्पत्ति और आपूर्ति श्रृंखला ब्लॉकचेन पर डिजिटल प्रोडक्ट पासपोर्ट (DPP) के माध्यम से सत्यापित की गई है।' },
   'product.dpp.certifications': { vi: 'Chứng nhận', en: 'Certifications', zh: '认证', th: 'ใบรับรอง', hi: 'प्रमाणपत्र' },
-  'product.dpp.viewDetail': { vi: 'Xem chi tiết DPP', en: 'View DPP Details', zh: '查看DPP详情', th: 'ดูรายละเอียด DPP', hi: 'DPP विवरण देखें' },
   'product.review.verified': { vi: 'Đánh giá đã xác minh', en: 'Verified Review', zh: '已验证评价', th: 'รีวิวที่ยืนยันแล้ว', hi: 'सत्यापित समीक्षा' },
   'product.review.purchased': { vi: 'Đã mua hàng', en: 'Verified Purchase', zh: '已购买', th: 'ซื้อแล้ว', hi: 'सत्यापित खरीद' },
 };

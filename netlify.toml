@@ -8,6 +8,9 @@
   VITE_API_URL = "https://wellkoc-api.onrender.com/api/v1"
   VITE_WS_URL = "wss://wellkoc-api.onrender.com/ws"
 
+# Disable Next.js plugin (this is a Vite/React project)
+[[plugins]]
+
 # SPA routing - all routes go to index.html
 [[redirects]]
   from = "/*"

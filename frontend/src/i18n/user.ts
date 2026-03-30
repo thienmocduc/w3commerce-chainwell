@@ -407,7 +407,7 @@ export const userTranslations: Record<string, Record<string, string>> = {
   'dashboard.clickToCopy': { vi: 'Bấm để copy link', en: 'Click to copy link', zh: '点击复制链接', th: 'คลิกเพื่อคัดลอกลิงก์', hi: 'लिंक कॉपी करने के लिए क्लिक करें' },
   'dashboard.affStats': { vi: 'Thống kê Affiliate', en: 'Affiliate Stats', zh: '联盟统计', th: 'สถิติ Affiliate', hi: 'एफिलिएट आंकड़े' },
   'dashboard.totalClicks': { vi: 'Tổng clicks', en: 'Total clicks', zh: '总点击', th: 'คลิกทั้งหมด', hi: 'कुल क्लिक' },
-  'dashboard.conversionRate': { vi: 'Tỷ lệ chuyển đổi', en: 'Conversion rate', zh: '转化率', th: 'อัตราการเปลี่ยนแปลง', hi: 'रूपांतरण दर' },
+  'dashboard.affConversionRate': { vi: 'Tỷ lệ chuyển đổi', en: 'Conversion rate', zh: '转化率', th: 'อัตราการเปลี่ยนแปลง', hi: 'रूपांतरण दर' },
   'dashboard.affRevenue': { vi: 'Doanh thu Aff', en: 'Aff Revenue', zh: '联盟收入', th: 'รายได้ Aff', hi: 'एफिलिएट राजस्व' },
   // Address
   'dashboard.defaultLabel': { vi: 'Mặc định', en: 'Default', zh: '默认', th: 'ค่าเริ่มต้น', hi: 'डिफ़ॉल्ट' },
