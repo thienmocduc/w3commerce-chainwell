@@ -81,13 +81,21 @@ export default function Home() {
             <span className="dot-pulse dot-indigo" /> Conscious Community Commerce · Polygon
           </div>
 
-          <h1 className="display-xl" style={{ marginBottom: 20, lineHeight: 1.15 }}>
+          <h1 className="display-xl" style={{ marginBottom: 12, lineHeight: 1.15 }}>
             <span className="gradient-text">{t('home.hero.title')}</span>
-            <br />
-            <span style={{ fontSize: '0.55em', fontWeight: 600, color: 'var(--text-2)', lineHeight: 1.5 }}>
-              {t('home.hero.subtitle')}
-            </span>
           </h1>
+
+          <div style={{ textAlign: 'center', marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.02em' }}>
+              {t('home.hero.line1')}
+            </span>
+            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.02em' }}>
+              {t('home.hero.line2')}
+            </span>
+            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 700, letterSpacing: '.02em', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              {t('home.hero.line3')}
+            </span>
+          </div>
 
           <p
             style={{

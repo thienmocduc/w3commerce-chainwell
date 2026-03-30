@@ -10,7 +10,9 @@ export const commerceTranslations: TranslationMap = {
   // Hero
   'home.hero.badge': { vi: 'Conscious Community Commerce', en: 'Conscious Community Commerce', zh: '有意识的社区商务', th: 'การค้าชุมชนอย่างมีสติ', hi: 'सचेत सामुदायिक वाणिज्य' },
   'home.hero.title': { vi: 'Thương mại cộng đồng', en: 'Community Commerce', zh: '社区商务', th: 'การค้าชุมชน', hi: 'सामुदायिक वाणिज्य' },
-  'home.hero.subtitle': { vi: 'Nơi mỗi giao dịch đều minh bạch, mỗi đóng góp đều được ghi nhận', en: 'Where every transaction is transparent, every contribution is recognized', zh: '每笔交易都透明，每份贡献都被记录', th: 'ที่ที่ทุกธุรกรรมโปร่งใส ทุกการมีส่วนร่วมได้รับการบันทึก', hi: 'जहां हर लेन-देन पारदर्शी है, हर योगदान को मान्यता मिलती है' },
+  'home.hero.line1': { vi: 'Nơi Phát Ngôn Thành Tài Sản', en: 'Where Voice Becomes Asset', zh: '让声音成为资产', th: 'ที่ซึ่งเสียงกลายเป็นสินทรัพย์', hi: 'जहां आवाज़ संपत्ति बनती है' },
+  'home.hero.line2': { vi: 'Nơi Nhiệt Huyết Thành Di Sản', en: 'Where Passion Becomes Legacy', zh: '让热血成为遗产', th: 'ที่ซึ่งความหลงใหลกลายเป็นมรดก', hi: 'जहां जुनून विरासत बनता है' },
+  'home.hero.line3': { vi: 'Nơi Mọi Thành Tựu — Minh Bạch On-Chain', en: 'Where Every Achievement — Transparent On-Chain', zh: '每一份成就 — 链上透明', th: 'ทุกความสำเร็จ — โปร่งใสบน On-Chain', hi: 'हर उपलब्धि — On-Chain पर पारदर्शी' },
   'home.hero.desc.prefix': { vi: 'Nền tảng kết nối', en: 'Platform connecting', zh: '连接平台', th: 'แพลตฟอร์มเชื่อมต่อ', hi: 'प्लेटफ़ॉर्म जोड़ता है' },
   'home.hero.desc.buyer': { vi: 'Người mua', en: 'Buyers', zh: '买家', th: 'ผู้ซื้อ', hi: 'खरीदार' },
   'home.hero.desc.suffix': { vi: 'trên blockchain. Hoa hồng on-chain 100% minh bạch. 333 AI Agents phục vụ 24/7.', en: 'on blockchain. 100% transparent on-chain commission. 333 AI Agents serving 24/7.', zh: '在区块链上。100%透明的链上佣金。333个AI代理全天候服务。', th: 'บนบล็อกเชน คอมมิชชั่นออนเชนโปร่งใส 100% 333 AI Agents ให้บริการ 24/7', hi: 'ब्लॉकचेन पर। 100% पारदर्शी ऑन-चेन कमीशन। 333 AI एजेंट 24/7 सेवा।' },
