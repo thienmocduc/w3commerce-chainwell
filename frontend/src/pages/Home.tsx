@@ -42,7 +42,7 @@ function StatCounter({
 }: {
   value: number;
   suffix: string;
-  label: string;
+  label: React.ReactNode;
 }) {
   const { count, ref } = useCounter(value);
   return (
@@ -78,7 +78,7 @@ export default function Home() {
 
         <div className="hero-content" style={{ maxWidth: 860, padding: '16px 24px 40px' }}>
           <div className="section-badge" style={{ marginBottom: 24 }}>
-            <span className="dot-pulse dot-indigo" /> Conscious Community Commerce · Polygon
+            <span className="dot-pulse dot-indigo" /> <span style={{ whiteSpace: 'nowrap' }}>Conscious Community Commerce</span> · Polygon
           </div>
 
           <h1 className="display-xl" style={{ marginBottom: 12, lineHeight: 1.15 }}>
@@ -93,7 +93,7 @@ export default function Home() {
               "{t('home.hero.line2')}"
             </div>
             <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.1rem, 3vw, 1.6rem)', fontWeight: 800, letterSpacing: '.03em', background: 'linear-gradient(135deg, #22c55e, #06b6d4, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              "{t('home.hero.line3')}"
+              "{t('home.hero.line3').replace(/On-Chain/gi, 'On\u2011Chain').replace(/Minh Bạch/gi, 'Minh\u00A0Bạch')}"
             </div>
           </div>
 
@@ -132,8 +132,8 @@ export default function Home() {
           <div className="stats-bar" style={{ marginTop: 48 }}>
             <StatCounter value={142} suffix="₫" label="GMV · YTD" />
             <StatCounter value={12847} suffix="" label="Active KOCs" />
-            <StatCounter value={890} suffix="K" label="DPP Minted" />
-            <StatCounter value={333} suffix="" label="AI Agents" />
+            <StatCounter value={890} suffix="K" label={<span style={{ whiteSpace: 'nowrap' }}>DPP Minted</span>} />
+            <StatCounter value={333} suffix="" label={<span style={{ whiteSpace: 'nowrap' }}>AI Agents</span>} />
           </div>
         </div>
       </section>
@@ -372,10 +372,10 @@ export default function Home() {
                 {t('home.ecosystem.buyer.desc')}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-                <span className="badge badge-c4">DPP Verify</span>
-                <span className="badge badge-c5">Group Buy</span>
-                <span className="badge badge-c4">Follow KOC</span>
-                <span className="badge badge-c5">Copy Cart</span>
+                <span className="badge badge-c4" style={{ whiteSpace: 'nowrap' }}>DPP Verify</span>
+                <span className="badge badge-c5" style={{ whiteSpace: 'nowrap' }}>Group Buy</span>
+                <span className="badge badge-c4" style={{ whiteSpace: 'nowrap' }}>Follow KOC</span>
+                <span className="badge badge-c5" style={{ whiteSpace: 'nowrap' }}>Copy Cart</span>
               </div>
               <div
                 style={{
@@ -387,7 +387,7 @@ export default function Home() {
                   letterSpacing: '.04em',
                 }}
               >
-                Discover → Verify → Buy → Review
+                <span style={{ whiteSpace: 'nowrap' }}>Discover → Verify → Buy → Review</span>
               </div>
             </div>
 
@@ -430,10 +430,10 @@ export default function Home() {
                 {t('home.ecosystem.koc.desc')}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-                <span className="badge badge-c6">T1 40%</span>
-                <span className="badge badge-c7">T2 13%</span>
-                <span className="badge badge-c6">Creator Token</span>
-                <span className="badge badge-c7">Reputation NFT</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>T1 40%</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>T2 13%</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>Creator Token</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>Reputation NFT</span>
               </div>
               <div
                 style={{
@@ -445,7 +445,7 @@ export default function Home() {
                   letterSpacing: '.04em',
                 }}
               >
-                Create → Promote → Convert → Earn
+                <span style={{ whiteSpace: 'nowrap' }}>Create → Promote → Convert → Earn</span>
               </div>
             </div>
 
@@ -473,10 +473,10 @@ export default function Home() {
                 {t('home.ecosystem.vendor.desc')}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-                <span className="badge badge-c7">DPP Mint</span>
-                <span className="badge badge-c6">AI Live</span>
-                <span className="badge badge-c7">Analytics</span>
-                <span className="badge badge-c6">333 Agents</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>DPP Mint</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>AI Live</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>Analytics</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>333 Agents</span>
               </div>
               <div
                 style={{
@@ -488,7 +488,7 @@ export default function Home() {
                   letterSpacing: '.04em',
                 }}
               >
-                List → Mint DPP → KOC Sell → Earn
+                <span style={{ whiteSpace: 'nowrap' }}>List → Mint DPP → KOC Sell → Earn</span>
               </div>
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function Home() {
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div className="section-badge">
-              <span className="dot-pulse dot-violet" /> On-chain Commission
+              <span className="dot-pulse dot-violet" /> <span style={{ whiteSpace: 'nowrap' }}>On-chain Commission</span>
             </div>
             <h2 className="display-lg" style={{ marginBottom: 12 }}>
               {t('home.commission.title.prefix')}{' '}
@@ -769,7 +769,7 @@ export default function Home() {
                   {t('home.commission.step4')}
                 </span>
                 <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
-                  T1 40% · T2 13%
+                  <span style={{ whiteSpace: 'nowrap' }}>T1 40%</span> · <span style={{ whiteSpace: 'nowrap' }}>T2 13%</span>
                 </span>
               </div>
 
@@ -862,9 +862,9 @@ export default function Home() {
                 color: 'var(--badge-verified-clr)',
               }}
             >
-              ⬡ Verified on Polygon
+              <span style={{ whiteSpace: 'nowrap' }}>⬡ Verified on Polygon</span>
             </span>
-            <span className="mono" style={{ color: 'var(--text-3)' }}>
+            <span className="mono" style={{ color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
               0x7A3b...2eF8::CommissionSplit
             </span>
             <span
@@ -934,10 +934,10 @@ export default function Home() {
           >
             {[
               { value: 142, suffix: '₫', label: t('home.stats.gmv') },
-              { value: 12847, suffix: '', label: 'Active KOCs' },
-              { value: 890, suffix: 'K', label: 'DPP Minted' },
-              { value: 333, suffix: '', label: 'AI Agents' },
-              { value: 2400, suffix: '', label: 'Live Sessions' },
+              { value: 12847, suffix: '', label: 'Active\u00A0KOCs' },
+              { value: 890, suffix: 'K', label: 'DPP\u00A0Minted' },
+              { value: 333, suffix: '', label: 'AI\u00A0Agents' },
+              { value: 2400, suffix: '', label: 'Live\u00A0Sessions' },
               { value: 38, suffix: '₫', label: t('home.stats.commissionPaid') },
             ].map((stat, i) => (
               <MetricCounter
@@ -1039,7 +1039,7 @@ export default function Home() {
                     color: 'var(--badge-verified-clr)',
                   }}
                 >
-                  100% On-chain
+                  <span style={{ whiteSpace: 'nowrap' }}>100% On-chain</span>
                 </div>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
                   {t('home.tech.onchain.desc')}
@@ -1066,7 +1066,7 @@ export default function Home() {
                     color: 'var(--c6-300)',
                   }}
                 >
-                  Smart Contract Audited
+                  <span style={{ whiteSpace: 'nowrap' }}>Smart Contract Audited</span>
                 </div>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
                   {t('home.tech.audit.desc')}
@@ -1093,7 +1093,7 @@ export default function Home() {
                     color: 'var(--c7-300)',
                   }}
                 >
-                  333 AI Agents 24/7
+                  <span style={{ whiteSpace: 'nowrap' }}>333 AI Agents</span> <span style={{ whiteSpace: 'nowrap' }}>24/7</span>
                 </div>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
                   {t('home.tech.ai.desc')}
@@ -1200,7 +1200,7 @@ function MetricCounter({
 }: {
   value: number;
   suffix: string;
-  label: string;
+  label: React.ReactNode;
 }) {
   const { count, ref } = useCounter(value);
   return (
@@ -1237,6 +1237,7 @@ function MetricCounter({
           color: 'var(--text-3)',
           letterSpacing: '.06em',
           textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
         }}
       >
         {label}

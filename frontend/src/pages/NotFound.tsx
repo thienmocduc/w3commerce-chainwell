@@ -49,7 +49,7 @@ export default function NotFound() {
               { to: '/hot', label: t('notFound.hotProducts'), icon: '🔥' },
               { to: '/dashboard', label: 'Dashboard', icon: '📊' },
               { to: '/academy', label: 'KOC Academy', icon: '🎓' },
-              { to: '/agents', label: '333 AI Agents', icon: '🤖' },
+              { to: '/agents', label: '333\u00A0AI\u00A0Agents', icon: '🤖' },
             ].map(link => (
               <Link
                 key={link.to}

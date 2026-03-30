@@ -60,7 +60,7 @@ const agentCategories: Category[] = [
   {
     key: 'customer', label: 'Chăm Sóc Khách Hàng', labelKey: 'agents.cat.customer', icon: '💬', color: 'var(--c4-500)',
     agents: [
-      { id: 29, name: 'AI Chat Support', description: 'Chatbot hỗ trợ khách hàng 24/7', capabilities: ['Auto response', 'FAQ handling', 'Escalation', 'Multi-language'], status: 'active' },
+      { id: 29, name: 'AI Chat Support', description: 'Chatbot hỗ trợ khách hàng\u00A024/7', capabilities: ['Auto response', 'FAQ handling', 'Escalation', 'Multi-language'], status: 'active' },
       { id: 30, name: 'AI Review Responder', description: 'Phản hồi đánh giá sản phẩm tự động', capabilities: ['Positive thanks', 'Issue resolution', 'Brand voice', 'Sentiment-aware'], status: 'active' },
       { id: 31, name: 'AI Order Tracker', description: 'Cập nhật trạng thái đơn hàng cho khách', capabilities: ['Status updates', 'Delivery ETA', 'Issue alerts', 'Proactive notify'], status: 'active' },
       { id: 32, name: 'AI Return Handler', description: 'Xử lý yêu cầu đổi trả tự động', capabilities: ['Return eligibility', 'Process guide', 'Refund track', 'Policy explain'], status: 'active' },
@@ -94,11 +94,11 @@ const agentCategories: Category[] = [
   {
     key: 'blockchain', label: 'Blockchain & Web3', labelKey: 'agents.cat.blockchain', icon: '⛓️', color: 'var(--c4-300)',
     agents: [
-      { id: 53, name: 'AI DPP Generator', description: 'Tạo Digital Product Passport on-chain', capabilities: ['Auto metadata', 'IPFS upload', 'Smart mint', 'QR generate'], status: 'active' },
-      { id: 54, name: 'AI Gas Optimizer', description: 'Tối ưu gas fee cho on-chain transactions', capabilities: ['Gas prediction', 'Batch transactions', 'L2 routing', 'Priority queue'], status: 'active' },
+      { id: 53, name: 'AI DPP Generator', description: 'Tạo Digital Product Passport on\u2011chain', capabilities: ['Auto metadata', 'IPFS upload', 'Smart mint', 'QR generate'], status: 'active' },
+      { id: 54, name: 'AI Gas Optimizer', description: 'Tối ưu gas fee cho on\u2011chain transactions', capabilities: ['Gas prediction', 'Batch transactions', 'L2 routing', 'Priority queue'], status: 'active' },
       { id: 55, name: 'AI NFT Minter', description: 'Mint Reputation NFT và certificates', capabilities: ['Auto mint', 'Metadata generate', 'Batch mint', 'Cross-chain'], status: 'active' },
       { id: 56, name: 'AI Smart Contract Auditor', description: 'Kiểm tra và audit smart contract', capabilities: ['Vulnerability scan', 'Gas analysis', 'Logic verify', 'Compliance check'], status: 'active' },
-      { id: 57, name: 'AI Wallet Analyzer', description: 'Phân tích on-chain activity của ví', capabilities: ['Transaction history', 'Token balance', 'DeFi positions', 'Risk score'], status: 'active' },
+      { id: 57, name: 'AI Wallet Analyzer', description: 'Phân tích on\u2011chain activity của ví', capabilities: ['Transaction history', 'Token balance', 'DeFi positions', 'Risk score'], status: 'active' },
       { id: 58, name: 'AI Token Economist', description: 'Phân tích và mô hình tokenomics', capabilities: ['Supply model', 'Velocity analysis', 'Staking optimize', 'Burn mechanism'], status: 'beta' },
       { id: 59, name: 'AI Bridge Agent', description: 'Hỗ trợ cross-chain bridge transactions', capabilities: ['Route finding', 'Fee compare', 'Safety check', 'Auto bridge'], status: 'active' },
       { id: 60, name: 'AI ZKP Verifier', description: 'Xác minh Zero-Knowledge Proofs', capabilities: ['Proof verify', 'Circuit check', 'Batch verify', 'Privacy audit'], status: 'active' },
@@ -304,7 +304,7 @@ export default function Agents() {
                                 <span className={`badge ${sc.badge}`}>{t(sc.labelKey)}</span>
                               </div>
                               <div style={{ fontWeight: 600, fontSize: '.82rem' }}>{agent.name}</div>
-                              <div style={{ fontSize: '.7rem', color: 'var(--text-3)', marginTop: 2 }}>{agent.description}</div>
+                              <div style={{ fontSize: '.7rem', color: 'var(--text-3)', marginTop: 2, wordBreak: 'keep-all' }}>{agent.description}</div>
                             </div>
                           </div>
 

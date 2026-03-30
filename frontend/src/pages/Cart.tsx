@@ -301,6 +301,7 @@ export default function Cart() {
                 <span style={{
                   fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800,
                   fontSize: '1.3rem', color: 'var(--c6-300, #06b6d4)',
+                  whiteSpace: 'nowrap',
                 }}>
                   {formatVND(total)}
                 </span>
@@ -317,7 +318,7 @@ export default function Cart() {
                   <span style={{ fontSize: '.78rem', color: 'var(--text-3)', fontWeight: 600 }}>
                     🎮 {t('cart.xpEarned')}
                   </span>
-                  <span className="badge badge-gold" style={{ fontSize: '.72rem' }}>
+                  <span className="badge badge-gold" style={{ fontSize: '.72rem', whiteSpace: 'nowrap' }}>
                     +{totalXP} XP
                   </span>
                 </div>
@@ -365,9 +366,9 @@ export default function Cart() {
                 display: 'flex', gap: 6, justifyContent: 'center', marginTop: 14,
                 flexWrap: 'wrap',
               }}>
-                <span className="badge badge-c4" style={{ fontSize: '.6rem' }}>DPP Verified</span>
-                <span className="badge badge-c5" style={{ fontSize: '.6rem' }}>{t('cart.sslSecure')}</span>
-                <span className="badge badge-c7" style={{ fontSize: '.6rem' }}>Web3 Ready</span>
+                <span className="badge badge-c4" style={{ fontSize: '.6rem', whiteSpace: 'nowrap' }}>DPP Verified</span>
+                <span className="badge badge-c5" style={{ fontSize: '.6rem', whiteSpace: 'nowrap' }}>{t('cart.sslSecure')}</span>
+                <span className="badge badge-c7" style={{ fontSize: '.6rem', whiteSpace: 'nowrap' }}>Web3 Ready</span>
               </div>
             </div>
           </div>

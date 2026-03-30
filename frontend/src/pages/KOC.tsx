@@ -456,7 +456,7 @@ const TH = ({ children }: { children: string }) => (
   <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, fontSize: '.65rem', color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase' }}>{children}</th>
 );
 const TD = ({ children, mono, bold, color, style: s }: { children: React.ReactNode; mono?: boolean; bold?: boolean; color?: string; style?: React.CSSProperties }) => (
-  <td style={{ padding: '12px 14px', fontFamily: mono ? 'var(--ff-display)' : undefined, fontWeight: bold ? 700 : undefined, color, ...s }}>{children}</td>
+  <td style={{ padding: '12px 14px', fontFamily: mono ? 'var(--ff-display)' : undefined, fontWeight: bold ? 700 : undefined, color, whiteSpace: mono ? 'nowrap' : undefined, ...s }}>{children}</td>
 );
 
 /* ══════════════════════════════════════════════════ */
@@ -1039,9 +1039,9 @@ export default function KOC() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24 }}>
               {kpiData.map((kpi, i) => (
                 <div key={i} className="kpi-card">
-                  <div className="kpi-label">{kpi.label}</div>
-                  <div className="kpi-val" style={{ color: kpi.color }}>{kpi.label === 'XP Points' ? xp.toLocaleString() : kpi.value}</div>
-                  <div className={`kpi-delta ${kpi.up ? 'delta-up' : 'delta-down'}`}>
+                  <div className="kpi-label" style={{ whiteSpace: 'nowrap' }}>{kpi.label}</div>
+                  <div className="kpi-val" style={{ color: kpi.color, whiteSpace: 'nowrap' }}>{kpi.label === 'XP Points' ? xp.toLocaleString() : kpi.value}</div>
+                  <div className={`kpi-delta ${kpi.up ? 'delta-up' : 'delta-down'}`} style={{ whiteSpace: 'nowrap' }}>
                     {kpi.up ? '↑' : '↓'} {kpi.delta}
                   </div>
                 </div>
@@ -1171,22 +1171,22 @@ export default function KOC() {
             <div className="grid-3" style={{ gap: 16, marginBottom: 24 }}>
               <div className="card" style={{ padding: 20, borderLeft: '3px solid var(--c4-500)' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: 4 }}>Số dư khả dụng</div>
-                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--c4-500)' }}>{formatVND(commBalance)}</div>
+                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--c4-500)', whiteSpace: 'nowrap' }}>{formatVND(commBalance)}</div>
               </div>
               <div className="card" style={{ padding: 20, borderLeft: '3px solid var(--gold-400)' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: 4 }}>Đang chờ duyệt</div>
-                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--gold-400)' }}>3.200.000₫</div>
+                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--gold-400)', whiteSpace: 'nowrap' }}>3.200.000₫</div>
               </div>
               <div className="card" style={{ padding: 20, borderLeft: '3px solid var(--c5-500)' }}>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-3)', marginBottom: 4 }}>Tổng đã rút</div>
-                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--c5-500)' }}>45.200.000₫</div>
+                <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.3rem', color: 'var(--c5-500)', whiteSpace: 'nowrap' }}>45.200.000₫</div>
               </div>
             </div>
 
             <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
                 <div className="flex" style={{ justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 700, fontSize: '.88rem' }}>Hoa Hồng Gần Đây</span>
+                  <span style={{ fontWeight: 700, fontSize: '.88rem', whiteSpace: 'nowrap' }}><span style={{ whiteSpace: 'nowrap' }}>Hoa Hồng</span> Gần Đây</span>
                   <span className="badge badge-c5">{commissionData.length} giao dịch</span>
                 </div>
               </div>
@@ -1299,10 +1299,10 @@ export default function KOC() {
             </div>
 
             <div className="onchain-card">
-              <div className="verified-seal">On-chain Verified</div>
+              <div className="verified-seal" style={{ whiteSpace: 'nowrap' }}>On-chain Verified</div>
               <div style={{ fontSize: '.82rem', fontWeight: 600, marginBottom: 8 }}>Tất cả hoa hồng được ghi nhận trên blockchain</div>
               <div style={{ fontSize: '.72rem', color: 'var(--text-3)', lineHeight: 1.6 }}>
-                Smart contract tự động tính toán và phân phối hoa hồng minh bạch. Mọi giao dịch đều có thể xác minh trên Polygon.
+                Smart contract tự động tính toán và phân phối <span style={{ whiteSpace: 'nowrap' }}>hoa hồng</span> <span style={{ whiteSpace: 'nowrap' }}>minh bạch</span>. Mọi giao dịch đều có thể xác minh trên Polygon.
               </div>
               <div className="flex gap-8" style={{ marginTop: 12 }}>
                 <span className="badge badge-c4">Polygon</span>
@@ -1344,7 +1344,7 @@ export default function KOC() {
                 </div>
                 <div>
                   <div className="label" style={{ marginBottom: 6 }}>Lịch chạy</div>
-                  <div style={{ fontSize: '.82rem', color: 'var(--text-2)' }}>Hàng ngày, Hàng tuần, 24/7, Tùy chỉnh</div>
+                  <div style={{ fontSize: '.82rem', color: 'var(--text-2)' }}>Hàng ngày, Hàng tuần, <span style={{ whiteSpace: 'nowrap' }}>24/7</span>, Tùy chỉnh</div>
                 </div>
               </div>
             </div>
@@ -1838,7 +1838,7 @@ export default function KOC() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>Tổng doanh thu</div>
-                  <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.2rem', color: 'var(--gold-400)' }}>{myRank.revenue}</div>
+                  <div style={{ fontFamily: 'var(--ff-display)', fontWeight: 800, fontSize: '1.2rem', color: 'var(--gold-400)', whiteSpace: 'nowrap' }}>{myRank.revenue}</div>
                 </div>
               </div>
             </div>

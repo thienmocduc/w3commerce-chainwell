@@ -916,7 +916,7 @@ export default function MainLayout() {
             }}
           >
             <span>&copy; 2026 WellKOC. All rights reserved.</span>
-            <span style={{ fontFamily: 'var(--ff-mono)' }}>v3.0 · Chakra 4567</span>
+            <span style={{ fontFamily: 'var(--ff-mono)', whiteSpace: 'nowrap' }}>v3.0 · Chakra 4567</span>
           </div>
         </div>
       </footer>}

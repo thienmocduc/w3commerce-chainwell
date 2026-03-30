@@ -13,7 +13,7 @@ interface Props {
   onNavigate: (tab: string) => void;
 }
 
-const thSm: React.CSSProperties = { padding: '8px 10px', textAlign: 'left' as const, fontWeight: 700, fontSize: '.62rem', color: 'var(--text-3)', letterSpacing: '.05em', textTransform: 'uppercase' as const };
+const thSm: React.CSSProperties = { padding: '8px 10px', textAlign: 'left' as const, fontWeight: 700, fontSize: '.62rem', color: 'var(--text-3)', letterSpacing: '.05em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' };
 const tdSm: React.CSSProperties = { padding: '8px 10px', fontSize: '.75rem' };
 const filterInput: React.CSSProperties = { padding: '6px 10px', fontSize: '.75rem', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-0)', color: 'var(--text-1)', outline: 'none', width: 130 };
 const statusBadge: Record<string, string> = { active: 'badge-c4', suspended: 'badge-gold', approved: 'badge-c4', pending: 'badge-gold', rejected: 'badge-c5', delivered: 'badge-c4', shipping: 'badge-c5', processing: 'badge-c6', cancelled: 'badge-c5', paid: 'badge-c4', confirmed: 'badge-c6', packing: 'badge-c7', review: 'badge-c6' };
@@ -51,8 +51,8 @@ function StatGrid({ items }: { items: { label: string; value: string | number; c
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, 1fr)`, gap: 10, marginBottom: 16 }}>
       {items.map((r, i) => (
         <div key={i} style={{ padding: 14, borderRadius: 10, background: 'var(--bg-2)', textAlign: 'center', cursor: r.onClick ? 'pointer' : 'default', border: '1px solid var(--border)', transition: 'all .15s' }} onClick={r.onClick}>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: r.color }}>{r.value}</div>
-          <div style={{ fontSize: '.68rem', color: 'var(--text-3)', marginTop: 2 }}>{r.label}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: r.color, whiteSpace: 'nowrap' }}>{r.value}</div>
+          <div style={{ fontSize: '.68rem', color: 'var(--text-3)', marginTop: 2, whiteSpace: 'nowrap' }}>{r.label}</div>
           {r.pct && <div style={{ height: 3, borderRadius: 2, background: 'var(--bg-0)', marginTop: 6 }}><div style={{ height: '100%', width: `${Math.min(parseFloat(r.pct), 100)}%`, background: r.color, borderRadius: 2 }} /></div>}
         </div>
       ))}

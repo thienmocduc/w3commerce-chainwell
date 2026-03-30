@@ -203,7 +203,7 @@ export default function Checkout() {
           {/* TX Hash for crypto */}
           {payment === 'crypto' && (
             <div className="onchain-card" style={{ padding: 14, marginBottom: 16, textAlign: 'left' }}>
-              <div className="verified-seal" style={{ marginBottom: 6, fontSize: '.75rem' }}>On-chain Receipt</div>
+              <div className="verified-seal" style={{ marginBottom: 6, fontSize: '.75rem', whiteSpace: 'nowrap' }}>On-chain Receipt</div>
               <div style={{ fontSize: '.65rem', color: 'var(--c4-300, #22c55e)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 TX: {txHash.slice(0, 20)}...{txHash.slice(-8)}
               </div>
@@ -408,7 +408,7 @@ export default function Checkout() {
                 {payment === 'crypto' && (
                   <div className="onchain-card" style={{ padding: 16, marginBottom: 16 }}>
                     <div className="verified-seal" style={{ marginBottom: 8, fontSize: '.75rem' }}>
-                      Web3 Payment
+                      <span style={{ whiteSpace: 'nowrap' }}>Web3 Payment</span>
                     </div>
                     <label style={labelStyle}>{t('checkout.payment.walletAddress')}</label>
                     <input
@@ -597,7 +597,7 @@ export default function Checkout() {
                 </div>
                 {w3cDiscount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.82rem' }}>
-                    <span style={{ color: 'var(--c7-500, #6366f1)' }}>W3C Token -5%</span>
+                    <span style={{ color: 'var(--c7-500, #6366f1)', whiteSpace: 'nowrap' }}>W3C Token -5%</span>
                     <span style={{ fontWeight: 600, color: 'var(--c4-500, #22c55e)' }}>-{formatVND(w3cDiscount)}</span>
                   </div>
                 )}
@@ -610,6 +610,7 @@ export default function Checkout() {
                 <span style={{
                   fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800,
                   fontSize: '1.2rem', color: 'var(--c6-300, #06b6d4)',
+                  whiteSpace: 'nowrap',
                 }}>
                   {formatVND(total)}
                 </span>

@@ -182,6 +182,7 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
   display: inline-flex; align-items: center; gap: 5px;
   padding: .2rem .6rem; border-radius: 100px;
   font-size: .62rem; font-weight: 700; letter-spacing: .04em;
+  white-space: nowrap;
 }
 .badge-c4  { background: var(--badge-verified-bg); color: var(--badge-verified-clr); }
 .badge-c5  { background: rgba(6,182,212,.1); color: #22d3ee; }
@@ -326,9 +327,9 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
   font-size: 1.4rem; line-height: 1;
   background: var(--chakra-text);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  margin-bottom: 4px;
+  margin-bottom: 4px; white-space: nowrap;
 }
-.stat-lbl { font-size: .62rem; color: var(--text-3); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.stat-lbl { font-size: .62rem; color: var(--text-3); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 
 /* ── SECTION HEADER ── */
 .section-header { text-align: center; margin-bottom: 56px; }
@@ -338,6 +339,7 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
   font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
   background: rgba(99,102,241,.1); color: var(--c6-300);
   border: 1px solid rgba(99,102,241,.2); margin-bottom: 16px;
+  white-space: nowrap;
 }
 
 /* ── ROLE CARDS ── */
@@ -489,12 +491,12 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
   transition: var(--t-base);
 }
 .kpi-card:hover { border-color: var(--border-glow); }
-.kpi-label { font-size: .6rem; font-weight: 700; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.kpi-label { font-size: .6rem; font-weight: 700; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; white-space: nowrap; }
 .kpi-val {
   font-family: var(--ff-display); font-weight: 800; font-size: 1.25rem;
-  line-height: 1; margin-bottom: 6px;
+  line-height: 1; margin-bottom: 6px; white-space: nowrap;
 }
-.kpi-delta { font-size: .62rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.kpi-delta { font-size: .62rem; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .delta-up   { color: var(--c4-500); }
 .delta-down { color: #f43f5e; }
 
@@ -541,6 +543,7 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
   font-size: .65rem; font-weight: 700; color: var(--badge-verified-clr);
   margin-bottom: 14px;
   box-shadow: var(--onchain-glow);
+  white-space: nowrap;
 }
 
 /* ── GROUP BUY ── */

@@ -95,7 +95,7 @@ interface KocReview {
 }
 
 const kocReviews: KocReview[] = [
-  { id: 1, author: 'Linh Nguyen', avatar: 'LN', rating: 5, date: '2026-03-20', content: 'Sản phẩm chất lượng tuyệt vời! Đã dùng 2 tháng và thấy hiệu quả rõ rệt. Nguồn gốc minh bạch trên blockchain, rất yên tâm.', verified: true, purchaseBadge: true, kocLevel: 'Gold KOC' },
+  { id: 1, author: 'Linh Nguyen', avatar: 'LN', rating: 5, date: '2026-03-20', content: 'Sản phẩm chất lượng tuyệt vời! Đã dùng 2 tháng và thấy hiệu quả rõ rệt. Nguồn gốc minh\u00A0bạch trên blockchain, rất yên tâm.', verified: true, purchaseBadge: true, kocLevel: 'Gold KOC' },
   { id: 2, author: 'Minh Tran', avatar: 'MT', rating: 5, date: '2026-03-18', content: 'Đóng gói cẩn thận, giao hàng nhanh. DPP xác minh được toàn bộ chuỗi cung ứng, từ nguyên liệu đến sản xuất.', verified: true, purchaseBadge: true, kocLevel: 'Silver KOC' },
   { id: 3, author: 'Thu Ha', avatar: 'TH', rating: 4, date: '2026-03-15', content: 'Giá hợp lý so với chất lượng. Đã giới thiệu cho bạn bè và ai cũng hài lòng. Sẽ tiếp tục ủng hộ!', verified: true, purchaseBadge: true, kocLevel: 'Gold KOC' },
   { id: 4, author: 'Van Anh', avatar: 'VA', rating: 4, date: '2026-03-12', content: 'Sản phẩm tốt, đúng như mô tả. Ship hơi lâu nhưng chấp nhận được. Giá trị nhận được xứng đáng.', verified: false, purchaseBadge: false, kocLevel: '' },
@@ -236,6 +236,7 @@ export default function ProductDetail() {
               <span style={{
                 fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800,
                 fontSize: '2rem', color: 'var(--c6-300, #06b6d4)',
+                whiteSpace: 'nowrap',
               }}>
                 {formatVND(product.price)}
               </span>
@@ -269,7 +270,7 @@ export default function ProductDetail() {
               }}>
                 <span style={{ fontSize: '.85rem' }}>🔗</span>
                 <div>
-                  <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--c4-500, #22c55e)' }}>
+                  <div style={{ fontSize: '.78rem', fontWeight: 700, color: 'var(--c4-500, #22c55e)', whiteSpace: 'nowrap' }}>
                     DPP Verified on Blockchain
                   </div>
                   <div style={{ fontSize: '.65rem', color: 'var(--text-4)' }}>

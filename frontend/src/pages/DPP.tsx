@@ -38,7 +38,7 @@ export default function DPP() {
       }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <div className="section-badge" style={{ background: 'rgba(34,197,94,.1)', color: 'var(--c4-300)', borderColor: 'rgba(34,197,94,.2)' }}>
-            ⛓️ BLOCKCHAIN DPP
+            <span style={{ whiteSpace: 'nowrap' }}>⛓️ BLOCKCHAIN DPP</span>
           </div>
           <h1 className="display-lg gradient-text" style={{ marginBottom: 12 }}>
             Digital Product Passport
@@ -52,7 +52,7 @@ export default function DPP() {
       <div className="container" style={{ paddingTop: 40, paddingBottom: 80 }}>
         {/* Product Passport Card */}
         <div className="onchain-card" style={{ marginBottom: 40, padding: 32 }}>
-          <div className="verified-seal">✅ DPP Verified On-Chain</div>
+          <div className="verified-seal" style={{ whiteSpace: 'nowrap' }}>✅ DPP Verified <span style={{ whiteSpace: 'nowrap' }}>On-Chain</span></div>
           <div className="grid-2" style={{ gap: 32, marginTop: 16 }}>
             <div>
               <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>🍵</div>
@@ -165,7 +165,7 @@ export default function DPP() {
         {/* ZKP Section */}
         <div className="card card-glow" style={{ padding: 32, textAlign: 'center' }}>
           <div className="section-badge" style={{ background: 'rgba(168,85,247,.1)', color: 'var(--c7-300)', borderColor: 'rgba(168,85,247,.2)' }}>
-            🔐 ZERO-KNOWLEDGE PROOF
+            <span style={{ whiteSpace: 'nowrap' }}>🔐 ZERO-KNOWLEDGE PROOF</span>
           </div>
           <h3 className="display-md" style={{ marginBottom: 12 }}>{t('dpp.zkp.title')}</h3>
           <p style={{ fontSize: '.82rem', color: 'var(--text-3)', maxWidth: 500, margin: '0 auto 20px' }}>
@@ -193,7 +193,7 @@ export default function DPP() {
                 ))}
               </div>
               <div className="mono" style={{ marginTop: 14, padding: 12, background: 'var(--bg-1)', borderRadius: 8, fontSize: '.68rem', color: 'var(--c4-300)', wordBreak: 'break-all' }}>
-                Proof: zk-SNARK · Circuit: DPP-Supply-v3 · Verifier: 0x7a3f...b92c · Block: #45,892,103 · Gas: 0.0023 MATIC
+                <span style={{ whiteSpace: 'nowrap' }}>Proof: zk-SNARK</span> · <span style={{ whiteSpace: 'nowrap' }}>Circuit: DPP-Supply-v3</span> · <span style={{ whiteSpace: 'nowrap' }}>Verifier: 0x7a3f...b92c</span> · <span style={{ whiteSpace: 'nowrap' }}>Block: #45,892,103</span> · <span style={{ whiteSpace: 'nowrap' }}>Gas: 0.0023 MATIC</span>
               </div>
             </div>
           )}

@@ -573,6 +573,7 @@ export default function Pricing() {
                           lineHeight: 1.5,
                           opacity: f.startsWith('❌') ? 0.6 : 1,
                           fontWeight: f.includes('Workflow') || f.includes('workflow') ? 600 : 400,
+                          wordBreak: 'keep-all',
                         }}
                       >
                         {f}
@@ -678,6 +679,7 @@ export default function Pricing() {
                             color: val === '❌' ? 'var(--text-3)' : plans[vi]?.popular ? 'var(--text-1)' : plans[vi]?.isCustom ? '#a855f7' : 'var(--text-2)',
                             fontWeight: plans[vi]?.popular || row.label === 'Agent Workflows' ? 600 : 400,
                             opacity: val === '❌' ? 0.5 : 1,
+                            wordBreak: 'keep-all',
                           }}
                         >
                           {val}

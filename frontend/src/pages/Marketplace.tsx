@@ -222,6 +222,7 @@ export default function Marketplace() {
                         position: 'absolute', top: 10, left: 10,
                         fontSize: '.6rem', padding: '3px 8px',
                         background: 'rgba(34,197,94,.9)', color: '#fff',
+                        whiteSpace: 'nowrap',
                       }}>
                         DPP ✓
                       </span>
@@ -272,6 +273,7 @@ export default function Marketplace() {
                       <span style={{
                         fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800,
                         fontSize: '1rem', color: 'var(--c6-300, #06b6d4)',
+                        whiteSpace: 'nowrap',
                       }}>
                         {formatVND(p.price)}
                       </span>
@@ -279,6 +281,7 @@ export default function Marketplace() {
                         <span style={{
                           fontSize: '.72rem', color: 'var(--text-4)',
                           textDecoration: 'line-through',
+                          whiteSpace: 'nowrap',
                         }}>
                           {formatVND(p.originalPrice)}
                         </span>
