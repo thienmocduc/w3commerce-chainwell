@@ -85,16 +85,15 @@ export default function Home() {
             <span className="gradient-text">{t('home.hero.title')}</span>
           </h1>
 
-          <div style={{ textAlign: 'center', marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.02em' }}>
-              {t('home.hero.line1')}
-            </span>
-            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 600, color: 'var(--text-2)', letterSpacing: '.02em' }}>
-              {t('home.hero.line2')}
-            </span>
-            <span style={{ fontStyle: 'italic', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', fontWeight: 700, letterSpacing: '.02em', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+          <div style={{ textAlign: 'center', marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+            {/* Line 1: Two phrases joined by dash */}
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.15rem, 3vw, 1.65rem)', fontWeight: 700, letterSpacing: '.03em', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              {t('home.hero.line1')} — {t('home.hero.line2')}
+            </div>
+            {/* Line 2: On-Chain highlight */}
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.2rem, 3.2vw, 1.75rem)', fontWeight: 800, letterSpacing: '.03em', background: 'linear-gradient(135deg, #22c55e, #06b6d4, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               {t('home.hero.line3')}
-            </span>
+            </div>
           </div>
 
           <p
