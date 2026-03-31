@@ -203,7 +203,7 @@ export default function Home() {
                   marginBottom: 16,
                 }}
               >
-                {t('home.philosophy.transparency.desc')}
+                {t('home.philosophy.transparency.desc').replace(/on-chain/gi, 'on\u2011chain')}
               </p>
               <div
                 style={{
@@ -507,7 +507,7 @@ export default function Home() {
               <span className="dot-pulse dot-violet" /> <span style={{ whiteSpace: 'nowrap' }}>On-chain Commission</span>
             </div>
             <h2 className="display-lg" style={{ marginBottom: 12 }}>
-              {t('home.commission.title.prefix')}{' '}
+              {t('home.commission.title.prefix').replace(/Hoa hồng/g, 'Hoa\u00A0hồng').replace(/minh bạch/g, 'minh\u00A0bạch')}{' '}
               <span className="gradient-text">{t('home.commission.title.highlight')}</span>
             </h2>
             <p
@@ -831,7 +831,7 @@ export default function Home() {
                     marginBottom: 2,
                   }}
                 >
-                  {t('home.commission.step5')}
+                  {t('home.commission.step5').replace(/on-chain/gi, 'on\u2011chain')}
                 </span>
                 <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
                   Immutable
