@@ -715,6 +715,18 @@ export const vendorApi = {
   requestPayout(amount: number, token: string): Promise<ApiMessage> {
     return apiClient.post('/vendor/payout/request', { amount }, token);
   },
+
+  createProduct(data: Partial<Product>, token: string): Promise<Product> {
+    return apiClient.post('/vendor/products', data, token);
+  },
+
+  updateProduct(id: string, data: Partial<Product>, token: string): Promise<Product> {
+    return apiClient.put(`/vendor/products/${id}`, data, token);
+  },
+
+  deleteProduct(id: string, token: string): Promise<ApiMessage> {
+    return apiClient.delete(`/vendor/products/${id}`, token);
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1279,5 +1291,31 @@ export const notificationsApi = {
 
   getUnreadCount(token: string): Promise<{ count: number }> {
     return apiClient.get('/notifications/unread-count', token);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SOCIAL (follow / unfollow / followers)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const socialApi = {
+  follow(userId: string, token: string): Promise<ApiMessage> {
+    return apiClient.post(`/social/follow/${userId}`, {}, token);
+  },
+
+  unfollow(userId: string, token: string): Promise<ApiMessage> {
+    return apiClient.delete(`/social/follow/${userId}`, token);
+  },
+
+  getFollowers(userId: string, token?: string): Promise<{ followers: { id: string; name: string; avatar?: string }[]; count: number }> {
+    return apiClient.get(`/social/followers/${userId}`, token);
+  },
+
+  getFollowing(userId: string, token: string): Promise<{ following: { id: string; name: string; avatar?: string }[]; count: number }> {
+    return apiClient.get(`/social/following/${userId}`, token);
+  },
+
+  isFollowing(userId: string, token: string): Promise<{ following: boolean }> {
+    return apiClient.get(`/social/following/${userId}/check`, token);
   },
 };

@@ -158,7 +158,7 @@ export default function Marketplace() {
     e.stopPropagation();
     setAddingToCart(product.id);
     try {
-      await cartApi.addItem({ productId: product.id, quantity: 1 }, token ?? undefined);
+      await cartApi.addItem({ product_id: product.id, quantity: 1 }, token ?? undefined);
       toast.success(`Đã thêm "${product.name}" vào giỏ hàng`);
     } catch (err: any) {
       if (err.status === 401 || err.message?.includes('401')) {
@@ -291,7 +291,7 @@ export default function Marketplace() {
                   key={p.id}
                   className="card card-hover"
                   style={{ overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
-                  onClick={() => navigate(`/product/${p.id}`)}
+                  onClick={() => navigate(`/products/${p.id}`)}
                   onMouseEnter={() => setHoveredProduct(p.id)}
                   onMouseLeave={() => setHoveredProduct(null)}
                 >

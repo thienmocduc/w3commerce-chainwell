@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '@hooks/useI18n';
 import { useAuth } from '@hooks/useAuth';
-import { productsApi, cartApi, type Product } from '@lib/api';
+import { productsApi, cartApi, reviewsApi, socialApi, type Product } from '@lib/api';
 
 const formatVND = (price: number): string =>
   new Intl.NumberFormat('vi-VN').format(price) + ' \u20AB';
@@ -19,24 +19,16 @@ function getGradients(id: string): string[] {
   return [base, GRADIENTS[(id.charCodeAt(0) + 1) % GRADIENTS.length], GRADIENTS[(id.charCodeAt(0) + 2) % GRADIENTS.length], GRADIENTS[(id.charCodeAt(0) + 3) % GRADIENTS.length]];
 }
 
-interface KocReview {
-  id: number;
+interface Review {
+  id: string;
   author: string;
-  avatar: string;
+  avatar_initials: string;
   rating: number;
   date: string;
   content: string;
   verified: boolean;
-  purchaseBadge: boolean;
-  kocLevel: string;
+  helpful_count: number;
 }
-
-const kocReviews: KocReview[] = [
-  { id: 1, author: 'Linh Nguyen', avatar: 'LN', rating: 5, date: '2026-03-20', content: 'Sản phẩm chất lượng tuyệt vời! Đã dùng 2 tháng và thấy hiệu quả rõ rệt. Nguồn gốc minh\u00A0bạch trên blockchain, rất yên tâm.', verified: true, purchaseBadge: true, kocLevel: 'Gold KOC' },
-  { id: 2, author: 'Minh Tran', avatar: 'MT', rating: 5, date: '2026-03-18', content: 'Đóng gói cẩn thận, giao hàng nhanh. DPP xác minh được toàn bộ chuỗi cung ứng, từ nguyên liệu đến sản xuất.', verified: true, purchaseBadge: true, kocLevel: 'Silver KOC' },
-  { id: 3, author: 'Thu Ha', avatar: 'TH', rating: 4, date: '2026-03-15', content: 'Giá hợp lý so với chất lượng. Đã giới thiệu cho bạn bè và ai cũng hài lòng. Sẽ tiếp tục ủng hộ!', verified: true, purchaseBadge: true, kocLevel: 'Gold KOC' },
-  { id: 4, author: 'Van Anh', avatar: 'VA', rating: 4, date: '2026-03-12', content: 'Sản phẩm tốt, đúng như mô tả. Ship hơi lâu nhưng chấp nhận được. Giá trị nhận được xứng đáng.', verified: false, purchaseBadge: false, kocLevel: '' },
-];
 
 type TabKey = 'description' | 'dpp' | 'reviews';
 
@@ -52,6 +44,59 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartToast, setCartToast] = useState('');
+
+  // Follow state
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewSummary, setReviewSummary] = useState({ average_rating: 0, total_reviews: 0, rating_distribution: {} as Record<string, number> });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, content: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  // Fetch reviews when tab opens or product loads
+  const fetchReviews = useCallback(async () => {
+    if (!product?.id) return;
+    setReviewsLoading(true);
+    try {
+      const res = await reviewsApi.getByProduct(product.id, { per_page: 20 });
+      const items = (res as any).items ?? (Array.isArray(res) ? res : []);
+      setReviews(items.map((r: any) => ({
+        id: r.id,
+        author: r.user_name || r.author_name || 'Ẩn danh',
+        avatar_initials: (r.user_name || r.author_name || 'A').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+        rating: r.rating,
+        date: (r.created_at || '').slice(0, 10),
+        content: r.text || r.content || '',
+        verified: r.verified_purchase ?? false,
+        helpful_count: r.helpful_count ?? 0,
+      })));
+      if ((res as any).summary) {
+        setReviewSummary((res as any).summary);
+      }
+    } catch { /* silently fail */ }
+    finally { setReviewsLoading(false); }
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (activeTab === 'reviews') fetchReviews();
+  }, [activeTab, fetchReviews]);
+
+  const handleSubmitReview = async () => {
+    if (!token) { navigate('/login'); return; }
+    if (!newReview.content.trim() || !product?.id) return;
+    setSubmittingReview(true);
+    try {
+      await reviewsApi.create({ product_id: product.id, rating: newReview.rating, text: newReview.content }, token);
+      setReviewSubmitted(true);
+      setNewReview({ rating: 5, content: '' });
+      fetchReviews();
+    } catch { /* silently fail */ }
+    finally { setSubmittingReview(false); }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -259,6 +304,32 @@ export default function ProductDetail() {
               <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>
                 {t('product.sold')} {product.sold_count?.toLocaleString('vi-VN')}
               </span>
+            </div>
+
+            {/* KOC/Vendor Info */}
+            <div style={{ marginBottom: 20 }}>
+              <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>{product.brand}</span>
+              <button
+                onClick={async () => {
+                  if (!token) { navigate('/login'); return; }
+                  if (!product.vendor_id) return;
+                  setFollowLoading(true);
+                  try {
+                    if (following) {
+                      await socialApi.unfollow(product.vendor_id, token);
+                    } else {
+                      await socialApi.follow(product.vendor_id, token);
+                    }
+                    setFollowing(f => !f);
+                  } catch { setFollowing(f => !f); } // revert on error
+                  finally { setFollowLoading(false); }
+                }}
+                disabled={followLoading}
+                className={following ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm'}
+                style={{ fontSize: '.72rem', marginLeft: 12 }}
+              >
+                {following ? '✓ Đang theo dõi' : '+ Theo dõi'}
+              </button>
             </div>
 
             {/* Price */}
@@ -484,35 +555,30 @@ export default function ProductDetail() {
         {activeTab === 'reviews' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {/* Rating summary */}
-            <div className="card" style={{
-              padding: 20, display: 'flex', alignItems: 'center', gap: 24, marginBottom: 8,
-            }}>
+            <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 24, marginBottom: 8 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800,
-                  fontSize: '2.5rem', color: 'var(--gold-400, #f59e0b)',
-                }}>
-                  {product.rating}
+                <div style={{ fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800, fontSize: '2.5rem', color: 'var(--gold-400, #f59e0b)' }}>
+                  {reviewSummary.average_rating > 0 ? reviewSummary.average_rating.toFixed(1) : product.rating}
                 </div>
                 <div style={{ fontSize: '.82rem', color: 'var(--gold-400, #f59e0b)' }}>
-                  {'★'.repeat(Math.floor(product.rating))}
+                  {'★'.repeat(Math.floor(reviewSummary.average_rating || product.rating))}
                 </div>
                 <div style={{ fontSize: '.72rem', color: 'var(--text-4)', marginTop: 2 }}>
-                  {product.reviewCount} {t('product.reviews')}
+                  {reviewSummary.total_reviews || product.review_count} {t('product.reviews')}
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {[5, 4, 3, 2, 1].map(stars => {
-                  const pct = stars === 5 ? 65 : stars === 4 ? 25 : stars === 3 ? 7 : stars === 2 ? 2 : 1;
+                  const dist = reviewSummary.rating_distribution;
+                  const total = reviewSummary.total_reviews || 1;
+                  const count = dist[String(stars)] ?? 0;
+                  const pct = total > 0 ? Math.round((count / total) * 100) : (stars === 5 ? 65 : stars === 4 ? 25 : stars === 3 ? 7 : stars === 2 ? 2 : 1);
                   return (
                     <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: '.68rem', color: 'var(--text-3)', minWidth: 14, textAlign: 'right' }}>{stars}</span>
                       <span style={{ fontSize: '.68rem', color: 'var(--gold-400, #f59e0b)' }}>★</span>
                       <div className="progress-track" style={{ flex: 1, height: 6 }}>
-                        <div className="progress-bar" style={{
-                          width: `${pct}%`, height: '100%', borderRadius: 3,
-                          background: 'var(--gold-400, #f59e0b)',
-                        }} />
+                        <div className="progress-bar" style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: 'var(--gold-400, #f59e0b)' }} />
                       </div>
                       <span style={{ fontSize: '.62rem', color: 'var(--text-4)', minWidth: 28 }}>{pct}%</span>
                     </div>
@@ -521,46 +587,64 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Individual reviews */}
-            {kocReviews.map(review => (
+            {/* Write review form */}
+            {!reviewSubmitted ? (
+              <div className="card" style={{ padding: 20, border: '1px solid var(--c6-500, #06b6d4)30' }}>
+                <div style={{ fontWeight: 700, fontSize: '.88rem', marginBottom: 12 }}>✏️ Viết đánh giá của bạn</div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <button key={s} onClick={() => setNewReview(r => ({ ...r, rating: s }))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.4rem', color: s <= newReview.rating ? '#f59e0b' : 'var(--border)', padding: 2 }}>★</button>
+                  ))}
+                </div>
+                <textarea
+                  value={newReview.content}
+                  onChange={e => setNewReview(r => ({ ...r, content: e.target.value }))}
+                  placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', color: 'var(--text-1)', fontSize: '.82rem', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                />
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview || !newReview.content.trim()}
+                  className="btn btn-primary btn-sm"
+                  style={{ marginTop: 10 }}
+                >
+                  {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+                </button>
+              </div>
+            ) : (
+              <div className="card" style={{ padding: 16, textAlign: 'center', color: 'var(--c4-500)', fontSize: '.85rem' }}>
+                ✅ Cảm ơn đánh giá của bạn!
+              </div>
+            )}
+
+            {/* Reviews list */}
+            {reviewsLoading ? (
+              <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-3)' }}>Đang tải đánh giá...</div>
+            ) : reviews.length === 0 ? (
+              <div className="card" style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: '.85rem' }}>
+                Chưa có đánh giá nào. Hãy là người đầu tiên nhận xét!
+              </div>
+            ) : reviews.map(review => (
               <div key={review.id} className="card" style={{ padding: '18px 20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--c6-500, #06b6d4), var(--c7-500, #6366f1))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '.6rem', color: '#fff', fontWeight: 700,
-                    }}>
-                      {review.avatar}
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--c6-500, #06b6d4), var(--c7-500, #6366f1))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.6rem', color: '#fff', fontWeight: 700 }}>
+                      {review.avatar_initials}
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontWeight: 700, fontSize: '.85rem' }}>{review.author}</span>
-                        {review.purchaseBadge && (
-                          <span className="badge badge-c4" style={{ fontSize: '.55rem' }}>{t('product.review.purchased')}</span>
-                        )}
-                        {review.kocLevel && (
-                          <span className="badge badge-c6" style={{ fontSize: '.55rem' }}>{review.kocLevel}</span>
-                        )}
+                        <span style={{ fontWeight: 700, fontSize: '.82rem' }}>{review.author}</span>
+                        {review.verified && <span className="badge badge-c4" style={{ fontSize: '.55rem' }}>Đã mua</span>}
                       </div>
-                      <div style={{ fontSize: '.72rem', color: 'var(--gold-400, #f59e0b)', marginTop: 2 }}>
-                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                      </div>
+                      <div style={{ fontSize: '.65rem', color: 'var(--text-4)', marginTop: 2 }}>{review.date}</div>
                     </div>
                   </div>
-                  <span style={{ fontSize: '.68rem', color: 'var(--text-4)' }}>{review.date}</span>
+                  <div style={{ color: 'var(--gold-400, #f59e0b)', fontSize: '.75rem' }}>{'★'.repeat(review.rating)}</div>
                 </div>
-                <p style={{ fontSize: '.82rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
-                  {review.content}
-                </p>
-                {review.verified && (
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    marginTop: 8, fontSize: '.68rem', color: 'var(--c4-500, #22c55e)',
-                  }}>
-                    ✓ {t('product.review.verified')}
-                  </div>
+                <p style={{ fontSize: '.82rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>{review.content}</p>
+                {review.helpful_count > 0 && (
+                  <div style={{ marginTop: 8, fontSize: '.68rem', color: 'var(--text-4)' }}>👍 {review.helpful_count} người thấy hữu ích</div>
                 )}
               </div>
             ))}

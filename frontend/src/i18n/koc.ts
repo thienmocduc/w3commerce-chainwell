@@ -390,11 +390,11 @@ export const kocTranslations: TranslationMap = {
   'koc.kyc.allStepsDone': { vi: 'Bạn đã hoàn tất tất cả các bước KYC', en: 'You have completed all KYC steps', zh: '您已完成所有KYC步骤', th: 'คุณได้ทำ KYC ครบทุกขั้นตอนแล้ว', hi: 'आपने सभी KYC चरण पूरे कर लिए हैं' },
 
   /* ═══ Affiliate team ═══ */
-  'koc.affTeam.title': { vi: 'Cây Đội Nhóm Affiliate', en: 'Affiliate Team Tree', zh: '联盟团队树', th: 'ต้นไม้ทีมแอฟฟิลิเอท', hi: 'एफिलिएट टीम ट्री' },
+  'koc.affTeam.title': { vi: 'Cộng Đồng Tiếp Thị Liên Kết (Affiliate)', en: 'Affiliate Marketing Community', zh: '联盟营销社区', th: 'ชุมชนการตลาดพันธมิตร', hi: 'एफिलिएट मार्केटिंग समुदाय' },
   'koc.affTeam.totalMembers': { vi: 'Tổng thành viên', en: 'Total Members', zh: '总成员', th: 'สมาชิกทั้งหมด', hi: 'कुल सदस्य' },
   'koc.affTeam.deepestLevel': { vi: 'Cấp sâu nhất', en: 'Deepest Level', zh: '最深层级', th: 'ระดับลึกสุด', hi: 'सबसे गहरा स्तर' },
   'koc.affTeam.monthlyCommission': { vi: 'Commission tháng', en: 'Monthly Commission', zh: '月佣金', th: 'ค่าคอมมิชชั่นรายเดือน', hi: 'मासिक कमीशन' },
-  'koc.affTeam.level1': { vi: 'Cấp 1 — Trực tiếp', en: 'Level 1 — Direct', zh: '第1级 — 直接', th: 'ระดับ 1 — ตรง', hi: 'स्तर 1 — प्रत्यक्ष' },
+  'koc.affTeam.level1': { vi: 'User Affiliate', en: 'User Affiliate', zh: 'User Affiliate', th: 'User Affiliate', hi: 'User Affiliate' },
   'koc.affTeam.viewBranch': { vi: 'Xem nhánh', en: 'View Branch', zh: '查看分支', th: 'ดูสาขา', hi: 'शाखा देखें' },
 
   /* ═══ Affiliate stats ═══ */

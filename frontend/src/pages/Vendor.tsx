@@ -4,6 +4,8 @@ import { useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
 import { vendorApi, type Product as ApiProduct, type Order as ApiOrder } from '@lib/api';
 
+const parsePrice = (s: string) => parseInt(s.replace(/[^0-9]/g, '')) || 0;
+
 /* ── Sidebar (accordion groups like Admin) ────────── */
 interface VendorSidebarGroup {
   key: string; labelKey: string; color: string; icon: string;
@@ -258,13 +260,23 @@ export default function Vendor() {
   };
 
   /* ── Product CRUD ──────────────────────────────── */
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.name.trim()) { showToast(t('vendor.toast.enterProductName'), 'error'); return; }
+    const payload = {
+      name: newProduct.name,
+      price: parsePrice(newProduct.price),
+      stock: parseInt(newProduct.stock) || 0,
+      description: newProduct.description,
+      category: newProduct.category,
+      origin: newProduct.origin,
+      sku: newProduct.sku,
+      status: 'active',
+    };
     const p = {
       id: nextProductId++,
       name: newProduct.name,
       price: newProduct.price || '0₫',
-      stock: parseInt(newProduct.stock) || 0,
+      stock: payload.stock,
       sold: 0,
       status: 'active' as string,
       dppStatus: 'pending' as string,
@@ -277,12 +289,18 @@ export default function Vendor() {
     setNewProduct({ name: '', price: '', stock: '', commission: '', description: '', category: '', origin: '', weight: '', sku: '', imageUrl: '' });
     setShowAddProduct(false);
     showToast(`${t('vendor.toast.productAdded')} "${p.name}"`);
+    if (token) {
+      vendorApi.createProduct(payload as ApiProduct, token)
+        .then(created => setProductList(prev => prev.map(x => x.id === p.id ? mapApiProductToLocal(created, prev.indexOf(x)) : x)))
+        .catch(() => {});
+    }
   };
 
   const handleDeleteProduct = (id: number) => {
     const p = productList.find(x => x.id === id);
     setProductList(prev => prev.filter(x => x.id !== id));
     showToast(`${t('vendor.toast.productDeleted')} "${p?.name}"`);
+    if (token) vendorApi.deleteProduct(String(id), token).catch(() => {});
   };
 
   const handleToggleProduct = (id: number) => {
@@ -292,10 +310,13 @@ export default function Vendor() {
       return { ...p, hidden: nowHidden, status: nowHidden ? 'hidden' : (p.stock === 0 ? 'out_of_stock' : p.stock <= 50 ? 'low_stock' : 'active') };
     }));
     const p = productList.find(x => x.id === id);
-    showToast(p?.hidden ? `${t('vendor.toast.productShown')} "${p.name}"` : `${t('vendor.toast.productHidden')} "${p?.name}"`);
+    const nowHidden = !p?.hidden;
+    showToast(nowHidden ? `${t('vendor.toast.productHidden')} "${p?.name}"` : `${t('vendor.toast.productShown')} "${p?.name}"`);
+    if (token) vendorApi.updateProduct(String(id), { status: nowHidden ? 'hidden' : 'active' } as Partial<ApiProduct>, token).catch(() => {});
   };
 
   const handleSaveEditProduct = (id: number) => {
+    const updated = { name: newProduct.name, price: parsePrice(newProduct.price), commission: newProduct.commission };
     setProductList(prev => prev.map(p => {
       if (p.id !== id) return p;
       return { ...p, name: newProduct.name || p.name, price: newProduct.price || p.price, commission: newProduct.commission || p.commission };
@@ -303,20 +324,21 @@ export default function Vendor() {
     setEditingProduct(null);
     setNewProduct({ name: '', price: '', stock: '', commission: '', description: '', category: '', origin: '', weight: '', sku: '', imageUrl: '' });
     showToast(t('vendor.toast.productUpdated'));
+    if (token) vendorApi.updateProduct(String(id), updated as Partial<ApiProduct>, token).catch(() => {});
   };
 
   /* ── Order status flow ─────────────────────────── */
   const handleAdvanceOrder = (orderId: string) => {
-    setOrderList(prev => prev.map(o => {
-      if (o.id !== orderId) return o;
-      const flow = orderStatusFlow[o.status];
-      if (!flow) return o;
-      const newTxHash = flow.next === 'delivered' ? `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}` : o.txHash;
-      return { ...o, status: flow.next, txHash: newTxHash };
-    }));
     const o = orderList.find(x => x.id === orderId);
     const flow = orderStatusFlow[o?.status ?? ''];
-    showToast(`${t('vendor.kpi.orders')} ${orderId}: ${flow ? t(flow.actionKey) : t('vendor.toast.orderUpdate')}`);
+    if (!flow) return;
+    setOrderList(prev => prev.map(ord => {
+      if (ord.id !== orderId) return ord;
+      const newTxHash = flow.next === 'delivered' ? `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}` : ord.txHash;
+      return { ...ord, status: flow.next, txHash: newTxHash };
+    }));
+    showToast(`${t('vendor.kpi.orders')} ${orderId}: ${t(flow.actionKey)}`);
+    if (token) vendorApi.updateOrderStatus(orderId, flow.next, token).catch(() => {});
   };
 
   /* ── DPP Mint ──────────────────────────────────── */

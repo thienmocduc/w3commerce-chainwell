@@ -2317,9 +2317,9 @@ export default function KOC() {
             {/* Stats */}
             <div className="grid-3 gap-12" style={{ marginBottom: 20 }}>
               {[
-                { label: 'Tổng thành viên', value: '156', color: 'var(--c6-500)' },
-                { label: 'Cấp sâu nhất', value: '5', color: 'var(--c4-500)' },
-                { label: 'Commission tháng', value: '12.4M₫', color: '#f59e0b' },
+                { label: 'Tổng thành viên', value: communityStatsData.totalMembers.toLocaleString(), color: 'var(--c6-500)' },
+                { label: 'Team trực tiếp (F1)', value: communityTeamsData.length.toString(), color: 'var(--c4-500)' },
+                { label: 'Commission chờ', value: commBalance > 0 ? commBalance.toLocaleString('vi-VN') + '₫' : '0₫', color: '#f59e0b' },
               ].map(s => (
                 <div key={s.label} className="kpi-card">
                   <div style={{ fontSize: '.68rem', color: 'var(--text-3)' }}>{s.label}</div>
@@ -2327,24 +2327,32 @@ export default function KOC() {
                 </div>
               ))}
             </div>
-            {/* Tree */}
+            {/* User Affiliate list */}
             <div className="card" style={{ padding: 20 }}>
-              <div style={{ fontSize: '.82rem', fontWeight: 700, marginBottom: 16 }}>Cấp 1 — Trực tiếp (12 người)</div>
-              {[
-                { name: 'Ngọc Anh', level: 1, referrals: 8, commission: '2.1M₫', active: true },
-                { name: 'Bảo Trân', level: 1, referrals: 15, commission: '3.8M₫', active: true },
-                { name: 'Hải Yến', level: 1, referrals: 3, commission: '890K₫', active: true },
-                { name: 'Đức Minh', level: 1, referrals: 0, commission: '120K₫', active: false },
-              ].map((m, i) => (
-                <div key={i} className="flex gap-12" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: m.active ? 'var(--c6-500)' : 'var(--bg-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 700, color: '#fff' }}>{m.name[0]}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: '.82rem' }}>{m.name} {!m.active && <span className="badge badge-rose" style={{ fontSize: '.55rem' }}>Inactive</span>}</div>
-                    <div style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>{m.referrals} referrals · {m.commission}</div>
-                  </div>
-                  <button className="btn btn-secondary btn-sm" style={{ fontSize: '.68rem' }} onClick={() => showToast(`Nhánh ${m.name}: ${m.referrals} referrals — Commission: ${m.commission}`)}>Xem nhánh</button>
+              <div style={{ fontSize: '.82rem', fontWeight: 700, marginBottom: 16 }}>
+                {t('koc.affTeam.level1')} ({communityTeamsData.length} người)
+              </div>
+              {communityTeamsData.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-3)', fontSize: '.82rem' }}>
+                  Chưa có User Affiliate. Chia sẻ link giới thiệu để phát triển mạng lưới!
                 </div>
-              ))}
+              ) : communityTeamsData.map((team, i) => {
+                const f1Rank = getRank(team.f1.rank);
+                return (
+                  <div key={team.teamNo} className="flex gap-12" style={{ padding: '10px 0', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: team.f1.active ? (f1Rank.gradient ?? f1Rank.color) : 'var(--bg-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 700, color: '#fff' }}>{team.f1.name[0]}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '.82rem' }}>
+                        {team.f1.name}
+                        <span style={{ marginLeft: 6, fontSize: '.6rem', padding: '1px 6px', borderRadius: 8, background: f1Rank.bg, color: f1Rank.color }}>{f1Rank.icon} {f1Rank.label}</span>
+                        {!team.f1.active && <span className="badge badge-rose" style={{ fontSize: '.55rem', marginLeft: 4 }}>Inactive</span>}
+                      </div>
+                      <div style={{ fontSize: '.7rem', color: 'var(--text-3)' }}>{team.members.length} thành viên bên dưới · {team.f1.orders} đơn hàng</div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" style={{ fontSize: '.68rem' }} onClick={() => showToast(`Team ${team.f1.name}: ${team.members.length} thành viên`)}>Xem nhánh</button>
+                  </div>
+                );
+              })}
             </div>
           </>
         );
