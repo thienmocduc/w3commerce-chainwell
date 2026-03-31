@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
+import { ordersApi, type Order as ApiOrder } from '@lib/api';
 
 /* ── Helpers ─────────────────────────────────────── */
 const formatVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
@@ -259,10 +260,26 @@ const suggestedProducts = [
 ];
 
 /* ── Component ───────────────────────────────────── */
+function mapApiOrder(o: ApiOrder): Order {
+  return {
+    id: o.order_number || o.id,
+    date: o.created_at?.slice(0, 10) || '',
+    items: o.items?.map(i => ({ name: i.product_name, qty: i.quantity, price: i.unit_price })) || [],
+    total: o.total,
+    status: (['pending','confirmed','packing','shipping','delivered','cancelled'].includes(o.status)
+      ? o.status
+      : o.status === 'shipped' ? 'shipping'
+      : o.status === 'returned' ? 'return'
+      : 'pending') as Order['status'],
+    payment: o.payment_method || '',
+    trackingCode: o.tracking_number,
+  };
+}
+
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, token } = useAuth();
   const [searchParams] = useSearchParams();
 
   // Read tab from URL query params (e.g. /dashboard?tab=settings)
@@ -303,8 +320,20 @@ export default function Dashboard() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2500);
   };
 
-  // Mutable order state
+  // Mutable order state — loaded from API, falls back to hardcoded for demo
   const [orders, setOrders] = useState<Order[]>(allOrders);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    setOrdersLoading(true);
+    ordersApi.list({ per_page: 50 }, token)
+      .then(res => {
+        if (res.items?.length) setOrders(res.items.map(mapApiOrder));
+      })
+      .catch(() => { /* keep demo data on error */ })
+      .finally(() => setOrdersLoading(false));
+  }, [token]);
   // Track which orders have "added to cart" feedback
   const [addedToCart, setAddedToCart] = useState<Set<string>>(new Set());
   // Track expanded order details

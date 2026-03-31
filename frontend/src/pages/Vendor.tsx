@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
+import { vendorApi, type Product as ApiProduct, type Order as ApiOrder } from '@lib/api';
 
 /* ── Sidebar (accordion groups like Admin) ────────── */
 interface VendorSidebarGroup {
@@ -155,6 +156,38 @@ let nextProductId = 7;
 let nextDppTokenId = 1252;
 
 /* ── Component ───────────────────────────────────── */
+function mapApiProductToLocal(p: ApiProduct, idx: number) {
+  const EMOJIS = ['📦','✨','🍵','🍯','☕','🌹','🐟','💎'];
+  const status = p.stock === 0 ? 'out_of_stock' : p.stock <= 10 ? 'low_stock' : p.status === 'active' ? 'active' : 'hidden';
+  return {
+    id: p.id as unknown as number ?? idx,
+    name: p.name,
+    price: new Intl.NumberFormat('vi-VN').format(p.price) + '₫',
+    stock: p.stock,
+    sold: p.sold_count || 0,
+    status,
+    dppStatus: p.dpp_token_id ? 'minted' : 'pending',
+    commission: '20%',
+    emoji: EMOJIS[idx % EMOJIS.length],
+    dppTokenId: p.dpp_token_id ? `#${p.dpp_token_id.slice(-4)}` : '—',
+    hidden: p.status !== 'active',
+  };
+}
+
+function mapApiOrderToLocal(o: ApiOrder, idx: number) {
+  return {
+    id: o.order_number || o.id,
+    customer: o.shipping_address?.full_name || 'Khách hàng',
+    product: o.items?.[0]?.product_name || '—',
+    amount: new Intl.NumberFormat('vi-VN').format(o.total) + '₫',
+    koc: '—',
+    commission: '—',
+    status: o.status === 'shipped' ? 'shipping' : o.status === 'processing' ? 'processing' : o.status,
+    date: o.created_at?.slice(0, 10) || '',
+    txHash: '',
+  };
+}
+
 export default function Vendor() {
   const { t } = useI18n();
   const [activeNav, setActiveNav] = useState('overview');
@@ -165,7 +198,7 @@ export default function Vendor() {
     if (!openGroups[groupKey]) setOpenGroups(prev => ({ ...prev, [groupKey]: true }));
   };
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const userName = user?.name || 'Vendor';
   const userEmail = user?.email || '';
 
@@ -180,17 +213,27 @@ export default function Vendor() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Products
+  // Products — loaded from API, fallback to demo data
   const [productList, setProductList] = useState(initialProducts);
   const [productSearch, setProductSearch] = useState('');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<number | null>(null);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '', commission: '', description: '', category: '', origin: '', weight: '', sku: '', imageUrl: '' });
 
-  // Orders
+  // Orders — loaded from API, fallback to demo data
   const [orderList, setOrderList] = useState(initialOrders);
   const [orderFilter, setOrderFilter] = useState('all');
   const [orderSearch, setOrderSearch] = useState('');
+
+  useEffect(() => {
+    if (!token) return;
+    vendorApi.getProducts({ per_page: 50 }, token)
+      .then(res => { if (res.items?.length) setProductList(res.items.map((p, i) => mapApiProductToLocal(p, i)) as typeof initialProducts); })
+      .catch(() => {});
+    vendorApi.getOrders({ per_page: 50 }, token)
+      .then(res => { if (res.items?.length) setOrderList(res.items.map((o, i) => mapApiOrderToLocal(o, i)) as typeof initialOrders); })
+      .catch(() => {});
+  }, [token]);
 
   // DPP
   const [dppMintList, setDppMintList] = useState(initialDppMints);
