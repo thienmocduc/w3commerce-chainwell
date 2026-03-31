@@ -1,632 +1,486 @@
 /**
- * WellKOC — 333 Marketing Agent Command Center
- * Streams SSE from /api/v1/ai/marketing/run-campaign
- * Gated: requires KOC or Vendor paid plan
- * Layout: fixed viewport (no outer scroll)
+ * WellKOC — 333 Agent Command Center
+ * Tab theo nhóm → grid agent → click agent locked → upgrade modal
+ * Click agent unlocked → detail panel + dispatch / launch pipeline
  */
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { API_BASE } from '@hooks/useAuth';
 
-interface AgentDef { id:string; name:string; squad:string; icon:string; count:number; color:string; role:string; spec:string[]; }
-interface Msg       { id:string; agentId:string; content:string; ts:string; }
-interface OutItem   { icon:string; title:string; badge:string; color:string; }
-type AS = 'idle'|'working'|'done';
-
-const C={gold:'#f0a500',goldL:'#ffd166',cyan:'#00c9c8',purple:'#a78bfa',green:'#22c55e',red:'#ff6b6b',amber:'#fb923c',rose:'#f472b6',blue:'#60a5fa',muted:'#8ba3c1'} as const;
-
-const AGENTS:AgentDef[]=[
-  {id:'tiktok_s', name:'TikTok Script',    squad:'content',  icon:'📱',count:10,color:C.amber, role:'Video Agent',   spec:['Hook 3s','Script 60s','Caption','Hashtag']},
-  {id:'reels_s',  name:'Reels Script',     squad:'content',  icon:'🎬',count:10,color:C.purple,role:'Video Agent',   spec:['IG Reels','FB Reels','Audio suggest']},
-  {id:'blog_w',   name:'Blog Writer',      squad:'content',  icon:'✍️', count:10,color:C.blue,  role:'Content Agent', spec:['SEO','Long-form','Product review']},
-  {id:'img_gen',  name:'Image Generator',  squad:'content',  icon:'🎨',count:10,color:C.rose,  role:'Design Agent',  spec:['Banner','Thumbnail','Infographic']},
-  {id:'email_c',  name:'Email Copywriter', squad:'content',  icon:'📧',count:10,color:C.green, role:'Copy Agent',    spec:['Subject line','CTA','Personalize']},
-  {id:'seo_opt',  name:'SEO Optimizer',    squad:'content',  icon:'🔍',count:10,color:C.cyan,  role:'SEO Agent',     spec:['Keywords','Meta tags','Backlink']},
-  {id:'tiktok_d', name:'TikTok Distributor',squad:'dist',   icon:'📤',count:10,color:C.amber, role:'Dist Agent',    spec:['Best time','Auto-post','A/B test']},
-  {id:'ig_d',     name:'IG Distributor',   squad:'dist',     icon:'📸',count:10,color:C.rose,  role:'Dist Agent',    spec:['Feed + Story','Carousel','Reel']},
-  {id:'fb_d',     name:'FB Distributor',   squad:'dist',     icon:'👤',count:10,color:C.blue,  role:'Dist Agent',    spec:['Page + Group','Boost ready','Pixel']},
-  {id:'yt_d',     name:'YouTube Scheduler',squad:'dist',     icon:'▶️', count:10,color:C.red,   role:'Dist Agent',    spec:['Thumbnail','Description','Card']},
-  {id:'zalo_d',   name:'Zalo Distributor', squad:'dist',     icon:'💬',count:10,color:C.cyan,  role:'Dist Agent',    spec:['OA Post','Zalo Ad','Broadcast']},
-  {id:'shopee_d', name:'Shopee Scheduler', squad:'dist',     icon:'🛍️', count:10,color:C.amber, role:'Dist Agent',    spec:['Flash deal','Feed post','Voucher']},
-  {id:'comment_r',name:'Comment Responder',squad:'engage',  icon:'💬',count:10,color:C.purple,role:'Engage Agent',  spec:['Sentiment','Auto-reply','Escalate']},
-  {id:'koc_m',    name:'KOC Matcher',      squad:'engage',   icon:'🤝',count:10,color:C.gold,  role:'Engage Agent',  spec:['Match score','Brief send','Track']},
-  {id:'review_a', name:'Review Analyzer',  squad:'engage',   icon:'⭐',count:10,color:C.green, role:'Engage Agent',  spec:['NPS','Sentiment','Alert']},
-  {id:'trend_w',  name:'Trend Watcher',    squad:'engage',   icon:'📈',count:10,color:C.blue,  role:'Intel Agent',   spec:['Trending tags','Viral detect','Alert']},
-  {id:'bi_r',     name:'BI Reporter',      squad:'engage',   icon:'📊',count:10,color:C.cyan,  role:'Analyst Agent', spec:['ROAS','GMV','CAC','LTV']},
-  {id:'fraud_d',  name:'Fraud Detector',   squad:'engage',   icon:'🛡️', count:10,color:C.red,   role:'Guard Agent',   spec:['Bot detect','Click fraud','Shield']},
-];
-
-const STAGES=[
-  {id:'intake',   label:'Intake',   icon:'📥',color:C.blue},
-  {id:'research', label:'Research', icon:'🔍',color:C.cyan},
-  {id:'content',  label:'Content',  icon:'✍️', color:C.purple},
-  {id:'design',   label:'Design',   icon:'🎨',color:C.rose},
-  {id:'schedule', label:'Schedule', icon:'📅',color:C.amber},
-  {id:'publish',  label:'Publish',  icon:'📤',color:C.green},
-  {id:'engage',   label:'Engage',   icon:'💬',color:C.gold},
-  {id:'analyze',  label:'Analyze',  icon:'📊',color:C.blue},
-  {id:'report',   label:'Report',   icon:'📋',color:C.cyan},
-];
-
-const PRESETS=[
-  {label:'Flash Sale 12/12',    brief:'Chiến dịch flash sale lớn ngày 12/12, giảm đến 70%, tất cả danh mục sản phẩm, thúc đẩy GMV tối đa trong 24h.',  platforms:['tiktok','instagram','facebook','shopee']},
-  {label:'Ra mắt sản phẩm',    brief:'Ra mắt dòng sản phẩm skincare organic mới, target phụ nữ 25-35 tuổi, Hà Nội & HCM, budget 50M VND.',             platforms:['tiktok','instagram','youtube']},
-  {label:'KOC Ambassador',      brief:'Tuyển dụng và kích hoạt 50 KOC tier micro, category thời trang & beauty, campaign 30 ngày.',                      platforms:['tiktok','instagram']},
-  {label:'Tet Campaign',        brief:'Chiến dịch Tết Nguyên Đán, quà tặng cao cấp, voucher gia đình, livestream Tất Niên, target toàn quốc.',           platforms:['tiktok','facebook','zalo','shopee']},
-  {label:'Brand Awareness',     brief:'Tăng brand awareness cho WellKOC tại thị trường Đông Nam Á, tập trung Vietnam, Thailand, Malaysia.',               platforms:['instagram','youtube','facebook']},
-  {label:'Reactivation',        brief:'Tái kích hoạt 100K khách hàng cũ chưa mua trong 90 ngày, email + Zalo OA + retargeting ads.',                     platforms:['zalo','facebook']},
-];
-
-const PLATFORM_CFG:{[k:string]:{label:string;color:string}}={
-  tiktok:{label:'TikTok',color:'#00c9c8'},
-  instagram:{label:'Instagram',color:'#f472b6'},
-  facebook:{label:'Facebook',color:'#60a5fa'},
-  youtube:{label:'YouTube',color:'#ff6b6b'},
-  zalo:{label:'Zalo',color:'#2563eb'},
-  shopee:{label:'Shopee',color:'#f0a500'},
-};
-
-// Paywall access rules
-// koc / vendor → full access
-// user (buyer) → locked
-// unauthenticated → locked
-type AccessLevel = 'full' | 'locked';
-function getAccess(role?: string): AccessLevel {
-  if (role === 'koc' || role === 'vendor' || role === 'admin') return 'full';
-  return 'locked';
+/* ─── Types ─── */
+interface AgentDef {
+  id: string; name: string; squad: Squad;
+  icon: string; count: number; color: string;
+  role: string; spec: string[]; desc: string;
 }
+interface Msg { id: string; agentId: string; content: string; ts: string; }
+interface OutItem { icon: string; title: string; color: string; }
+type AS = 'idle' | 'working' | 'done';
+type Squad = 'content' | 'dist' | 'engage';
+
+/* ─── Palette ─── */
+const C = {
+  gold: '#f0a500', cyan: '#00c9c8', purple: '#a78bfa',
+  green: '#22c55e', red: '#ff6b6b', amber: '#fb923c',
+  rose: '#f472b6', blue: '#60a5fa', muted: '#4a6a8a',
+} as const;
+
+/* ─── Agent catalogue ─── */
+const AGENTS: AgentDef[] = [
+  // Content Factory (111 = 10+10+10+10+10+10+10+10+11+10 simplified as ×10 per agent)
+  { id:'tiktok_s',  name:'TikTok Script',      squad:'content', icon:'📱', count:12, color:C.amber,  role:'Video Agent',    spec:['Hook 3s','Script 60s','Caption','Hashtag'],       desc:'Tự động viết script TikTok tối ưu thuật toán, hook 3 giây đầu, call-to-action mạnh.' },
+  { id:'reels_s',   name:'Reels Script',        squad:'content', icon:'🎬', count:10, color:C.purple, role:'Video Agent',    spec:['IG Reels','FB Reels','Audio suggest'],             desc:'Script cho Instagram & Facebook Reels, đề xuất âm thanh trending phù hợp sản phẩm.' },
+  { id:'blog_w',    name:'Blog Writer',          squad:'content', icon:'✍️',  count:10, color:C.blue,   role:'Content Agent',  spec:['SEO','Long-form','Product review'],               desc:'Viết bài blog chuẩn SEO, đánh giá sản phẩm, tối ưu từ khoá và meta description.' },
+  { id:'img_gen',   name:'Image Generator',      squad:'content', icon:'🎨', count:10, color:C.rose,   role:'Design Agent',   spec:['Banner','Thumbnail','Infographic'],               desc:'Tạo banner đa kích thước, thumbnail YouTube, infographic sản phẩm theo brand.' },
+  { id:'email_c',   name:'Email Copywriter',     squad:'content', icon:'📧', count:10, color:C.green,  role:'Copy Agent',     spec:['Subject line','CTA','Personalize'],               desc:'Viết chuỗi email marketing cá nhân hoá, tối ưu open rate và click-through rate.' },
+  { id:'seo_opt',   name:'SEO Optimizer',        squad:'content', icon:'🔍', count:10, color:C.cyan,   role:'SEO Agent',      spec:['Keywords','Meta tags','Backlink'],                desc:'Phân tích và tối ưu SEO on-page, đề xuất từ khoá, cấu trúc nội dung chuẩn Google.' },
+  { id:'script_fb', name:'Facebook Ad Script',   squad:'content', icon:'💬', count:10, color:C.blue,   role:'Ad Agent',       spec:['Ad copy','Hook','Objection handle'],              desc:'Viết nội dung quảng cáo Facebook, xử lý phản đối và tối ưu tỷ lệ chuyển đổi.' },
+  { id:'zalo_c',    name:'Zalo Content',         squad:'content', icon:'💚', count:10, color:C.cyan,   role:'Content Agent',  spec:['Zalo OA','Broadcast','Mini App'],                desc:'Tạo nội dung cho Zalo OA, tin broadcast, bài viết trang Zalo tối ưu.' },
+  { id:'shopee_c',  name:'Shopee Listing',       squad:'content', icon:'🛍️',  count:10, color:C.amber,  role:'Commerce Agent', spec:['Product title','Description','Bullet'],          desc:'Tối ưu tiêu đề, mô tả sản phẩm Shopee, từ khoá tìm kiếm và bullet points.' },
+  { id:'yt_script', name:'YouTube Script',       squad:'content', icon:'▶️',  count:9,  color:C.red,    role:'Video Agent',    spec:['Intro hook','Chapter','CTA'],                     desc:'Script YouTube dạng dài, cấu trúc chương, hook mở đầu và lời kêu gọi hành động.' },
+  { id:'infl_b',    name:'Influencer Brief',     squad:'content', icon:'⭐', count:10, color:C.gold,   role:'KOC Agent',      spec:['Brand voice','Dos & Donts','KPI'],               desc:'Tạo brief cho KOC/Influencer: brand voice, guideline, KPI target và deliverables.' },
+
+  // Distribution Grid (111)
+  { id:'tiktok_d',  name:'TikTok Distributor',   squad:'dist',    icon:'📤', count:12, color:C.amber,  role:'Dist Agent',     spec:['Best time','Auto-post','A/B test'],               desc:'Phân tích giờ vàng TikTok, tự động lên lịch và A/B test nội dung để tối ưu reach.' },
+  { id:'ig_d',      name:'IG Distributor',        squad:'dist',    icon:'📸', count:10, color:C.rose,   role:'Dist Agent',     spec:['Feed + Story','Carousel','Reel'],                 desc:'Quản lý lịch đăng Instagram: Feed, Story, Carousel, Reel — tối ưu thuật toán IG.' },
+  { id:'fb_d',      name:'Facebook Distributor',  squad:'dist',    icon:'👥', count:10, color:C.blue,   role:'Dist Agent',     spec:['Page + Group','Boost ready','Pixel'],             desc:'Đăng bài trang & nhóm Facebook, chuẩn bị nội dung boost ads và cài Pixel tracking.' },
+  { id:'yt_d',      name:'YouTube Scheduler',     squad:'dist',    icon:'📺', count:10, color:C.red,    role:'Dist Agent',     spec:['Thumbnail','Description','Card'],                 desc:'Lên lịch upload YouTube, tối ưu metadata, thumbnail và end card.' },
+  { id:'zalo_d',    name:'Zalo Distributor',      squad:'dist',    icon:'💬', count:10, color:C.cyan,   role:'Dist Agent',     spec:['OA Post','Zalo Ad','Broadcast'],                  desc:'Phân phối nội dung qua Zalo OA, quảng cáo Zalo và tin broadcast hàng loạt.' },
+  { id:'shopee_d',  name:'Shopee Scheduler',      squad:'dist',    icon:'🛒', count:10, color:C.amber,  role:'Dist Agent',     spec:['Flash deal','Feed post','Voucher'],               desc:'Quản lý flash deal, lịch đăng feed Shopee và phát hành voucher tự động.' },
+  { id:'lazada_d',  name:'Lazada Distributor',    squad:'dist',    icon:'📦', count:10, color:C.blue,   role:'Dist Agent',     spec:['LazLive','Campaign','Flash sale'],                desc:'Phân phối sản phẩm trên Lazada, tham gia campaign nền tảng và flash sale.' },
+  { id:'email_d',   name:'Email Distributor',     squad:'dist',    icon:'📨', count:10, color:C.green,  role:'Dist Agent',     spec:['Segment','A/B','Drip'],                           desc:'Phân đoạn danh sách email, A/B test tiêu đề, tự động hóa drip campaign.' },
+  { id:'sms_d',     name:'SMS Dispatcher',        squad:'dist',    icon:'📱', count:10, color:C.purple, role:'Dist Agent',     spec:['OTP','Promo SMS','Zalo ZNS'],                     desc:'Gửi SMS khuyến mại, OTP và Zalo ZNS notification tự động theo trigger.' },
+  { id:'push_d',    name:'Push Notification',     squad:'dist',    icon:'🔔', count:9,  color:C.cyan,   role:'Dist Agent',     spec:['Web push','App push','Segment'],                  desc:'Gửi web push và app push notification theo segment người dùng tự động.' },
+
+  // Engagement Matrix (111)
+  { id:'comment_r', name:'Comment Responder',     squad:'engage',  icon:'💬', count:12, color:C.purple, role:'Engage Agent',   spec:['Sentiment','Auto-reply','Escalate'],              desc:'Phân tích sentiment, tự động trả lời comment theo tone brand, escalate vấn đề.' },
+  { id:'koc_m',     name:'KOC Matcher',           squad:'engage',  icon:'🤝', count:10, color:C.gold,   role:'Engage Agent',   spec:['Match score','Brief send','Track'],               desc:'Tìm kiếm và match KOC phù hợp sản phẩm, gửi brief tự động và tracking kết quả.' },
+  { id:'review_a',  name:'Review Analyzer',       squad:'engage',  icon:'⭐', count:10, color:C.green,  role:'Engage Agent',   spec:['NPS','Sentiment','Alert'],                        desc:'Phân tích đánh giá sản phẩm, tính NPS, cảnh báo review tiêu cực.' },
+  { id:'trend_w',   name:'Trend Watcher',         squad:'engage',  icon:'📈', count:10, color:C.blue,   role:'Intel Agent',    spec:['Trending tags','Viral detect','Alert'],           desc:'Theo dõi xu hướng TikTok/IG/FB, phát hiện nội dung viral, cảnh báo cơ hội.' },
+  { id:'bi_r',      name:'BI Reporter',           squad:'engage',  icon:'📊', count:10, color:C.cyan,   role:'Analyst Agent',  spec:['ROAS','GMV','CAC','LTV'],                         desc:'Báo cáo BI tự động: ROAS, GMV, CAC, LTV — xuất Excel và dashboard real-time.' },
+  { id:'fraud_d',   name:'Fraud Detector',        squad:'engage',  icon:'🛡️',  count:10, color:C.red,    role:'Guard Agent',    spec:['Bot detect','Click fraud','Shield'],              desc:'Phát hiện bot traffic, click fraud, bảo vệ ngân sách quảng cáo và brand safety.' },
+  { id:'cs_bot',    name:'CS Chatbot',            squad:'engage',  icon:'🤖', count:10, color:C.purple, role:'CS Agent',       spec:['FAQ','Order track','Refund'],                     desc:'Chatbot CSKH tự động trả lời FAQ, tra cứu đơn hàng và xử lý hoàn trả.' },
+  { id:'loyalty_e', name:'Loyalty Engine',        squad:'engage',  icon:'💎', count:10, color:C.gold,   role:'CRM Agent',      spec:['Points','Tier upgrade','Gift'],                   desc:'Quản lý điểm thưởng, nâng hạng tự động và gợi ý quà tặng cho khách hàng trung thành.' },
+  { id:'live_a',    name:'Live Commerce Agent',   squad:'engage',  icon:'📡', count:10, color:C.red,    role:'Live Agent',     spec:['Script','Q&A','Flash deal'],                     desc:'Hỗ trợ livestream: script realtime, trả lời Q&A tự động, kích hoạt flash deal.' },
+  { id:'retarget',  name:'Retargeting Agent',     squad:'engage',  icon:'🎯', count:9,  color:C.amber,  role:'Ads Agent',      spec:['Custom audience','Lookalike','ROAS opt'],         desc:'Tạo custom audience, lookalike và tối ưu retargeting ads tự động.' },
+];
+
+const SQUADS: { id: Squad; label: string; count: number; icon: string; color: string }[] = [
+  { id:'content', label:'Content Factory',    count:111, icon:'✍️',  color:C.purple },
+  { id:'dist',    label:'Distribution Grid',  count:111, icon:'📤', color:C.amber },
+  { id:'engage',  label:'Engagement Matrix',  count:111, icon:'💬', color:C.cyan },
+];
+
+const STAGES = [
+  {id:'intake',label:'Intake',icon:'📥',color:C.blue},{id:'research',label:'Research',icon:'🔍',color:C.cyan},
+  {id:'content',label:'Content',icon:'✍️',color:C.purple},{id:'design',label:'Design',icon:'🎨',color:C.rose},
+  {id:'schedule',label:'Schedule',icon:'📅',color:C.amber},{id:'publish',label:'Publish',icon:'📤',color:C.green},
+  {id:'engage',label:'Engage',icon:'💬',color:C.gold},{id:'analyze',label:'Analyze',icon:'📊',color:C.blue},
+  {id:'report',label:'Report',icon:'📋',color:C.cyan},
+];
+
+const PRESETS = [
+  {label:'Flash Sale 12/12',brief:'Chiến dịch flash sale lớn ngày 12/12, giảm đến 70%, tất cả danh mục sản phẩm, thúc đẩy GMV tối đa trong 24h.',platforms:['tiktok','instagram','facebook','shopee']},
+  {label:'Ra mắt sản phẩm',brief:'Ra mắt dòng sản phẩm skincare organic mới, target phụ nữ 25-35 tuổi, Hà Nội & HCM, budget 50M VND.',platforms:['tiktok','instagram','youtube']},
+  {label:'KOC Ambassador',brief:'Tuyển dụng và kích hoạt 50 KOC tier micro, category thời trang & beauty, campaign 30 ngày.',platforms:['tiktok','instagram']},
+  {label:'Tet Campaign',brief:'Chiến dịch Tết Nguyên Đán, quà tặng cao cấp, voucher gia đình, livestream Tất Niên, target toàn quốc.',platforms:['tiktok','facebook','zalo','shopee']},
+  {label:'Reactivation',brief:'Tái kích hoạt 100K khách hàng cũ chưa mua trong 90 ngày, email + Zalo OA + retargeting.',platforms:['zalo','facebook']},
+];
+
+const PLATFORMS:{[k:string]:{label:string;color:string}}={
+  tiktok:{label:'TikTok',color:'#00c9c8'},instagram:{label:'Instagram',color:'#f472b6'},
+  facebook:{label:'Facebook',color:'#60a5fa'},youtube:{label:'YouTube',color:'#ff6b6b'},
+  zalo:{label:'Zalo',color:'#2563eb'},shopee:{label:'Shopee',color:'#f0a500'},
+};
 
 function uid(){return Math.random().toString(36).slice(2,8);}
 function ts(){return new Date().toLocaleTimeString('vi-VN',{hour12:false});}
+function getAccess(role?:string){return role==='koc'||role==='vendor'||role==='admin';}
 
-/* ─── Paywall screen ─── */
-function PaywallScreen({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const perks = [
-    { icon: '🤖', title: '333 AI Agents', desc: 'Content Factory · Distribution Grid · Engagement Matrix' },
-    { icon: '🚀', title: '9-Stage Auto Pipeline', desc: 'Intake → Research → Content → Design → Schedule → Publish → Engage → Analyze → Report' },
-    { icon: '📊', title: 'Real-time KPI Dashboard', desc: 'Posts · Reach · ROAS · GMV cập nhật theo từng bước' },
-    { icon: '💬', title: 'Multi-platform Publish', desc: 'TikTok · Instagram · Facebook · YouTube · Zalo · Shopee' },
-    { icon: '🎯', title: 'KOC Matching Engine', desc: 'Tự động match KOC phù hợp, gửi brief và tracking' },
-    { icon: '🛡️', title: 'Fraud Detection', desc: 'Bot detection, click fraud shield, brand safety' },
-  ];
-
-  const plans = [
-    { name: 'KOC Free',     agents: 3,   workflows: 1,  color: C.muted,   highlight: false },
-    { name: 'KOC Pro',      agents: 25,  workflows: 5,  color: C.cyan,    highlight: true  },
-    { name: 'KOC Business', agents: 80,  workflows: -1, color: C.purple,  highlight: false },
-    { name: 'Vendor Pro',   agents: 30,  workflows: 10, color: C.amber,   highlight: false },
-  ];
-
+/* ─── Upgrade Modal ─── */
+function UpgradeModal({agent,onClose}:{agent:AgentDef;onClose:()=>void}) {
   return (
-    <div style={{
-      position:'fixed' as const, top:100, left:0, right:0, bottom:0,
-      background:'#05101e', display:'flex', flexDirection:'column',
-      alignItems:'center', justifyContent:'center', padding:'0 24px', overflowY:'auto',
-      color:'#d4e6ff',
-    }}>
-      <div style={{ maxWidth: 760, width: '100%', textAlign: 'center' }}>
-        {/* Lock icon */}
-        <div style={{
-          width:72, height:72, borderRadius:20, margin:'0 auto 20px',
-          background:'linear-gradient(135deg,rgba(0,201,200,.2),rgba(167,139,250,.2))',
-          border:'1px solid rgba(0,201,200,.3)',
-          display:'flex', alignItems:'center', justifyContent:'center', fontSize:32,
-        }}>🔒</div>
-
-        <div style={{
-          fontSize:'1.8rem', fontWeight:800, marginBottom:8,
-          background:'linear-gradient(135deg,#00c9c8,#a78bfa)',
-          WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-        }}>
-          333 Agent Command Center
-        </div>
-        <div style={{ color:'#8ba3c1', fontSize:'0.9rem', marginBottom:32, lineHeight:1.6 }}>
-          {isLoggedIn
-            ? 'Tính năng này dành riêng cho KOC và Vendor đã đăng ký gói trả phí.\nNâng cấp để mở khóa toàn bộ 333 AI agents.'
-            : 'Đăng nhập với tài khoản KOC hoặc Vendor để truy cập Command Center.'}
+    <div style={{position:'fixed',inset:0,zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.7)',backdropFilter:'blur(8px)'}}
+      onClick={onClose}>
+      <div style={{background:'#0d2137',border:'1px solid rgba(0,201,200,.25)',borderRadius:20,padding:'32px',maxWidth:480,width:'90%',boxShadow:'0 24px 60px rgba(0,0,0,.6)'}}
+        onClick={e=>e.stopPropagation()}>
+        {/* Agent preview */}
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <div style={{fontSize:48,marginBottom:8}}>{agent.icon}</div>
+          <div style={{fontSize:'1.2rem',fontWeight:800,color:agent.color,marginBottom:4}}>{agent.name}</div>
+          <div style={{fontSize:'0.8rem',color:'#4a6a8a'}}>{agent.role}</div>
         </div>
 
-        {/* Feature grid */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:32, textAlign:'left' }}>
-          {perks.map(p=>(
-            <div key={p.icon} style={{
-              background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)',
-              borderRadius:10, padding:'14px',
-            }}>
-              <div style={{ fontSize:22, marginBottom:6 }}>{p.icon}</div>
-              <div style={{ fontSize:'0.82rem', fontWeight:700, color:'#c0d8f0', marginBottom:4 }}>{p.title}</div>
-              <div style={{ fontSize:'0.72rem', color:'#4a6a8a', lineHeight:1.4 }}>{p.desc}</div>
-            </div>
-          ))}
+        <div style={{background:'rgba(255,255,255,.04)',borderRadius:12,padding:'16px',marginBottom:20,border:'1px solid rgba(255,255,255,.08)'}}>
+          <div style={{fontSize:'0.8rem',color:'#8ba3c1',lineHeight:1.6}}>{agent.desc}</div>
+          <div style={{display:'flex',flexWrap:'wrap' as const,gap:6,marginTop:12}}>
+            {agent.spec.map(s=>(
+              <span key={s} style={{padding:'3px 10px',borderRadius:20,background:`${agent.color}18`,color:agent.color,fontSize:'0.72rem',fontWeight:600,border:`1px solid ${agent.color}33`}}>{s}</span>
+            ))}
+          </div>
         </div>
 
-        {/* Plan comparison */}
-        <div style={{ display:'flex', gap:10, justifyContent:'center', marginBottom:28 }}>
-          {plans.map(p=>(
-            <div key={p.name} style={{
-              flex:1, maxWidth:160,
-              background: p.highlight ? 'rgba(0,201,200,.08)' : 'rgba(255,255,255,.03)',
-              border: `1px solid ${p.highlight ? C.cyan : 'rgba(255,255,255,.08)'}`,
-              borderRadius:10, padding:'14px 10px', textAlign:'center',
-              boxShadow: p.highlight ? `0 0 16px rgba(0,201,200,.15)` : 'none',
-            }}>
-              <div style={{ fontSize:'0.78rem', fontWeight:700, color: p.color, marginBottom:8 }}>{p.name}</div>
-              <div style={{ fontSize:'1.3rem', fontWeight:800, color:'#d4e6ff' }}>{p.agents}</div>
-              <div style={{ fontSize:'0.65rem', color:'#4a6a8a' }}>AI Agents</div>
-              <div style={{ fontSize:'0.72rem', color:'#8ba3c1', marginTop:6 }}>
-                {p.workflows === -1 ? 'Unlimited' : p.workflows} workflows
-              </div>
-            </div>
-          ))}
+        <div style={{background:'rgba(0,201,200,.06)',border:'1px solid rgba(0,201,200,.2)',borderRadius:12,padding:'14px',marginBottom:20,textAlign:'center'}}>
+          <div style={{fontSize:'0.82rem',color:'#8ba3c1',marginBottom:4}}>Nâng cấp để mở khóa agent này</div>
+          <div style={{fontSize:'1rem',fontWeight:700,color:'#00c9c8'}}>KOC Pro · 25 Agents — từ 299.000đ/tháng</div>
         </div>
 
-        {/* CTAs */}
-        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-          {!isLoggedIn && (
-            <Link to="/login" style={{
-              padding:'12px 28px', borderRadius:10, fontWeight:700, fontSize:'0.9rem',
-              background:'rgba(255,255,255,.06)', color:'#d4e6ff', textDecoration:'none',
-              border:'1px solid rgba(255,255,255,.12)',
-            }}>Đăng nhập</Link>
-          )}
-          <Link to="/pricing" style={{
-            padding:'12px 28px', borderRadius:10, fontWeight:700, fontSize:'0.9rem',
-            background:'linear-gradient(135deg,#00c9c8,#a78bfa)', color:'#fff',
-            textDecoration:'none', boxShadow:'0 4px 20px rgba(0,201,200,.3)',
-          }}>
-            {isLoggedIn ? '🚀 Nâng cấp gói KOC / Vendor' : '🚀 Xem gói KOC / Vendor'}
+        <div style={{display:'flex',gap:10}}>
+          <button onClick={onClose} style={{flex:1,padding:'11px',borderRadius:10,border:'1px solid rgba(255,255,255,.12)',background:'transparent',color:'#8ba3c1',cursor:'pointer',fontSize:'0.85rem'}}>
+            Để sau
+          </button>
+          <Link to="/pricing" onClick={onClose} style={{flex:2,padding:'11px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#00c9c8,#a78bfa)',color:'#fff',cursor:'pointer',fontSize:'0.85rem',fontWeight:700,textDecoration:'none',textAlign:'center' as const,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            🚀 Xem gói KOC / Vendor
           </Link>
-          {!isLoggedIn && (
-            <Link to="/register" style={{
-              padding:'12px 28px', borderRadius:10, fontWeight:700, fontSize:'0.9rem',
-              background:'linear-gradient(135deg,#f0a500,#fb923c)', color:'#fff',
-              textDecoration:'none',
-            }}>Đăng ký KOC</Link>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Main Command Center ─── */
-const s:Record<string,React.CSSProperties>={
-  page:{position:'fixed' as const,top:100,left:0,right:0,bottom:0,background:'#05101e',color:'#d4e6ff',fontFamily:'Inter,system-ui,sans-serif',display:'flex',flexDirection:'column',overflow:'hidden'},
-  hero:{background:'linear-gradient(135deg,#071a2e 0%,#0d2137 50%,#071a2e 100%)',borderBottom:'1px solid rgba(0,201,200,.15)',padding:'16px 32px',display:'flex',alignItems:'center',gap:20,flexShrink:0},
-  heroIcon:{width:44,height:44,borderRadius:12,background:'linear-gradient(135deg,#00c9c8,#a78bfa)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0},
-  heroTitle:{fontSize:'1.3rem',fontWeight:800,background:'linear-gradient(135deg,#00c9c8,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'},
-  heroSub:{fontSize:'0.78rem',color:'#8ba3c1',marginTop:2},
-  heroBadge:{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'},
-  badge:{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:'rgba(0,201,200,.15)',color:'#00c9c8',border:'1px solid rgba(0,201,200,.3)'},
-  grid:{flex:1,display:'grid',gridTemplateColumns:'240px 1fr 280px',minHeight:0,overflow:'hidden'},
-  // sidebar
-  sidebar:{background:'#071525',borderRight:'1px solid rgba(255,255,255,.06)',overflow:'hidden',display:'flex',flexDirection:'column'},
-  sideHead:{padding:'12px',borderBottom:'1px solid rgba(255,255,255,.06)',flexShrink:0},
-  sideSearch:{width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'7px 10px',color:'#d4e6ff',fontSize:'0.8rem',outline:'none',boxSizing:'border-box' as const},
-  sideList:{flex:1,overflowY:'auto'},
-  squadLabel:{padding:'8px 14px 2px',fontSize:'0.65rem',fontWeight:700,letterSpacing:1,color:'#4a6a8a',textTransform:'uppercase' as const},
-  agentRow:{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',cursor:'pointer',transition:'background .15s',borderLeft:'3px solid transparent'},
-  agentRowActive:{background:'rgba(0,201,200,.08)',borderLeft:'3px solid #00c9c8'},
-  agentIcon:{fontSize:16,width:24,textAlign:'center' as const},
-  agentName:{fontSize:'0.78rem',fontWeight:600,color:'#c0d8f0'},
-  agentRole:{fontSize:'0.65rem',color:'#4a6a8a'},
-  agentStatus:{marginLeft:'auto',width:6,height:6,borderRadius:'50%'},
-  // center
-  center:{background:'#08131f',display:'flex',flexDirection:'column',overflow:'hidden'},
-  kpiBar:{display:'flex',borderBottom:'1px solid rgba(255,255,255,.06)',flexShrink:0},
-  kpi:{flex:1,padding:'10px 16px',borderRight:'1px solid rgba(255,255,255,.06)',textAlign:'center' as const},
-  kpiVal:{fontSize:'1.2rem',fontWeight:800,color:'#00c9c8'},
-  kpiLbl:{fontSize:'0.65rem',color:'#4a6a8a',marginTop:1},
-  pipeline:{display:'flex',padding:'12px 20px 6px',flexShrink:0,overflowX:'auto' as const},
-  stageNode:{display:'flex',flexDirection:'column',alignItems:'center',gap:3,flex:1,minWidth:60},
-  stageCircle:{width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,transition:'all .3s',border:'2px solid rgba(255,255,255,.08)'},
-  stageName:{fontSize:'0.58rem',color:'#4a6a8a',textAlign:'center' as const},
-  stageConn:{flex:1,height:2,background:'rgba(255,255,255,.06)',alignSelf:'center',marginTop:-18},
-  progressWrap:{padding:'0 20px 8px',flexShrink:0},
-  progressBar:{height:3,background:'rgba(255,255,255,.06)',borderRadius:2,overflow:'hidden'},
-  progressFill:{height:'100%',borderRadius:2,transition:'width .6s ease',background:'linear-gradient(90deg,#00c9c8,#a78bfa)'},
-  msgs:{flex:1,padding:'0 20px',overflowY:'auto',display:'flex',flexDirection:'column',gap:6},
-  msgBubble:{padding:'8px 12px',borderRadius:8,background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',fontSize:'0.8rem',lineHeight:1.5,flexShrink:0},
-  msgAgent:{fontSize:'0.68rem',fontWeight:700,marginBottom:3},
-  inputArea:{padding:'10px 20px',borderTop:'1px solid rgba(255,255,255,.06)',flexShrink:0},
-  platformRow:{display:'flex',gap:5,marginBottom:7,flexWrap:'wrap' as const},
-  platformChip:{padding:'3px 9px',borderRadius:20,fontSize:'0.68rem',fontWeight:600,cursor:'pointer',transition:'all .15s',border:'1px solid rgba(255,255,255,.1)',background:'rgba(255,255,255,.04)',color:'#8ba3c1'},
-  platformChipOn:{border:'1px solid',background:'rgba(0,0,0,.3)'},
-  inputRow:{display:'flex',gap:8},
-  textarea:{flex:1,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',color:'#d4e6ff',fontSize:'0.82rem',resize:'none' as const,outline:'none',fontFamily:'inherit'},
-  btnRun:{padding:'8px 18px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:700,fontSize:'0.82rem',background:'linear-gradient(135deg,#00c9c8,#a78bfa)',color:'#fff',flexShrink:0,transition:'opacity .2s'},
-  presetRow:{display:'flex',gap:5,marginBottom:7,flexWrap:'wrap' as const},
-  presetBtn:{padding:'3px 9px',borderRadius:20,border:'1px solid rgba(255,255,255,.1)',background:'rgba(255,255,255,.03)',color:'#8ba3c1',fontSize:'0.67rem',cursor:'pointer'},
-  // right panel
-  right:{background:'#071525',borderLeft:'1px solid rgba(255,255,255,.06)',overflow:'hidden',display:'flex',flexDirection:'column'},
-  rightScroll:{flex:1,overflowY:'auto'},
-  panel:{padding:'12px 14px',borderBottom:'1px solid rgba(255,255,255,.06)'},
-  panelTitle:{fontSize:'0.67rem',fontWeight:700,letterSpacing:1,color:'#4a6a8a',textTransform:'uppercase' as const,marginBottom:10},
-  metrGrid:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6},
-  metrCard:{background:'rgba(255,255,255,.04)',borderRadius:7,padding:'8px',border:'1px solid rgba(255,255,255,.07)'},
-  metrVal:{fontSize:'1.1rem',fontWeight:800},
-  metrLbl:{fontSize:'0.63rem',color:'#4a6a8a',marginTop:2},
-  detailBox:{background:'rgba(255,255,255,.03)',borderRadius:7,padding:'10px',border:'1px solid rgba(255,255,255,.07)'},
-  specChip:{display:'inline-block',padding:'2px 7px',borderRadius:4,background:'rgba(255,255,255,.06)',fontSize:'0.63rem',color:'#8ba3c1',margin:'2px 2px 2px 0'},
-  outRow:{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.05)'},
-  outIcon:{fontSize:16,width:22,textAlign:'center' as const},
-  outTitle:{fontSize:'0.74rem',color:'#c0d8f0',flex:1},
-  outBadge:{padding:'1px 7px',borderRadius:20,fontSize:'0.6rem',fontWeight:600},
-  logLine:{fontSize:'0.67rem',color:'#4a6a8a',padding:'2px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontFamily:'monospace'},
-};
+/* ─── Agent Detail Panel (right side) ─── */
+function AgentPanel({agent,status,onClose,onDispatch,onLaunch,running}:{
+  agent:AgentDef; status:AS; onClose:()=>void;
+  onDispatch:(id:string)=>void; onLaunch:()=>void; running:boolean;
+}) {
+  return (
+    <div style={{position:'absolute',top:0,right:0,bottom:0,width:320,background:'#071525',borderLeft:'1px solid rgba(255,255,255,.08)',display:'flex',flexDirection:'column',zIndex:100,boxShadow:'-8px 0 32px rgba(0,0,0,.4)'}}>
+      {/* Header */}
+      <div style={{padding:'20px',borderBottom:'1px solid rgba(255,255,255,.06)',display:'flex',alignItems:'flex-start',gap:12}}>
+        <div style={{fontSize:36}}>{agent.icon}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:'1rem',fontWeight:800,color:agent.color}}>{agent.name}</div>
+          <div style={{fontSize:'0.72rem',color:'#4a6a8a',marginTop:2}}>{agent.role} · ×{agent.count} instances</div>
+          <div style={{marginTop:6,display:'flex',alignItems:'center',gap:6}}>
+            <div style={{width:7,height:7,borderRadius:'50%',background:status==='working'?C.amber:status==='done'?C.green:'#4a6a8a',boxShadow:status==='working'?`0 0 6px ${C.amber}`:undefined}}/>
+            <span style={{fontSize:'0.7rem',color:'#8ba3c1'}}>{status==='working'?'Running':status==='done'?'Done':'Idle'}</span>
+          </div>
+        </div>
+        <button onClick={onClose} style={{background:'none',border:'none',color:'#4a6a8a',cursor:'pointer',fontSize:'1.1rem',padding:4}}>✕</button>
+      </div>
 
+      {/* Desc */}
+      <div style={{padding:'16px',borderBottom:'1px solid rgba(255,255,255,.06)'}}>
+        <div style={{fontSize:'0.8rem',color:'#8ba3c1',lineHeight:1.6}}>{agent.desc}</div>
+        <div style={{display:'flex',flexWrap:'wrap' as const,gap:5,marginTop:10}}>
+          {agent.spec.map(s=>(
+            <span key={s} style={{padding:'3px 9px',borderRadius:4,background:'rgba(255,255,255,.06)',color:'#8ba3c1',fontSize:'0.68rem'}}>{s}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{padding:'16px',borderBottom:'1px solid rgba(255,255,255,.06)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        {[
+          {lbl:'Instances',val:`×${agent.count}`},
+          {lbl:'Squad',val:agent.squad==='content'?'Content':agent.squad==='dist'?'Distribution':'Engagement'},
+          {lbl:'Status',val:status},
+          {lbl:'Type',val:agent.role.replace(' Agent','')},
+        ].map(m=>(
+          <div key={m.lbl} style={{background:'rgba(255,255,255,.03)',borderRadius:8,padding:'10px',border:'1px solid rgba(255,255,255,.06)'}}>
+            <div style={{fontSize:'0.72rem',color:'#4a6a8a',marginBottom:3}}>{m.lbl}</div>
+            <div style={{fontSize:'0.85rem',fontWeight:700,color:'#c0d8f0',textTransform:'capitalize' as const}}>{m.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div style={{padding:'16px',display:'flex',flexDirection:'column',gap:8,marginTop:'auto'}}>
+        <button
+          onClick={()=>onDispatch(agent.id)}
+          disabled={running}
+          style={{padding:'11px',borderRadius:10,border:'1px solid rgba(0,201,200,.3)',background:'rgba(0,201,200,.08)',color:'#00c9c8',cursor:'pointer',fontWeight:600,fontSize:'0.85rem'}}
+        >⚡ Quick Dispatch</button>
+        <button
+          onClick={onLaunch}
+          disabled={running}
+          style={{padding:'11px',borderRadius:10,border:'none',background:running?'rgba(255,255,255,.08)':'linear-gradient(135deg,#00c9c8,#a78bfa)',color:running?'#4a6a8a':'#fff',cursor:running?'not-allowed':'pointer',fontWeight:700,fontSize:'0.85rem'}}
+        >{running?'Pipeline đang chạy…':'🚀 Launch Pipeline'}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main page ─── */
 export default function Agents() {
   const { token, user } = useAuth() as { token: string | null; user: { role?: string } | null };
-  const access = getAccess(user?.role);
+  const hasAccess = getAccess(user?.role);
 
+  /* squad tabs */
+  const [activeSquad, setActiveSquad] = useState<Squad>('content');
+  /* selected agent */
+  const [selAgent, setSelAgent] = useState<AgentDef | null>(null);
+  /* upgrade modal */
+  const [upgradeAgent, setUpgradeAgent] = useState<AgentDef | null>(null);
+  /* pipeline */
   const [agStatus, setAgStatus] = useState<Record<string,AS>>({});
-  const [platforms, setPlatforms] = useState<string[]>(['tiktok','instagram','facebook']);
-  const [brief, setBrief] = useState('');
-  const [search, setSearch] = useState('');
-  const [selId, setSelId] = useState<string>('tiktok_s');
-  const [msgs, setMsgs] = useState<Msg[]>([]);
   const [running, setRunning] = useState(false);
   const [actStage, setActStage] = useState<string|null>(null);
   const [doneStg, setDoneStg] = useState<string[]>([]);
   const [pct, setPct] = useState(0);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [outs, setOuts] = useState<OutItem[]>([]);
+  const [brief, setBrief] = useState('');
+  const [platforms, setPlatforms] = useState(['tiktok','instagram','facebook']);
+  const [showPipeline, setShowPipeline] = useState(false);
   const [kpiPost, setKpiPost] = useState(0);
   const [kpiReach, setKpiReach] = useState(0);
   const [kpiRoas, setKpiRoas] = useState(0);
   const [kpiGmv, setKpiGmv] = useState(0);
-  const [outs, setOuts] = useState<OutItem[]>([]);
-  const [logs, setLogs] = useState<string[]>(['[SYS] Command Center online','[SYS] 333 agents ready']);
   const [uptime, setUptime] = useState(0);
-  const msgsRef = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const msgsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(()=>{
-    const t = setInterval(()=>setUptime(u=>u+1),1000);
-    return ()=>clearInterval(t);
-  },[]);
+  useEffect(()=>{ const t=setInterval(()=>setUptime(u=>u+1),1000); return()=>clearInterval(t); },[]);
+  useEffect(()=>{ if(msgsRef.current) msgsRef.current.scrollTop=msgsRef.current.scrollHeight; },[msgs]);
 
-  useEffect(()=>{
-    if(msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
-  },[msgs]);
-
-  const addLog = useCallback((line:string)=>{
-    setLogs(l=>[...l.slice(-49),`[${ts()}] ${line}`]);
-  },[]);
-
-  const addMsg = useCallback((agentId:string, content:string)=>{
+  const addMsg = useCallback((agentId:string,content:string)=>{
     setMsgs(m=>[...m,{id:uid(),agentId,content,ts:ts()}]);
   },[]);
 
   const handleEv = useCallback((ev:{type:string;stage?:string;agent_id?:string;content?:string;pct?:number;done_stages?:string[];metrics?:Record<string,number>})=>{
-    if(ev.type==='stage_start' && ev.stage){
-      setActStage(ev.stage);
-      addLog(`Stage → ${ev.stage}`);
-      if(ev.agent_id) setAgStatus(s=>({...s,[ev.agent_id!]:'working'}));
-    }
-    if(ev.type==='stage_done' && ev.stage){
+    if(ev.type==='stage_start'&&ev.stage){ setActStage(ev.stage); if(ev.agent_id) setAgStatus(s=>({...s,[ev.agent_id!]:'working'})); }
+    if(ev.type==='stage_done'&&ev.stage){
       setDoneStg(d=>[...d,ev.stage!]);
       if(ev.pct!=null) setPct(ev.pct);
       if(ev.done_stages) setDoneStg(ev.done_stages);
-      if(ev.content && ev.agent_id) addMsg(ev.agent_id, ev.content);
-      if(ev.agent_id) setAgStatus(s=>({...s,[ev.agent_id!]:'done'}));
+      if(ev.content&&ev.agent_id){ addMsg(ev.agent_id,ev.content); setAgStatus(s=>({...s,[ev.agent_id!]:'done'})); }
       if(ev.metrics){
-        if(ev.metrics.posts)  setKpiPost(p=>p+ev.metrics!.posts);
-        if(ev.metrics.reach)  setKpiReach(p=>p+ev.metrics!.reach);
-        if(ev.metrics.roas)   setKpiRoas(ev.metrics.roas);
-        if(ev.metrics.gmv)    setKpiGmv(p=>p+ev.metrics!.gmv);
+        if(ev.metrics.posts) setKpiPost(p=>p+ev.metrics!.posts);
+        if(ev.metrics.reach) setKpiReach(p=>p+ev.metrics!.reach);
+        if(ev.metrics.roas)  setKpiRoas(ev.metrics.roas);
+        if(ev.metrics.gmv)   setKpiGmv(p=>p+ev.metrics!.gmv);
       }
-      setOuts(o=>[...o,{icon:STAGES.find(st=>st.id===ev.stage)?.icon||'📄',title:`${ev.stage} output`,badge:'Ready',color:C.green}]);
+      setOuts(o=>[...o,{icon:STAGES.find(s=>s.id===ev.stage)?.icon||'📄',title:`${ev.stage} output`,color:C.green}]);
     }
-    if(ev.type==='complete'){
-      setRunning(false);setActStage(null);setPct(100);
-      addLog('Campaign complete ✓');
-      AGENTS.forEach(a=>setAgStatus(s=>({...s,[a.id]:'done'})));
-    }
-    if(ev.type==='error'){
-      setRunning(false);addLog(`ERROR: ${ev.content||'unknown'}`);
-    }
-  },[addLog,addMsg]);
+    if(ev.type==='complete'){ setRunning(false); setActStage(null); setPct(100); AGENTS.forEach(a=>setAgStatus(s=>({...s,[a.id]:'done'}))); }
+    if(ev.type==='error'){ setRunning(false); }
+  },[addMsg]);
 
   const runDemo = useCallback(()=>{
-    timers.current.forEach(clearTimeout);timers.current=[];
-    const demoStages=[
-      {stage:'intake',   agent:'tiktok_s', content:'Đã phân tích brief. Xác định 6 nền tảng, budget 50M, KPI: GMV 500M.',          metrics:{posts:0,reach:0,roas:0,gmv:0}},
-      {stage:'research', agent:'trend_w',  content:'Trending: #FlashSale #WellKOC #OrganicSkincare. 3 đối thủ phân tích xong.',    metrics:{posts:0,reach:5000,roas:0,gmv:0}},
-      {stage:'content',  agent:'blog_w',   content:'12 scripts TikTok, 8 bài blog, 24 caption IG, 6 email chuỗi đã hoàn thiện.',   metrics:{posts:50,reach:20000,roas:0,gmv:0}},
-      {stage:'design',   agent:'img_gen',  content:'48 banner đa size, 12 thumbnail YouTube, 6 infographic đã render xong.',        metrics:{posts:0,reach:0,roas:0,gmv:0}},
-      {stage:'schedule', agent:'tiktok_d', content:'Lịch đăng tối ưu: TikTok 19:00, IG 20:30, FB 12:00 & 21:00 hằng ngày.',        metrics:{posts:60,reach:50000,roas:0,gmv:0}},
-      {stage:'publish',  agent:'ig_d',     content:'Đã publish 60 posts lên 6 nền tảng. Rate đăng thành công 98.3%.',               metrics:{posts:60,reach:150000,roas:0,gmv:0}},
-      {stage:'engage',   agent:'comment_r',content:'284 comments đã trả lời. Matched 12 KOC micro, brief đã gửi.',                 metrics:{posts:0,reach:200000,roas:0,gmv:5000000}},
-      {stage:'analyze',  agent:'bi_r',     content:'CTR 4.7%, Conv 2.1%, ROAS 3.8x vượt target. Đề xuất tăng budget TikTok +20%.', metrics:{posts:0,reach:250000,roas:3.8,gmv:45000000}},
-      {stage:'report',   agent:'fraud_d',  content:'Báo cáo: GMV 450M, 18.5K đơn, ROAS 3.8x, NPS +12. KOC top: 3 người.',         metrics:{posts:0,reach:300000,roas:3.8,gmv:450000000}},
+    timers.current.forEach(clearTimeout); timers.current=[];
+    const ds=[
+      {stage:'intake',  agent:'tiktok_s', content:'Phân tích brief xong. 6 nền tảng, budget 50M, KPI: GMV 500M.',         metrics:{posts:0,reach:0,roas:0,gmv:0}},
+      {stage:'research',agent:'trend_w',  content:'Trending: #FlashSale #WellKOC. 3 đối thủ phân tích xong.',             metrics:{posts:0,reach:5000,roas:0,gmv:0}},
+      {stage:'content', agent:'blog_w',   content:'12 TikTok scripts, 8 blogs, 24 IG captions đã hoàn thành.',            metrics:{posts:50,reach:20000,roas:0,gmv:0}},
+      {stage:'design',  agent:'img_gen',  content:'48 banners, 12 thumbnails YouTube, 6 infographics xong.',               metrics:{posts:0,reach:0,roas:0,gmv:0}},
+      {stage:'schedule',agent:'tiktok_d', content:'Lịch tối ưu: TikTok 19:00, IG 20:30, FB 12:00 & 21:00.',              metrics:{posts:60,reach:50000,roas:0,gmv:0}},
+      {stage:'publish', agent:'ig_d',     content:'60 posts đã lên 6 nền tảng. Success rate 98.3%.',                       metrics:{posts:60,reach:150000,roas:0,gmv:0}},
+      {stage:'engage',  agent:'comment_r',content:'284 comments trả lời. 12 KOC micro matched, brief đã gửi.',            metrics:{posts:0,reach:200000,roas:0,gmv:5000000}},
+      {stage:'analyze', agent:'bi_r',     content:'CTR 4.7%, Conv 2.1%, ROAS 3.8x. Tăng budget TikTok +20%.',             metrics:{posts:0,reach:250000,roas:3.8,gmv:45000000}},
+      {stage:'report',  agent:'fraud_d',  content:'Kết quả: GMV 450M, 18.5K đơn, ROAS 3.8x, NPS +12.',                   metrics:{posts:0,reach:300000,roas:3.8,gmv:450000000}},
     ];
     let delay=0;
-    demoStages.forEach((st,i)=>{
-      const pct=Math.round((i+1)/demoStages.length*100);
+    ds.forEach((st,i)=>{
+      const pct=Math.round((i+1)/ds.length*100);
       timers.current.push(setTimeout(()=>handleEv({type:'stage_start',stage:st.stage,agent_id:st.agent}),delay));
       delay+=1800;
-      timers.current.push(setTimeout(()=>handleEv({type:'stage_done',stage:st.stage,agent_id:st.agent,content:st.content,pct,done_stages:demoStages.slice(0,i+1).map(s=>s.stage),metrics:st.metrics}),delay));
+      timers.current.push(setTimeout(()=>handleEv({type:'stage_done',stage:st.stage,agent_id:st.agent,content:st.content,pct,done_stages:ds.slice(0,i+1).map(s=>s.stage),metrics:st.metrics}),delay));
       delay+=400;
     });
     timers.current.push(setTimeout(()=>handleEv({type:'complete'}),delay+300));
   },[handleEv]);
 
   const runFull = useCallback(async()=>{
-    if(!brief.trim()){addLog('Brief trống — nhập brief trước');return;}
-    setRunning(true);setMsgs([]);setOuts([]);setDoneStg([]);setPct(0);setActStage(null);
-    setKpiPost(0);setKpiReach(0);setKpiRoas(0);setKpiGmv(0);
+    if(!brief.trim()) return;
+    setRunning(true); setMsgs([]); setOuts([]); setDoneStg([]); setPct(0); setActStage(null);
+    setKpiPost(0); setKpiReach(0); setKpiRoas(0); setKpiGmv(0);
     AGENTS.forEach(a=>setAgStatus(s=>({...s,[a.id]:'idle'})));
-    addLog('Launching campaign pipeline…');
-    if(!token){addLog('No auth — demo mode');runDemo();return;}
+    if(!token){ runDemo(); return; }
     try{
-      const res = await fetch(`${API_BASE}/api/v1/ai/marketing/run-campaign`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body:JSON.stringify({brief,platforms}),
-      });
-      if(!res.ok||!res.body){throw new Error(`HTTP ${res.status}`);}
-      const reader=res.body.getReader();const dec=new TextDecoder();let buf='';
-      while(true){
-        const {done,value}=await reader.read();
-        if(done)break;
-        buf+=dec.decode(value,{stream:true});
-        const lines=buf.split('\n');buf=lines.pop()||'';
-        for(const line of lines){
-          if(line.startsWith('data: ')){
-            try{handleEv(JSON.parse(line.slice(6)));}catch(_){/**/}
-          }
-        }
+      const res=await fetch(`${API_BASE}/api/v1/ai/marketing/run-campaign`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({brief,platforms})});
+      if(!res.ok||!res.body) throw new Error(`HTTP ${res.status}`);
+      const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
+      while(true){ const {done,value}=await reader.read(); if(done) break;
+        buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop()||'';
+        for(const line of lines){ if(line.startsWith('data: ')){ try{ handleEv(JSON.parse(line.slice(6))); }catch(_){} } }
       }
-    }catch(e){
-      addLog(`Backend unavailable — demo mode (${(e as Error).message})`);
-      runDemo();
-    }
-  },[brief,platforms,token,handleEv,runDemo,addLog]);
+    }catch(_e){ runDemo(); }
+  },[brief,platforms,token,handleEv,runDemo]);
 
-  const quickSend = useCallback(async(agentId:string)=>{
-    if(!token){addLog(`Quick dispatch: ${agentId} (demo)`);return;}
-    try{
-      await fetch(`${API_BASE}/api/v1/ai/marketing/quick`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-        body:JSON.stringify({agent_id:agentId,task:'Thực hiện nhiệm vụ mặc định',context:{}}),
-      });
-      addLog(`Quick → ${agentId} dispatched`);
-    }catch(_){addLog(`Quick → ${agentId} (offline)`);}
-  },[token,addLog]);
+  const quickDispatch = useCallback(async(agentId:string)=>{
+    if(!token) return;
+    try{ await fetch(`${API_BASE}/api/v1/ai/marketing/quick`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({agent_id:agentId,task:'Thực hiện nhiệm vụ',context:{}})}); }catch(_){}
+  },[token]);
 
-  // ── Paywall ──
-  if (access === 'locked') {
-    return <PaywallScreen isLoggedIn={!!user} />;
-  }
+  const handleAgentClick = (agent:AgentDef)=>{
+    if(!hasAccess){ setUpgradeAgent(agent); return; }
+    setSelAgent(s=>s?.id===agent.id?null:agent);
+  };
 
-  const selAgent = AGENTS.find(a=>a.id===selId);
-  const filtered = AGENTS.filter(a=>a.name.toLowerCase().includes(search.toLowerCase())||a.squad.includes(search.toLowerCase()));
-  const squads = ['content','dist','engage'];
-  const squadLabel:Record<string,string>={content:'Content Factory (111)',dist:'Distribution Grid (111)',engage:'Engagement Matrix (111)'};
   const fmtUptime=`${String(Math.floor(uptime/3600)).padStart(2,'0')}:${String(Math.floor(uptime%3600/60)).padStart(2,'0')}:${String(uptime%60).padStart(2,'0')}`;
+  const squadAgents = AGENTS.filter(a=>a.squad===activeSquad);
 
   return (
-    <div style={s.page}>
-      {/* Hero — compact, fixed height */}
-      <div style={s.hero}>
-        <div style={s.heroIcon}>🤖</div>
-        <div>
-          <div style={s.heroTitle}>333 Agent Command Center</div>
-          <div style={s.heroSub}>Content Factory · Distribution Grid · Engagement Matrix</div>
-        </div>
-        <div style={s.heroBadge}>
-          <span style={s.badge}>⚡ {fmtUptime}</span>
-          <span style={{...s.badge,background:'rgba(34,197,94,.12)',color:'#22c55e',border:'1px solid rgba(34,197,94,.3)'}}>
-            ● {running?'Running':'Standby'}
-          </span>
-          <span style={{...s.badge,background:'rgba(240,165,0,.12)',color:C.gold,border:'1px solid rgba(240,165,0,.3)'}}>
-            333 Agents
-          </span>
-        </div>
-      </div>
+    <>
+      {/* Fixed full-page container below navbar */}
+      <div style={{position:'fixed',top:100,left:0,right:0,bottom:0,background:'#05101e',color:'#d4e6ff',fontFamily:'Inter,system-ui,sans-serif',display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
-      {/* 3-col grid — fills remaining height, no scroll on outer page */}
-      <div style={s.grid}>
-
-        {/* LEFT — Agent sidebar */}
-        <div style={s.sidebar}>
-          <div style={s.sideHead}>
-            <input style={s.sideSearch} placeholder="Tìm agent…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        {/* ── Top bar ── */}
+        <div style={{background:'linear-gradient(135deg,#071a2e,#0d2137)',borderBottom:'1px solid rgba(0,201,200,.12)',padding:'12px 28px',display:'flex',alignItems:'center',gap:16,flexShrink:0}}>
+          <div style={{fontSize:24,width:38,height:38,borderRadius:10,background:'linear-gradient(135deg,#00c9c8,#a78bfa)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>🤖</div>
+          <div>
+            <div style={{fontSize:'1.05rem',fontWeight:800,background:'linear-gradient(135deg,#00c9c8,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>333 Agent Command Center</div>
+            <div style={{fontSize:'0.72rem',color:'#4a6a8a',marginTop:1}}>Content Factory · Distribution Grid · Engagement Matrix</div>
           </div>
-          <div style={s.sideList}>
-            {squads.map(sq=>(
-              <div key={sq}>
-                <div style={s.squadLabel}>{squadLabel[sq]}</div>
-                {filtered.filter(a=>a.squad===sq).map(a=>{
-                  const st:AS=agStatus[a.id]||'idle';
-                  const dot=st==='working'?C.amber:st==='done'?C.green:C.muted;
-                  return (
-                    <div
-                      key={a.id}
-                      style={{...s.agentRow,...(selId===a.id?s.agentRowActive:{})}}
-                      onClick={()=>{setSelId(a.id);quickSend(a.id);}}
-                    >
-                      <div style={s.agentIcon}>{a.icon}</div>
-                      <div>
-                        <div style={s.agentName}>{a.name}</div>
-                        <div style={s.agentRole}>{a.role} · ×{a.count}</div>
-                      </div>
-                      <div style={{...s.agentStatus,background:dot,boxShadow:st==='working'?`0 0 5px ${dot}`:undefined}}/>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+          <div style={{marginLeft:'auto',display:'flex',gap:8,alignItems:'center'}}>
+            {/* KPI chips */}
+            {kpiPost>0&&<span style={{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:'rgba(0,201,200,.12)',color:C.cyan,border:'1px solid rgba(0,201,200,.25)'}}>📤 {kpiPost} posts</span>}
+            {kpiRoas>0&&<span style={{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:'rgba(240,165,0,.12)',color:C.gold,border:'1px solid rgba(240,165,0,.25)'}}>💰 ROAS {kpiRoas}x</span>}
+            {kpiGmv>0&&<span style={{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:'rgba(34,197,94,.12)',color:C.green,border:'1px solid rgba(34,197,94,.25)'}}>📈 {(kpiGmv/1e6).toFixed(0)}M GMV</span>}
+            <span style={{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:'rgba(167,139,250,.12)',color:C.purple,border:'1px solid rgba(167,139,250,.25)'}}>⚡ {fmtUptime}</span>
+            <span style={{padding:'3px 10px',borderRadius:20,fontSize:'0.7rem',fontWeight:600,background:running?'rgba(251,146,60,.15)':'rgba(34,197,94,.12)',color:running?C.amber:C.green,border:`1px solid ${running?'rgba(251,146,60,.3)':'rgba(34,197,94,.25)'}`}}>
+              ● {running?'Running':'Standby'}
+            </span>
+            <button
+              onClick={()=>setShowPipeline(p=>!p)}
+              style={{padding:'5px 14px',borderRadius:8,border:'1px solid rgba(0,201,200,.3)',background:showPipeline?'rgba(0,201,200,.12)':'transparent',color:'#00c9c8',cursor:'pointer',fontSize:'0.75rem',fontWeight:600}}
+            >{showPipeline?'⬆ Ẩn Pipeline':'⬇ Mở Pipeline'}</button>
           </div>
         </div>
 
-        {/* CENTER */}
-        <div style={s.center}>
-          {/* KPI bar */}
-          <div style={s.kpiBar}>
-            {[
-              {val:kpiPost,lbl:'Posts',col:C.cyan},
-              {val:kpiReach>=1000?`${(kpiReach/1000).toFixed(1)}K`:kpiReach,lbl:'Reach',col:C.purple},
-              {val:kpiRoas?`${kpiRoas}x`:'—',lbl:'ROAS',col:C.gold},
-              {val:kpiGmv>=1e6?`${(kpiGmv/1e6).toFixed(1)}M`:kpiGmv||'—',lbl:'GMV (VND)',col:C.green},
-            ].map((k,i)=>(
-              <div key={i} style={s.kpi}>
-                <div style={{...s.kpiVal,color:k.col}}>{k.val}</div>
-                <div style={s.kpiLbl}>{k.lbl}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pipeline */}
-          <div style={s.pipeline}>
-            {STAGES.map((st,i)=>{
-              const done=doneStg.includes(st.id);
-              const active=actStage===st.id;
-              return (
-                <div key={st.id} style={{display:'flex',alignItems:'center',flex:1}}>
-                  <div style={s.stageNode}>
-                    <div style={{
-                      ...s.stageCircle,
-                      background:done?`${st.color}22`:active?`${st.color}33`:'rgba(255,255,255,.04)',
-                      borderColor:done?st.color:active?st.color:'rgba(255,255,255,.1)',
-                      boxShadow:active?`0 0 10px ${st.color}`:undefined,
-                    }}>{st.icon}</div>
-                    <div style={{...s.stageName,color:done||active?st.color:undefined}}>{st.label}</div>
-                  </div>
-                  {i<STAGES.length-1&&<div style={{...s.stageConn,background:done?`${STAGES[i].color}44`:'rgba(255,255,255,.06)'}}/>}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Progress */}
-          <div style={s.progressWrap}>
-            <div style={s.progressBar}>
-              <div style={{...s.progressFill,width:`${pct}%`}}/>
-            </div>
-            <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontSize:'0.65rem',color:'#4a6a8a'}}>
-              <span>{actStage?`Running: ${actStage}`:pct===100?'Complete ✓':'Waiting…'}</span>
-              <span>{pct}%</span>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div style={s.msgs} ref={msgsRef}>
-            {msgs.length===0&&(
-              <div style={{textAlign:'center',color:'#4a6a8a',fontSize:'0.8rem',padding:'30px 0'}}>
-                Chọn preset hoặc nhập brief → nhấn Launch để bắt đầu pipeline 333 agents
-              </div>
-            )}
-            {msgs.map(m=>{
-              const ag=AGENTS.find(a=>a.id===m.agentId);
-              return(
-                <div key={m.id} style={s.msgBubble}>
-                  <div style={{...s.msgAgent,color:ag?.color||C.cyan}}>{ag?.icon} {ag?.name||m.agentId} · {m.ts}</div>
-                  {m.content}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Input */}
-          <div style={s.inputArea}>
-            <div style={s.presetRow}>
-              {PRESETS.map(p=>(
-                <button key={p.label} style={s.presetBtn} onClick={()=>{setBrief(p.brief);setPlatforms(p.platforms);}}>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div style={s.platformRow}>
-              {Object.entries(PLATFORM_CFG).map(([k,v])=>{
-                const on=platforms.includes(k);
+        {/* ── Pipeline panel (collapsible) ── */}
+        {showPipeline&&(
+          <div style={{background:'#071525',borderBottom:'1px solid rgba(255,255,255,.06)',padding:'12px 28px',flexShrink:0}}>
+            {/* Stage nodes */}
+            <div style={{display:'flex',alignItems:'center',marginBottom:10}}>
+              {STAGES.map((st,i)=>{
+                const done=doneStg.includes(st.id); const active=actStage===st.id;
                 return(
-                  <div key={k} style={{
-                    ...s.platformChip,
-                    ...(on?{...s.platformChipOn,borderColor:v.color,color:v.color,background:`${v.color}18`}:{}),
-                  }} onClick={()=>setPlatforms(pl=>pl.includes(k)?pl.filter(x=>x!==k):[...pl,k])}>
-                    {v.label}
+                  <div key={st.id} style={{display:'flex',alignItems:'center',flex:1}}>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,flex:1}}>
+                      <div style={{width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,border:`2px solid ${done?st.color:active?st.color:'rgba(255,255,255,.08)'}`,background:done?`${st.color}20`:active?`${st.color}30`:'rgba(255,255,255,.04)',boxShadow:active?`0 0 10px ${st.color}`:undefined,transition:'all .3s'}}>{st.icon}</div>
+                      <div style={{fontSize:'0.58rem',color:done||active?st.color:'#4a6a8a',textAlign:'center' as const}}>{st.label}</div>
+                    </div>
+                    {i<STAGES.length-1&&<div style={{flex:1,height:2,background:done?`${st.color}40`:'rgba(255,255,255,.06)',marginTop:-14,transition:'background .3s'}}/>}
                   </div>
                 );
               })}
             </div>
-            <div style={s.inputRow}>
-              <textarea style={s.textarea} rows={2} placeholder="Nhập campaign brief… (hoặc chọn preset ở trên)"
-                value={brief} onChange={e=>setBrief(e.target.value)}/>
-              <button style={{...s.btnRun,opacity:running?0.6:1}} disabled={running} onClick={runFull}>
+            {/* Progress + brief */}
+            <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+              <div style={{flex:1}}>
+                <div style={{height:3,background:'rgba(255,255,255,.06)',borderRadius:2,overflow:'hidden',marginBottom:4}}>
+                  <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,#00c9c8,#a78bfa)',borderRadius:2,transition:'width .6s ease'}}/>
+                </div>
+                <div style={{fontSize:'0.65rem',color:'#4a6a8a',display:'flex',justifyContent:'space-between'}}>
+                  <span>{actStage?`Running: ${actStage}`:pct===100?'Complete ✓':'Waiting…'}</span>
+                  <span>{pct}%</span>
+                </div>
+              </div>
+              <div style={{flexShrink:0,display:'flex',gap:6,alignItems:'center',flexWrap:'wrap' as const}}>
+                {Object.entries(PLATFORMS).map(([k,v])=>{
+                  const on=platforms.includes(k);
+                  return <div key={k} onClick={()=>setPlatforms(pl=>pl.includes(k)?pl.filter(x=>x!==k):[...pl,k])} style={{padding:'3px 9px',borderRadius:20,fontSize:'0.68rem',fontWeight:600,cursor:'pointer',border:`1px solid ${on?v.color:'rgba(255,255,255,.1)'}`,background:on?`${v.color}18`:'rgba(255,255,255,.04)',color:on?v.color:'#4a6a8a'}}>{v.label}</div>;
+                })}
+              </div>
+            </div>
+            {/* Presets + input */}
+            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap' as const}}>
+              {PRESETS.map(p=><button key={p.label} onClick={()=>{setBrief(p.brief);setPlatforms(p.platforms);}} style={{padding:'3px 9px',borderRadius:20,border:'1px solid rgba(255,255,255,.1)',background:'rgba(255,255,255,.03)',color:'#8ba3c1',fontSize:'0.67rem',cursor:'pointer'}}>{p.label}</button>)}
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:8}}>
+              <textarea value={brief} onChange={e=>setBrief(e.target.value)} rows={2} placeholder="Nhập campaign brief hoặc chọn preset ở trên…"
+                style={{flex:1,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:8,padding:'8px 12px',color:'#d4e6ff',fontSize:'0.82rem',resize:'none' as const,outline:'none',fontFamily:'inherit'}}/>
+              <button onClick={runFull} disabled={running||!brief.trim()} style={{padding:'8px 18px',borderRadius:8,border:'none',background:running||!brief.trim()?'rgba(255,255,255,.08)':'linear-gradient(135deg,#00c9c8,#a78bfa)',color:running||!brief.trim()?'#4a6a8a':'#fff',cursor:running||!brief.trim()?'not-allowed':'pointer',fontWeight:700,fontSize:'0.82rem',flexShrink:0}}>
                 {running?'Running…':'🚀 Launch'}
               </button>
             </div>
+            {/* Messages */}
+            {msgs.length>0&&(
+              <div ref={msgsRef} style={{maxHeight:80,overflowY:'auto',marginTop:8,display:'flex',flexDirection:'column',gap:4}}>
+                {msgs.slice(-5).map(m=>{
+                  const ag=AGENTS.find(a=>a.id===m.agentId);
+                  return <div key={m.id} style={{fontSize:'0.75rem',color:'#8ba3c1',padding:'4px 8px',background:'rgba(255,255,255,.03)',borderRadius:6,borderLeft:`2px solid ${ag?.color||C.cyan}`}}>
+                    <span style={{color:ag?.color||C.cyan,fontWeight:600}}>{ag?.icon} {ag?.name}: </span>{m.content}
+                  </div>;
+                })}
+              </div>
+            )}
           </div>
+        )}
+
+        {/* ── Squad tabs ── */}
+        <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,.06)',flexShrink:0,background:'#071525'}}>
+          {SQUADS.map(sq=>(
+            <button key={sq.id} onClick={()=>{setActiveSquad(sq.id);setSelAgent(null);}}
+              style={{flex:1,padding:'14px 20px',background:'none',border:'none',borderBottom:`2px solid ${activeSquad===sq.id?sq.color:'transparent'}`,color:activeSquad===sq.id?sq.color:'#4a6a8a',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,transition:'all .2s',fontWeight:activeSquad===sq.id?700:400,fontSize:'0.85rem'}}>
+              <span style={{fontSize:18}}>{sq.icon}</span>
+              <span>{sq.label}</span>
+              <span style={{padding:'2px 8px',borderRadius:20,background:activeSquad===sq.id?`${sq.color}20`:'rgba(255,255,255,.05)',color:activeSquad===sq.id?sq.color:'#4a6a8a',fontSize:'0.7rem',fontWeight:600}}>{sq.count}</span>
+            </button>
+          ))}
         </div>
 
-        {/* RIGHT panel */}
-        <div style={s.right}>
-          <div style={s.rightScroll}>
-            {/* Metrics */}
-            <div style={s.panel}>
-              <div style={s.panelTitle}>Live Metrics</div>
-              <div style={s.metrGrid}>
-                {[
-                  {val:kpiPost,lbl:'Posts',col:C.cyan},
-                  {val:kpiReach>=1000?`${(kpiReach/1000).toFixed(0)}K`:kpiReach||0,lbl:'Reach',col:C.purple},
-                  {val:kpiRoas?`${kpiRoas}x`:'—',lbl:'ROAS',col:C.gold},
-                  {val:kpiGmv>=1e6?`${(kpiGmv/1e6).toFixed(0)}M`:kpiGmv||0,lbl:'GMV',col:C.green},
-                ].map((m,i)=>(
-                  <div key={i} style={s.metrCard}>
-                    <div style={{...s.metrVal,color:m.col}}>{m.val}</div>
-                    <div style={s.metrLbl}>{m.lbl}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Selected agent detail */}
-            {selAgent&&(
-              <div style={s.panel}>
-                <div style={s.panelTitle}>Agent Detail</div>
-                <div style={s.detailBox}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-                    <div style={{fontSize:24}}>{selAgent.icon}</div>
-                    <div>
-                      <div style={{fontSize:'0.85rem',fontWeight:700,color:selAgent.color}}>{selAgent.name}</div>
-                      <div style={{fontSize:'0.67rem',color:'#4a6a8a'}}>{selAgent.role} · ×{selAgent.count}</div>
-                    </div>
-                  </div>
-                  <div>{selAgent.spec.map(sp=><span key={sp} style={s.specChip}>{sp}</span>)}</div>
-                  <div style={{marginTop:8,fontSize:'0.67rem',color:'#4a6a8a'}}>
-                    Status: <span style={{color:agStatus[selAgent.id]==='working'?C.amber:agStatus[selAgent.id]==='done'?C.green:C.muted}}>
-                      {agStatus[selAgent.id]||'idle'}
-                    </span>
-                  </div>
+        {/* ── Agent grid + side panel ── */}
+        <div style={{flex:1,display:'flex',overflow:'hidden',position:'relative'}}>
+          {/* Grid */}
+          <div style={{flex:1,overflowY:'auto',padding:'20px 24px',paddingRight:selAgent?'344px':'24px',transition:'padding-right .2s'}}>
+            {!hasAccess&&(
+              <div style={{marginBottom:16,padding:'10px 16px',borderRadius:10,background:'rgba(0,201,200,.06)',border:'1px solid rgba(0,201,200,.2)',display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:'1.2rem'}}>🔒</span>
+                <div>
+                  <div style={{fontSize:'0.82rem',fontWeight:600,color:'#00c9c8'}}>Đăng nhập KOC/Vendor để mở khóa agents</div>
+                  <div style={{fontSize:'0.72rem',color:'#4a6a8a',marginTop:2}}>Click vào bất kỳ agent nào để xem gói phù hợp</div>
+                </div>
+                <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+                  <Link to="/login" style={{padding:'6px 14px',borderRadius:8,border:'1px solid rgba(255,255,255,.12)',background:'transparent',color:'#8ba3c1',fontSize:'0.75rem',fontWeight:600,textDecoration:'none'}}>Đăng nhập</Link>
+                  <Link to="/pricing" style={{padding:'6px 14px',borderRadius:8,background:'linear-gradient(135deg,#00c9c8,#a78bfa)',color:'#fff',fontSize:'0.75rem',fontWeight:600,textDecoration:'none'}}>Xem gói</Link>
                 </div>
               </div>
             )}
 
-            {/* Output queue */}
-            <div style={s.panel}>
-              <div style={s.panelTitle}>Output Queue ({outs.length})</div>
-              {outs.length===0&&<div style={{fontSize:'0.7rem',color:'#4a6a8a'}}>Pipeline outputs will appear here…</div>}
-              {outs.slice(-6).map((o,i)=>(
-                <div key={i} style={s.outRow}>
-                  <div style={s.outIcon}>{o.icon}</div>
-                  <div style={s.outTitle}>{o.title}</div>
-                  <span style={{...s.outBadge,background:`${o.color}22`,color:o.color}}>{o.badge}</span>
-                </div>
-              ))}
-            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:12}}>
+              {squadAgents.map(agent=>{
+                const st:AS = agStatus[agent.id]||'idle';
+                const locked = !hasAccess;
+                const isSelected = selAgent?.id===agent.id;
+                const dotColor = st==='working'?C.amber:st==='done'?C.green:'#2a3d52';
+                return (
+                  <div key={agent.id} onClick={()=>handleAgentClick(agent)}
+                    style={{background:isSelected?`${agent.color}10`:'rgba(255,255,255,.03)',border:`1px solid ${isSelected?agent.color:'rgba(255,255,255,.07)'}`,borderRadius:14,padding:'16px',cursor:'pointer',transition:'all .18s',position:'relative',boxShadow:isSelected?`0 0 0 1px ${agent.color}40`:undefined}}
+                    onMouseEnter={e=>{if(!isSelected)(e.currentTarget as HTMLDivElement).style.background='rgba(255,255,255,.06)';}}
+                    onMouseLeave={e=>{if(!isSelected)(e.currentTarget as HTMLDivElement).style.background='rgba(255,255,255,.03)';}}
+                  >
+                    {/* Lock badge */}
+                    {locked&&<div style={{position:'absolute',top:10,right:10,fontSize:'0.65rem',background:'rgba(0,0,0,.5)',border:'1px solid rgba(255,255,255,.12)',borderRadius:4,padding:'2px 6px',color:'#4a6a8a'}}>🔒 Locked</div>}
+                    {/* Status dot */}
+                    {!locked&&<div style={{position:'absolute',top:12,right:12,width:8,height:8,borderRadius:'50%',background:dotColor,boxShadow:st==='working'?`0 0 8px ${C.amber}`:undefined}}/>}
 
-            {/* System log */}
-            <div style={s.panel}>
-              <div style={s.panelTitle}>System Log</div>
-              {logs.slice(-15).reverse().map((l,i)=>(
-                <div key={i} style={s.logLine}>{l}</div>
-              ))}
+                    <div style={{fontSize:32,marginBottom:8}}>{agent.icon}</div>
+                    <div style={{fontSize:'0.88rem',fontWeight:700,color:isSelected?agent.color:'#c0d8f0',marginBottom:3}}>{agent.name}</div>
+                    <div style={{fontSize:'0.7rem',color:'#4a6a8a',marginBottom:10}}>
+                      {agent.role}
+                      <span style={{marginLeft:8,padding:'1px 6px',borderRadius:4,background:'rgba(255,255,255,.05)',color:'#8ba3c1'}}>×{agent.count}</span>
+                    </div>
+                    <div style={{display:'flex',flexWrap:'wrap' as const,gap:4}}>
+                      {agent.spec.slice(0,2).map(s=>(
+                        <span key={s} style={{padding:'2px 7px',borderRadius:4,background:locked?'rgba(255,255,255,.04)':`${agent.color}12`,color:locked?'#2a3d52':agent.color,fontSize:'0.65rem',border:`1px solid ${locked?'rgba(255,255,255,.06)':`${agent.color}25`}`}}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* Agent detail panel */}
+          {selAgent&&hasAccess&&(
+            <AgentPanel
+              agent={selAgent}
+              status={agStatus[selAgent.id]||'idle'}
+              onClose={()=>setSelAgent(null)}
+              onDispatch={quickDispatch}
+              onLaunch={()=>{setShowPipeline(true);if(!brief)setBrief(PRESETS[0].brief);runFull();}}
+              running={running}
+            />
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Upgrade modal */}
+      {upgradeAgent&&<UpgradeModal agent={upgradeAgent} onClose={()=>setUpgradeAgent(null)}/>}
+    </>
   );
 }
