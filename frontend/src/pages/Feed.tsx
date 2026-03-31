@@ -145,10 +145,10 @@ const Feed: React.FC = () => {
             <span className="dot-pulse dot-indigo"></span>
             {t('feed.badge')}
           </div>
-          <h2 style={{ fontSize: 'clamp(1.2rem, 3vw, 1.8rem)', fontWeight: 800, background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 4 }}>
+          <h2 className="display-lg gradient-text" style={{ marginBottom: 8, whiteSpace: 'nowrap' }}>
             {t('feed.title')}
           </h2>
-          <p style={{ color: 'var(--text-3)', fontSize: '.85rem', marginTop: '8px' }}>
+          <p style={{ color: 'var(--text-3)', fontSize: '.95rem', marginTop: '8px' }}>
             {t('feed.subtitle')}
           </p>
         </div>

@@ -197,10 +197,10 @@ export default function Marketplace() {
             <span className="dot-pulse dot-green"></span>
             MARKETPLACE
           </div>
-          <h1 className="display-md gradient-text" style={{ marginBottom: 8 }}>
+          <h1 className="display-lg gradient-text" style={{ marginBottom: 8, whiteSpace: 'nowrap' }}>
             {t('marketplace.title')}
           </h1>
-          <p style={{ color: 'var(--text-3)', fontSize: '.88rem', maxWidth: 480, margin: '0 auto' }}>
+          <p style={{ color: 'var(--text-3)', fontSize: '1rem', maxWidth: 540, margin: '0 auto' }}>
             {t('marketplace.desc')}
           </p>
         </div>

@@ -102,9 +102,9 @@ body {
 
 /* ── TYPOGRAPHY ── */
 h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
-.display-xl { font-size: clamp(2.8rem, 6vw, 5.2rem); font-weight: 700; letter-spacing: -.02em; }
-.display-lg { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; letter-spacing: -.01em; }
-.display-md { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: 0; }
+.display-xl { font-size: clamp(3rem, 6.5vw, 5.5rem); font-weight: 700; letter-spacing: -.02em; }
+.display-lg { font-size: clamp(2.4rem, 4.8vw, 4rem);  font-weight: 700; letter-spacing: -.01em; }
+.display-md { font-size: clamp(1.8rem, 3.2vw, 2.8rem); font-weight: 700; letter-spacing: 0; }
 .label     { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
 .mono      { font-family: var(--ff-mono); font-size: .78rem; }
 
@@ -335,8 +335,8 @@ h1,h2,h3,h4,h5 { font-family: var(--ff-display); line-height: 1.2; }
 .section-header { text-align: center; margin-bottom: 56px; }
 .section-badge {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: .3rem .9rem; border-radius: 100px;
-  font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  padding: .35rem 1rem; border-radius: 100px;
+  font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
   background: rgba(99,102,241,.1); color: var(--c6-300);
   border: 1px solid rgba(99,102,241,.2); margin-bottom: 16px;
   white-space: nowrap;
@@ -921,9 +921,9 @@ input[type="text"],input[type="email"],input[type="password"],input[type="number
 @media (max-width: 768px) {
   .section { padding: 32px 0 !important; }
   .hero-content { padding: 12px 16px 24px !important; }
-  .display-xl { font-size: 2.4rem !important; }
-  .display-lg { font-size: 1.8rem !important; }
-  .display-md { font-size: 1.4rem !important; }
+  .display-xl { font-size: 2.8rem !important; }
+  .display-lg { font-size: 2.2rem !important; }
+  .display-md { font-size: 1.7rem !important; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
   .container { padding: 0 16px !important; }
   .dash-wrap { display: flex !important; flex-direction: column !important; }

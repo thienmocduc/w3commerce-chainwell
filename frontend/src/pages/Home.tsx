@@ -76,23 +76,23 @@ export default function Home() {
           <div className="ring ring-4" />
         </div>
 
-        <div className="hero-content" style={{ maxWidth: 860, padding: '16px 24px 40px' }}>
+        <div className="hero-content" style={{ maxWidth: 1100, padding: '16px 24px 40px' }}>
           <div className="section-badge" style={{ marginBottom: 24 }}>
             <span className="dot-pulse dot-indigo" /> <span style={{ whiteSpace: 'nowrap' }}>Conscious Community Commerce</span> · Polygon
           </div>
 
-          <h1 className="display-xl" style={{ marginBottom: 16, lineHeight: 1.15, whiteSpace: 'nowrap', fontSize: 'clamp(1.4rem, 5.5vw, 3.5rem)' }}>
+          <h1 className="display-xl" style={{ marginBottom: 16, lineHeight: 1.15, whiteSpace: 'nowrap', fontSize: 'clamp(1.8rem, 6vw, 5rem)' }}>
             <span className="gradient-text">{t('home.hero.title')}</span>
           </h1>
 
-          <div style={{ textAlign: 'center', marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.25rem, 3.2vw, 2rem)', fontWeight: 700, letterSpacing: '.03em', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.4rem, 3.5vw, 2.4rem)', fontWeight: 700, letterSpacing: '.03em', whiteSpace: 'nowrap', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               "{t('home.hero.line1')}"
             </div>
-            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.25rem, 3.2vw, 2rem)', fontWeight: 700, letterSpacing: '.03em', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.4rem, 3.5vw, 2.4rem)', fontWeight: 700, letterSpacing: '.03em', whiteSpace: 'nowrap', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               "{t('home.hero.line2')}"
             </div>
-            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.35rem, 3.5vw, 2.1rem)', fontWeight: 800, letterSpacing: '.03em', background: 'linear-gradient(135deg, #22c55e, #06b6d4, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(1.5rem, 3.8vw, 2.6rem)', fontWeight: 800, letterSpacing: '.03em', whiteSpace: 'nowrap', background: 'linear-gradient(135deg, #22c55e, #06b6d4, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               "{t('home.hero.line3').replace(/On-Chain/gi, 'On\u2011Chain').replace(/Minh Bạch/gi, 'Minh\u00A0Bạch')}"
             </div>
           </div>
