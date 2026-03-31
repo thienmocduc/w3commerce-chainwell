@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE, useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
+import { cartApi, type CartItem } from '@lib/api';
 
 type CheckoutStep = 1 | 2 | 3;
 type PaymentMethod = 'vnpay' | 'momo' | 'crypto';
@@ -11,10 +12,12 @@ const formatVND = (price: number): string =>
 
 const stepLabelKeys = ['checkout.step.address', 'checkout.step.payment', 'checkout.step.confirm'];
 
-const orderItems = [
-  { name: 'Trà Ô Long Đài Loan Premium', qty: 2, price: 389000, gradient: 'linear-gradient(135deg, #84cc16, #22c55e)' },
-  { name: 'Serum Vitamin C 20% Brightening', qty: 1, price: 315000, gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
-  { name: 'Mật Ong Rừng Tây Nguyên 500ml', qty: 1, price: 285000, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+const ITEM_GRADIENTS = [
+  'linear-gradient(135deg, #84cc16, #22c55e)',
+  'linear-gradient(135deg, #fbbf24, #f59e0b)',
+  'linear-gradient(135deg, #06b6d4, #6366f1)',
+  'linear-gradient(135deg, #f59e0b, #d97706)',
+  'linear-gradient(135deg, #ec4899, #f43f5e)',
 ];
 
 const paymentOptions: { key: PaymentMethod; icon: string; label: string; descKey: string; color: string }[] = [
@@ -26,6 +29,7 @@ const paymentOptions: { key: PaymentMethod; icon: string; label: string; descKey
 export default function Checkout() {
   const { t } = useI18n();
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState<CheckoutStep>(1);
   const [payment, setPayment] = useState<PaymentMethod>('vnpay');
   const [useW3CToken, setUseW3CToken] = useState(false);
@@ -34,6 +38,9 @@ export default function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [cryptoPayInfo, setCryptoPayInfo] = useState<{ wallet: string; amount: string } | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartLoading, setCartLoading] = useState(true);
+  const [cartId, setCartId] = useState<string>('');
 
   // Shipping form
   const [fullName, setFullName] = useState('');
@@ -44,11 +51,22 @@ export default function Checkout() {
   const [city, setCity] = useState('');
   const [note, setNote] = useState('');
 
-  const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
+  useEffect(() => {
+    if (!token) { navigate('/login'); return; }
+    cartApi.get(token)
+      .then(cart => {
+        setCartItems(cart.items || []);
+        setCartId(cart.id);
+      })
+      .catch(() => setCartItems([]))
+      .finally(() => setCartLoading(false));
+  }, [token, navigate]);
+
+  const subtotal = cartItems.reduce((s, i) => s + i.subtotal, 0);
   const shipping = 0;
   const w3cDiscount = useW3CToken ? Math.round(subtotal * 0.05) : 0;
   const total = subtotal + shipping - w3cDiscount;
-  const totalXP = orderItems.reduce((s, i) => s + i.qty * 10, 0);
+  const totalXP = cartItems.reduce((s, i) => s + i.xp_reward * i.quantity, 0);
 
   const orderNumber = `ORD-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
   const txHash = '0x7a3f8c2e1d5b9f4a6e3c7d8b2a1f5e9c4d6b8a3f7e2c1d5b9a4f6e3c7d8b2a1f';
@@ -72,9 +90,19 @@ export default function Checkout() {
         },
         body: JSON.stringify({
           order_id: orderNumber,
+          cart_id: cartId,
           gateway: gatewayMap[payment],
           amount: total,
           return_url: `${window.location.origin}/checkout?success=1`,
+          shipping_address: {
+            full_name: fullName,
+            phone,
+            email: emailAddr,
+            address,
+            district,
+            city,
+            note,
+          },
         }),
       });
 
@@ -243,6 +271,18 @@ export default function Checkout() {
 
   return (
     <div style={{ paddingTop: 'var(--topbar-height, 64px)', minHeight: '100vh', background: 'var(--bg-0)' }}>
+      {/* Empty cart redirect */}
+      {!cartLoading && cartItems.length === 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+          <div className="card" style={{ padding: 48, textAlign: 'center', maxWidth: 400 }}>
+            <div style={{ fontSize: '3rem', marginBottom: 16 }}>🛒</div>
+            <h2 style={{ marginBottom: 8 }}>Giỏ hàng trống</h2>
+            <p style={{ color: 'var(--text-3)', fontSize: '.88rem', marginBottom: 24 }}>Hãy thêm sản phẩm vào giỏ trước khi thanh toán.</p>
+            <Link to="/marketplace" className="btn btn-primary" style={{ textDecoration: 'none' }}>Mua sắm ngay</Link>
+          </div>
+        </div>
+      )}
+      {!cartLoading && cartItems.length > 0 && <>
       {/* Floating toast */}
       {toastMsg && !submitted && (
         <div style={{
@@ -521,18 +561,21 @@ export default function Checkout() {
 
                 {/* Order Items */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-                  {orderItems.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < orderItems.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  {cartItems.map((item, i) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < cartItems.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{
                         width: 40, height: 40, borderRadius: 8, flexShrink: 0,
-                        background: item.gradient,
-                      }} />
+                        background: item.product_image ? undefined : ITEM_GRADIENTS[i % ITEM_GRADIENTS.length],
+                        overflow: 'hidden',
+                      }}>
+                        {item.product_image && <img src={item.product_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                      </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '.82rem', fontWeight: 600 }}>{item.name}</div>
-                        <div style={{ fontSize: '.68rem', color: 'var(--text-3)' }}>x{item.qty}</div>
+                        <div style={{ fontSize: '.82rem', fontWeight: 600 }}>{item.product_name}</div>
+                        <div style={{ fontSize: '.68rem', color: 'var(--text-3)' }}>x{item.quantity}</div>
                       </div>
                       <span style={{ fontWeight: 700, fontSize: '.82rem' }}>
-                        {formatVND(item.price * item.qty)}
+                        {formatVND(item.subtotal)}
                       </span>
                     </div>
                   ))}
@@ -564,21 +607,24 @@ export default function Checkout() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-                {orderItems.map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {cartItems.map((item, i) => (
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
                       width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                      background: item.gradient,
-                    }} />
+                      background: item.product_image ? undefined : ITEM_GRADIENTS[i % ITEM_GRADIENTS.length],
+                      overflow: 'hidden',
+                    }}>
+                      {item.product_image && <img src={item.product_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontWeight: 600, fontSize: '.75rem',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{item.name}</div>
-                      <div style={{ fontSize: '.65rem', color: 'var(--text-3)' }}>x{item.qty}</div>
+                      }}>{item.product_name}</div>
+                      <div style={{ fontSize: '.65rem', color: 'var(--text-3)' }}>x{item.quantity}</div>
                     </div>
                     <span style={{ fontWeight: 700, fontSize: '.78rem', flexShrink: 0 }}>
-                      {formatVND(item.price * item.qty)}
+                      {formatVND(item.subtotal)}
                     </span>
                   </div>
                 ))}
@@ -628,6 +674,7 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+      </>}
     </div>
   );
 }

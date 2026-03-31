@@ -1,86 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '@hooks/useI18n';
+import { useAuth } from '@hooks/useAuth';
+import { productsApi, cartApi, type Product } from '@lib/api';
 
 const formatVND = (price: number): string =>
   new Intl.NumberFormat('vi-VN').format(price) + ' \u20AB';
 
-interface ProductData {
-  name: string;
-  price: number;
-  originalPrice?: number;
-  category: string;
-  categorySlug: string;
-  description: string;
-  origin: string;
-  brand: string;
-  dpp: boolean;
-  dppHash: string;
-  certifications: string[];
-  chain: string;
-  rating: number;
-  reviewCount: number;
-  sold: number;
-  xpReward: number;
-  gradient: string;
-  galleryGradients: string[];
+// Gradient palette for products without images
+const GRADIENTS = [
+  'linear-gradient(135deg, #fbbf24, #f59e0b)',
+  'linear-gradient(135deg, #84cc16, #22c55e)',
+  'linear-gradient(135deg, #06b6d4, #6366f1)',
+  'linear-gradient(135deg, #f59e0b, #d97706)',
+];
+function getGradients(id: string): string[] {
+  const base = GRADIENTS[id.charCodeAt(0) % GRADIENTS.length];
+  return [base, GRADIENTS[(id.charCodeAt(0) + 1) % GRADIENTS.length], GRADIENTS[(id.charCodeAt(0) + 2) % GRADIENTS.length], GRADIENTS[(id.charCodeAt(0) + 3) % GRADIENTS.length]];
 }
-
-const productDB: Record<string, ProductData> = {
-  'serum-vitc': {
-    name: 'Serum Vitamin C 20% Brightening',
-    price: 315000, originalPrice: 470000,
-    category: 'Skincare', categorySlug: 'skincare',
-    description: 'Serum Vitamin C nồng độ cao 20% kết hợp Vitamin E và Ferulic Acid. Công nghệ nano giúp thẩm thấu sâu, làm sáng da, mờ vết thâm và chống lão hoá hiệu quả. Phù hợp mọi loại da, đã được kiểm nghiệm lâm sàng tại phòng thí nghiệm KFDA.',
-    origin: 'Hàn Quốc', brand: 'WellKOC Beauty', dpp: true,
-    dppHash: '0x8b4e2f1a3c5d7e9b...f2a1c3d5e7',
-    certifications: ['KFDA', 'GMP', 'Cruelty Free'],
-    chain: 'Polygon', rating: 4.8, reviewCount: 234, sold: 2341, xpReward: 10,
-    gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-    galleryGradients: [
-      'linear-gradient(135deg, #fbbf24, #f59e0b)',
-      'linear-gradient(135deg, #f59e0b, #d97706)',
-      'linear-gradient(135deg, #fbbf24, #f97316)',
-      'linear-gradient(135deg, #d97706, #b45309)',
-    ],
-  },
-  'tra-olong': {
-    name: 'Trà Ô Long Đài Loan Cao Cấp',
-    price: 389000,
-    category: 'Thực phẩm', categorySlug: 'food',
-    description: 'Trà Ô Long cao cấp từ Ali Shan, Đài Loan. Thu hoạch thủ công ở độ cao 1,200m. Hương thơm đặc trưng, vị ngọt hậu thanh mát. Đóng gói chân không giữ trọn hương vị. Sản phẩm đạt chứng nhận Organic EU.',
-    origin: 'Ali Shan, Đài Loan', brand: 'WellKOC Origin', dpp: true,
-    dppHash: '0x7a3f8c2e1d5b9f4a...b92c1d4e',
-    certifications: ['Organic EU', 'HACCP', 'ISO 22000'],
-    chain: 'Polygon', rating: 4.9, reviewCount: 187, sold: 1247, xpReward: 10,
-    gradient: 'linear-gradient(135deg, #84cc16, #22c55e)',
-    galleryGradients: [
-      'linear-gradient(135deg, #84cc16, #22c55e)',
-      'linear-gradient(135deg, #22c55e, #06b6d4)',
-      'linear-gradient(135deg, #84cc16, #16a34a)',
-      'linear-gradient(135deg, #16a34a, #059669)',
-    ],
-  },
-};
-
-// Default fallback for any product ID not explicitly in DB
-const defaultProduct: ProductData = {
-  name: 'Trà Ô Long Đài Loan Cao Cấp',
-  price: 389000,
-  category: 'Thực phẩm', categorySlug: 'food',
-  description: 'Trà Ô Long cao cấp từ Ali Shan, Đài Loan. Thu hoạch thủ công ở độ cao 1,200m. Hương thơm đặc trưng, vị ngọt hậu thanh mát.',
-  origin: 'Ali Shan, Đài Loan', brand: 'WellKOC Origin', dpp: true,
-  dppHash: '0x7a3f8c2e1d5b9f4a...b92c1d4e',
-  certifications: ['Organic EU', 'HACCP', 'ISO 22000'],
-  chain: 'Polygon', rating: 4.9, reviewCount: 187, sold: 1247, xpReward: 10,
-  gradient: 'linear-gradient(135deg, #84cc16, #22c55e)',
-  galleryGradients: [
-    'linear-gradient(135deg, #84cc16, #22c55e)',
-    'linear-gradient(135deg, #22c55e, #06b6d4)',
-    'linear-gradient(135deg, #84cc16, #16a34a)',
-    'linear-gradient(135deg, #16a34a, #059669)',
-  ],
-};
 
 interface KocReview {
   id: number;
@@ -107,23 +44,104 @@ export default function ProductDetail() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<TabKey>('description');
   const [selectedImage, setSelectedImage] = useState(0);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartToast, setCartToast] = useState('');
 
-  const product = productDB[id || ''] || defaultProduct;
-  const discount = product.originalPrice
-    ? Math.round((1 - product.price / product.originalPrice) * 100)
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    // Try UUID lookup first, then slug
+    const isUuid = /^[0-9a-f-]{36}$/.test(id);
+    const fetch$ = isUuid ? productsApi.getById(id) : productsApi.getBySlug(id);
+    fetch$
+      .then(p => setProduct(p))
+      .catch(() => {
+        // Fallback: try the other lookup
+        (isUuid ? productsApi.getBySlug(id) : productsApi.getById(id))
+          .then(p => setProduct(p))
+          .catch(() => setProduct(null));
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    if (!token) { navigate('/login'); return; }
+    setAddingToCart(true);
+    try {
+      await cartApi.addItem({ product_id: product.id, quantity }, token);
+      setCartToast(t('product.addedToCart') || 'Đã thêm vào giỏ hàng!');
+      setTimeout(() => setCartToast(''), 2500);
+    } catch {
+      setCartToast('Không thể thêm vào giỏ. Vui lòng thử lại.');
+      setTimeout(() => setCartToast(''), 2500);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ paddingTop: 'var(--topbar-height, 64px)', minHeight: '100vh', background: 'var(--bg-0)' }}>
+        <div className="container" style={{ paddingTop: 28, paddingBottom: 80 }}>
+          <div style={{ height: 20, width: 300, borderRadius: 8, background: 'var(--bg-2)', marginBottom: 28, animation: 'pulse 1.5s ease-in-out infinite' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+            <div style={{ height: 400, borderRadius: 20, background: 'var(--bg-2)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {[80, 40, 120, 60, 48].map((h, i) => (
+                <div key={i} style={{ height: h, borderRadius: 8, background: 'var(--bg-2)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div style={{ paddingTop: 'var(--topbar-height, 64px)', minHeight: '100vh', background: 'var(--bg-0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="card" style={{ padding: 48, textAlign: 'center', maxWidth: 400 }}>
+          <div style={{ fontSize: '3rem', marginBottom: 16 }}>😕</div>
+          <h2 style={{ marginBottom: 8 }}>Không tìm thấy sản phẩm</h2>
+          <p style={{ color: 'var(--text-3)', fontSize: '.88rem', marginBottom: 24 }}>Sản phẩm không tồn tại hoặc đã bị xoá.</p>
+          <Link to="/marketplace" className="btn btn-primary" style={{ textDecoration: 'none' }}>← Quay lại Marketplace</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const galleryGradients = getGradients(product.id);
+  const discount = product.original_price
+    ? Math.round((1 - product.price / product.original_price) * 100)
     : 0;
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'description', label: t('product.tab.description') },
     { key: 'dpp', label: t('product.tab.dpp') },
-    { key: 'reviews', label: `${t('product.tab.reviews')} (${product.reviewCount})` },
+    { key: 'reviews', label: `${t('product.tab.reviews')} (${product.review_count})` },
   ];
 
   return (
     <div style={{ paddingTop: 'var(--topbar-height, 64px)', minHeight: '100vh', background: 'var(--bg-0)' }}>
+      {/* Cart toast */}
+      {cartToast && (
+        <div style={{
+          position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, padding: '10px 24px', borderRadius: 10,
+          background: 'rgba(34,197,94,.15)', border: '1px solid rgba(34,197,94,.3)',
+          color: '#15803d', fontSize: '.82rem', fontWeight: 600,
+          backdropFilter: 'blur(8px)',
+        }}>
+          {cartToast}
+        </div>
+      )}
       <div className="container" style={{ paddingTop: 28, paddingBottom: 80 }}>
         {/* Breadcrumb */}
         <div style={{
@@ -146,19 +164,29 @@ export default function ProductDetail() {
             {/* Main Image */}
             <div style={{
               height: 400, borderRadius: 20, overflow: 'hidden',
-              background: product.galleryGradients[selectedImage],
+              background: product.images?.[selectedImage]
+                ? undefined
+                : galleryGradients[selectedImage],
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               position: 'relative', marginBottom: 12,
             }}>
-              <div style={{
-                width: 100, height: 100, borderRadius: '50%',
-                background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1rem', color: '#fff', fontWeight: 700,
-              }}>
-                IMG
-              </div>
-              {product.dpp && (
+              {product.images?.[selectedImage] ? (
+                <img
+                  src={product.images[selectedImage]}
+                  alt={product.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div style={{
+                  width: 100, height: 100, borderRadius: '50%',
+                  background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1rem', color: '#fff', fontWeight: 700,
+                }}>
+                  IMG
+                </div>
+              )}
+              {product.dpp_enabled && (
                 <span className="badge badge-c4" style={{
                   position: 'absolute', top: 16, right: 16,
                   padding: '4px 10px', fontSize: '.68rem',
@@ -181,21 +209,23 @@ export default function ProductDetail() {
 
             {/* Thumbnail Row */}
             <div style={{ display: 'flex', gap: 8 }}>
-              {product.galleryGradients.map((grad, i) => (
+              {(product.images?.length ? product.images : galleryGradients).map((src, i) => (
                 <div
                   key={i}
                   onClick={() => setSelectedImage(i)}
                   style={{
                     width: 72, height: 72, borderRadius: 12, cursor: 'pointer',
-                    background: grad,
+                    background: product.images?.length ? undefined : src as string,
                     border: `2px solid ${selectedImage === i ? 'var(--c7-500, #6366f1)' : 'transparent'}`,
                     opacity: selectedImage === i ? 1 : 0.6,
-                    transition: 'all .2s',
+                    transition: 'all .2s', overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '.5rem', color: 'rgba(255,255,255,.6)',
                   }}
                 >
-                  {i + 1}
+                  {product.images?.length ? (
+                    <img src={src as string} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : i + 1}
                 </div>
               ))}
             </div>
@@ -205,7 +235,7 @@ export default function ProductDetail() {
           <div>
             {/* Certifications */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-              {product.certifications.map(c => (
+              {product.certifications?.map(c => (
                 <span key={c} className="badge badge-c4" style={{ fontSize: '.65rem' }}>{c}</span>
               ))}
             </div>
@@ -224,10 +254,10 @@ export default function ProductDetail() {
                 {'★'.repeat(Math.floor(product.rating))} <span style={{ color: 'var(--text-2)', fontWeight: 600 }}>{product.rating}</span>
               </span>
               <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>
-                {product.reviewCount} {t('product.reviews')}
+                {product.review_count} {t('product.reviews')}
               </span>
               <span style={{ fontSize: '.82rem', color: 'var(--text-3)' }}>
-                {t('product.sold')} {product.sold.toLocaleString('vi-VN')}
+                {t('product.sold')} {product.sold_count?.toLocaleString('vi-VN')}
               </span>
             </div>
 
@@ -240,12 +270,12 @@ export default function ProductDetail() {
               }}>
                 {formatVND(product.price)}
               </span>
-              {product.originalPrice && (
+              {product.original_price && (
                 <span style={{
                   fontSize: '1rem', color: 'var(--text-4)',
                   textDecoration: 'line-through',
                 }}>
-                  {formatVND(product.originalPrice)}
+                  {formatVND(product.original_price)}
                 </span>
               )}
               {discount > 0 && (
@@ -260,7 +290,7 @@ export default function ProductDetail() {
             </div>
 
             {/* DPP Badge link */}
-            {product.dpp && (
+            {product.dpp_enabled && (
               <Link to="/dpp" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 16px', borderRadius: 12,
@@ -309,13 +339,14 @@ export default function ProductDetail() {
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-              <Link
-                to="/cart"
+              <button
                 className="btn btn-primary btn-lg"
-                style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                onClick={handleAddToCart}
+                disabled={addingToCart}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: addingToCart ? 0.7 : 1 }}
               >
-                🛒 {t('product.addToCart')}
-              </Link>
+                🛒 {addingToCart ? '...' : t('product.addToCart')}
+              </button>
               <Link
                 to="/checkout"
                 className="btn btn-secondary btn-lg"
@@ -336,7 +367,7 @@ export default function ProductDetail() {
                 {t('product.xp.prefix')}
               </span>
               <span className="badge badge-gold" style={{ fontSize: '.72rem' }}>
-                +{product.xpReward * quantity} XP
+                +{product.xp_reward * quantity} XP
               </span>
             </div>
 
@@ -407,8 +438,8 @@ export default function ProductDetail() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { label: 'DPP Hash', value: product.dppHash, mono: true },
-                { label: 'Blockchain', value: product.chain, badge: true },
+                { label: 'DPP Token ID', value: product.dpp_token_id || '—', mono: true },
+                { label: 'Blockchain', value: product.dpp_chain || 'Polygon', badge: true },
                 { label: t('product.info.origin'), value: product.origin },
                 { label: t('product.info.brand'), value: product.brand },
               ].map((row, i) => (
@@ -433,7 +464,7 @@ export default function ProductDetail() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', fontSize: '.82rem' }}>
                 <span style={{ color: 'var(--text-3)' }}>{t('product.dpp.certifications')}</span>
                 <div style={{ display: 'flex', gap: 6 }}>
-                  {product.certifications.map(c => (
+                  {product.certifications?.map(c => (
                     <span key={c} className="badge badge-c4" style={{ fontSize: '.65rem' }}>{c}</span>
                   ))}
                 </div>

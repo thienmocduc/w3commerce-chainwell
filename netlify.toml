@@ -7,6 +7,7 @@
   NODE_VERSION = "20"
   VITE_API_URL = "https://wellkoc-api.onrender.com/api/v1"
   VITE_WS_URL = "wss://wellkoc-api.onrender.com/ws"
+  # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in Netlify dashboard > Site settings > Environment variables
 
 [dev]
   framework = "#static"
