@@ -58,6 +58,7 @@ const Pricing = lazy(() => import('@pages/Pricing'));
 const Legal = lazy(() => import('@pages/Legal'));
 const VNeIDCallback = lazy(() => import('@pages/VNeIDCallback'));
 const NotFound = lazy(() => import('@pages/NotFound'));
+const WKToken  = lazy(() => import('@pages/WKToken'));
 
 /* ── Loading fallback ── */
 function PageLoader() {
@@ -120,6 +121,7 @@ export default function App() {
           <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/wk-token" element={<WKToken />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="*" element={<NotFound />} />
         </Route>

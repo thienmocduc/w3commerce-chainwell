@@ -8,13 +8,16 @@
     "deploy:testnet": "hardhat run scripts/deploy.js --network amoy",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network polygon",
     "verify": "hardhat verify --network polygon",
-    "gas-report": "REPORT_GAS=true hardhat test"
+    "gas-report": "REPORT_GAS=true hardhat test",
+    "deploy:wk:testnet": "hardhat run scripts/deployWK.js --network amoy",
+    "deploy:wk:mainnet": "hardhat run scripts/deployWK.js --network polygon",
+    "verify:wk": "hardhat verify --network polygon"
   },
   "devDependencies": {
-    "hardhat": "^2.22.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.1.0",
-    "@openzeppelin/contracts-upgradeable": "^5.1.0",
-    "dotenv": "^16.4.0"
+    "@openzeppelin/contracts-upgradeable": "^5.6.1",
+    "dotenv": "^16.4.0",
+    "hardhat": "^2.22.0"
   }
 }
