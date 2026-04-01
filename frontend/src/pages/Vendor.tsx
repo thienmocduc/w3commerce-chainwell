@@ -187,6 +187,7 @@ const productStatusConfig: Record<string, { labelKey: string; badge: string }> =
   low_stock: { labelKey: 'vendor.status.lowStock', badge: 'badge-gold' },
   out_of_stock: { labelKey: 'vendor.status.outOfStock', badge: 'badge-c5' },
   hidden: { labelKey: 'vendor.status.hidden', badge: 'badge-c6' },
+  dpp_pending: { labelKey: 'vendor.status.dppPending', badge: 'badge-c7' },
 };
 
 const dppStatusConfig: Record<string, { label: string; badge: string }> = {
@@ -350,6 +351,7 @@ export default function Vendor() {
   const [legalDocs, setLegalDocs] = useState<Record<string, boolean>>({});
   const [legalError, setLegalError] = useState('');
   const toggleLegalDoc = (key: string) => setLegalDocs(prev => ({ ...prev, [key]: !prev[key] }));
+  const [mintingIds, setMintingIds] = useState<Set<number>>(new Set());
 
   // Orders — loaded from API, fallback to demo data
   const [orderList, setOrderList] = useState(initialOrders);
@@ -411,18 +413,19 @@ export default function Vendor() {
     };
     const requiredCount = (LEGAL_REQUIREMENTS[newProduct.category]?.docs.filter(d => d.required).length) || 0;
     const approvedCount = Object.values(legalDocs).filter(Boolean).length;
+    const newId = nextProductId++;
     const p = {
-      id: nextProductId++,
+      id: newId,
       name: newProduct.name,
       price: newProduct.price || '0₫',
       stock: payload.stock,
       sold: 0,
-      status: 'active' as string,
+      status: 'dpp_pending' as string,  // blocked until DPP minted
       dppStatus: 'pending' as string,
       commission: newProduct.commission || '15%',
       emoji: '📦',
       dppTokenId: '—',
-      hidden: false,
+      hidden: true,   // not visible to buyers until on-chain
       legalOk: approvedCount >= requiredCount && requiredCount > 0,
       legalDocs: { ...legalDocs },
       category: newProduct.category,
@@ -432,12 +435,14 @@ export default function Vendor() {
     setLegalDocs({});
     setLegalError('');
     setShowAddProduct(false);
-    showToast(`${t('vendor.toast.productAdded')} "${p.name}"`);
+    showToast(`📦 Sản phẩm đã lưu — đang mint DPP lên blockchain...`, 'info');
     if (token) {
       vendorApi.createProduct(payload as ApiProduct, token)
-        .then(created => setProductList(prev => prev.map(x => x.id === p.id ? mapApiProductToLocal(created, prev.indexOf(x)) : x)))
+        .then(created => setProductList(prev => prev.map(x => x.id === newId ? mapApiProductToLocal(created, prev.indexOf(x)) : x)))
         .catch(() => {});
     }
+    // Auto-mint DPP immediately after product creation (blockchain compliance)
+    setTimeout(() => handleMintDpp(newId), 300);
   };
 
   const handleDeleteProduct = (id: number) => {
@@ -448,14 +453,19 @@ export default function Vendor() {
   };
 
   const handleToggleProduct = (id: number) => {
-    setProductList(prev => prev.map(p => {
-      if (p.id !== id) return p;
-      const nowHidden = !p.hidden;
-      return { ...p, hidden: nowHidden, status: nowHidden ? 'hidden' : (p.stock === 0 ? 'out_of_stock' : p.stock <= 50 ? 'low_stock' : 'active') };
-    }));
     const p = productList.find(x => x.id === id);
-    const nowHidden = !p?.hidden;
-    showToast(nowHidden ? `${t('vendor.toast.productHidden')} "${p?.name}"` : `${t('vendor.toast.productShown')} "${p?.name}"`);
+    if (!p) return;
+    // Block: cannot activate if DPP not minted (blockchain compliance)
+    if (p.hidden && p.dppStatus !== 'minted') {
+      showToast('⛓️ Sản phẩm chưa được xác thực trên blockchain. Vui lòng mint DPP trước khi kích hoạt.', 'error');
+      return;
+    }
+    const nowHidden = !p.hidden;
+    setProductList(prev => prev.map(x => {
+      if (x.id !== id) return x;
+      return { ...x, hidden: nowHidden, status: nowHidden ? 'hidden' : (x.stock === 0 ? 'out_of_stock' : x.stock <= 50 ? 'low_stock' : 'active') };
+    }));
+    showToast(nowHidden ? `${t('vendor.toast.productHidden')} "${p.name}"` : `${t('vendor.toast.productShown')} "${p.name}"`);
     if (token) vendorApi.updateProduct(String(id), { status: nowHidden ? 'hidden' : 'active' } as Partial<ApiProduct>, token).catch(() => {});
   };
 
@@ -485,24 +495,31 @@ export default function Vendor() {
     if (token) vendorApi.updateOrderStatus(orderId, flow.next, token).catch(() => {});
   };
 
-  /* ── DPP Mint ──────────────────────────────────── */
-  const handleMintDpp = (productId: number) => {
+  /* ── DPP Mint (blockchain) ─────────────────────── */
+  const handleMintDpp = async (productId: number) => {
     const product = productList.find(p => p.id === productId);
-    if (!product) return;
+    if (!product || mintingIds.has(productId)) return;
+    setMintingIds(prev => new Set(prev).add(productId));
+    showToast(`⛓️ Đang ghi lên blockchain Polygon...`, 'info');
+    // Simulate on-chain transaction (2s)
+    await new Promise(r => setTimeout(r, 2000));
     const tokenId = `#${nextDppTokenId++}`;
+    const txHash = `0x${Math.random().toString(16).slice(2, 10)}${Math.random().toString(16).slice(2, 10)}`;
+    const ipfsHash = `QmW${Math.random().toString(36).slice(2, 10)}`;
     setProductList(prev => prev.map(p =>
-      p.id === productId ? { ...p, dppStatus: 'minted', dppTokenId: tokenId } : p
+      p.id === productId ? { ...p, dppStatus: 'minted', dppTokenId: tokenId, status: p.status === 'dpp_pending' ? 'active' : p.status, hidden: false } : p
     ));
     setDppMintList(prev => [...prev, {
       tokenId,
       product: product.name,
       mintDate: new Date().toISOString().slice(0, 10),
       chain: 'Polygon',
-      txHash: `0xdpp${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
+      txHash,
       status: 'verified',
-      ipfsHash: `Qm...${Math.random().toString(36).slice(2, 6)}`,
+      ipfsHash,
     }]);
-    showToast(`${t('vendor.toast.dppMinted')} "${product.name}" (${tokenId})`);
+    setMintingIds(prev => { const s = new Set(prev); s.delete(productId); return s; });
+    showToast(`✅ DPP minted on-chain! "${product.name}" (${tokenId}) — TX: ${txHash.slice(0, 14)}...`);
   };
 
   /* ── Withdraw ──────────────────────────────────── */
@@ -635,9 +652,24 @@ export default function Vendor() {
       case 'products':
         return (
           <>
-            <div className="flex" style={{ justifyContent: 'space-between', marginBottom: 16 }}>
+            <div className="flex" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
               <h2 style={{ fontWeight: 700, fontSize: '1.1rem' }}>{t('vendor.products.title')} ({visibleProducts.length})</h2>
               <button className="btn btn-primary btn-sm" onClick={() => { setShowAddProduct(!showAddProduct); setEditingProduct(null); }}>{t('vendor.products.addBtn')}</button>
+            </div>
+
+            {/* ⛓️ Blockchain compliance notice */}
+            <div style={{ padding: '10px 16px', marginBottom: 16, borderRadius: 10, background: 'rgba(99,102,241,.07)', border: '1px solid rgba(99,102,241,.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '1.3rem' }}>⛓️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '.78rem', color: 'var(--c6-500)' }}>Quy định Blockchain — Bắt buộc với mọi sản phẩm</div>
+                <div style={{ fontSize: '.68rem', color: 'var(--text-3)', marginTop: 2 }}>
+                  Mỗi sản phẩm phải được cấp <strong>Digital Product Passport (DPP)</strong> trên chuỗi Polygon trước khi hiển thị với người mua. Hệ thống tự động mint sau khi pháp lý đầy đủ.
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: '.65rem', color: 'var(--text-4)' }}>DPP đã mint</div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--c6-500)' }}>{productList.filter(p => p.dppStatus === 'minted').length}/{productList.length}</div>
+              </div>
             </div>
 
             {/* Search */}
@@ -849,8 +881,16 @@ export default function Vendor() {
                           <td style={{ padding: '12px 14px' }}>{p.sold.toLocaleString()}</td>
                           <td style={{ padding: '12px 14px' }}><span className="badge badge-c6">{p.commission}</span></td>
                           <td style={{ padding: '12px 14px' }}>
-                            <span className={`status-pill badge ${dsc.badge}`}>{dsc.label}</span>
-                            {p.dppTokenId !== '—' && <span className="mono" style={{ fontSize: '.6rem', color: 'var(--text-4)', marginLeft: 4 }}>{p.dppTokenId}</span>}
+                            {mintingIds.has(p.id) ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 20, background: 'rgba(99,102,241,.12)', color: 'var(--c6-500)', fontSize: '.65rem', fontWeight: 700 }}>
+                                ⛓️ Đang mint...
+                              </span>
+                            ) : (
+                              <>
+                                <span className={`status-pill badge ${dsc.badge}`}>{dsc.label}</span>
+                                {p.dppTokenId !== '—' && <span className="mono" style={{ fontSize: '.6rem', color: 'var(--text-4)', marginLeft: 4 }}>{p.dppTokenId}</span>}
+                              </>
+                            )}
                           </td>
                           <td style={{ padding: '12px 14px' }}>
                             {(p as any).legalOk === true ? (
@@ -871,6 +911,14 @@ export default function Vendor() {
                                 </>
                               ) : (
                                 <>
+                                  {p.dppStatus === 'pending' && !mintingIds.has(p.id) && (
+                                    <button className="btn btn-primary btn-sm" style={{ fontSize: '.65rem', padding: '4px 10px', background: 'var(--c6-500)', border: 'none' }} onClick={() => handleMintDpp(p.id)}>
+                                      ⛓️ Mint DPP
+                                    </button>
+                                  )}
+                                  {mintingIds.has(p.id) && (
+                                    <span style={{ fontSize: '.65rem', color: 'var(--c6-500)', fontWeight: 700 }}>⛓️ Minting...</span>
+                                  )}
                                   <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px' }} onClick={() => { setEditingProduct(p.id); setNewProduct({ name: p.name, price: p.price, stock: String(p.stock), commission: p.commission }); setShowAddProduct(false); }}>{t('vendor.products.editBtn')}</button>
                                   <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px' }} onClick={() => handleToggleProduct(p.id)}>{p.hidden ? t('vendor.products.showBtn') : t('vendor.products.hideBtn')}</button>
                                   <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px', color: '#ef4444' }} onClick={() => handleDeleteProduct(p.id)}>{t('vendor.products.deleteBtn')}</button>

@@ -26,6 +26,7 @@ export const vendorTranslations: TranslationMap = {
   'vendor.status.lowStock': { vi: 'Sắp hết', en: 'Low Stock', zh: '库存不足', th: 'สินค้าใกล้หมด', hi: 'कम स्टॉक' },
   'vendor.status.outOfStock': { vi: 'Hết hàng', en: 'Out of Stock', zh: '缺货', th: 'สินค้าหมด', hi: 'स्टॉक में नहीं' },
   'vendor.status.hidden': { vi: 'Đã ẩn', en: 'Hidden', zh: '已隐藏', th: 'ซ่อนอยู่', hi: 'छिपा हुआ' },
+  'vendor.status.dppPending': { vi: 'Chờ Blockchain', en: 'Awaiting DPP', zh: '等待区块链', th: 'รอบล็อกเชน', hi: 'ब्लॉकचेन प्रतीक्षारत' },
 
   // ── Order status ──
   'vendor.order.delivered': { vi: 'Đã giao', en: 'Delivered', zh: '已交付', th: 'ส่งแล้ว', hi: 'डिलीवर किया गया' },
