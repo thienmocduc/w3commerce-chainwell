@@ -183,7 +183,7 @@ export default function WKToken() {
         </div>
       )}
 
-      <div style={{padding:'24px 24px 40px', maxWidth:900, margin:'0 auto'}}>
+      <div style={{padding:'24px 32px 40px', maxWidth:1400, margin:'0 auto'}}>
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:24}}>
           <div style={{width:52,height:52,borderRadius:'50%',
@@ -380,7 +380,7 @@ export default function WKToken() {
         {/* ── SEND ── */}
         {tab==='send' && (
           !wallet ? <div style={{textAlign:'center',padding:40}}><button onClick={connectWallet} className="btn btn-primary">🦊 Kết nối ví trước</button></div> : (
-            <div style={{...cardStyle,maxWidth:480}}>
+            <div style={{...cardStyle,maxWidth:640}}>
               <div style={{fontWeight:700,fontSize:'1rem',marginBottom:20}}>📤 Gửi WK Token</div>
               <div style={{marginBottom:14}}>
                 <label style={{fontSize:'.72rem',color:'var(--text-3)',display:'block',marginBottom:4}}>Địa chỉ nhận (0x...)</label>
@@ -412,7 +412,7 @@ export default function WKToken() {
           <>
             <div style={cardStyle}>
               <div style={{fontWeight:700,marginBottom:16}}>📋 Thông tin Token</div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
                 {[
                   ['Tên token','WellKOC Token'],['Symbol','WK'],['Decimal','18'],
                   ['Blockchain','Polygon (MATIC)'],['Chuẩn','ERC-20 + Permit + Votes'],
@@ -448,7 +448,7 @@ export default function WKToken() {
 
             <div style={cardStyle}>
               <div style={{fontWeight:700,marginBottom:16}}>⚡ Ứng dụng WK Token</div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
                 {UTILITY.map(u=>(
                   <div key={u.title} style={{padding:14,borderRadius:10,background:'var(--bg-2)',border:'1px solid var(--border)'}}>
                     <div style={{fontSize:'1.2rem',marginBottom:6}}>{u.icon}</div>
