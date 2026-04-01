@@ -151,7 +151,7 @@ const DRAWER_SECTIONS = [
       { to: '/dashboard?tab=payments', key: 'drawer.commission', icon: '◈' },
       { to: '/koc', key: 'drawer.creatorToken', icon: '◎' },
       { to: '/dpp', key: 'drawer.reputationNft', icon: '◇' },
-      { to: '/dashboard?tab=wkpay', key: 'drawer.wallet', icon: '◆' },
+      { to: '/wk-token', key: 'drawer.wallet', icon: '◆' },
     ],
   },
   {
