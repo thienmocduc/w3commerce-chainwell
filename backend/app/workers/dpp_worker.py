@@ -112,7 +112,7 @@ def mint_dpp_nft(self, product_id: str, metadata: dict) -> dict:
                 dpp_record.token_id = token_id
                 dpp_record.ipfs_uri = ipfs_uri
                 dpp_record.tx_hash = tx_hash
-                dpp_record.metadata = dpp_metadata
+                dpp_record.nft_metadata = dpp_metadata
                 dpp_record.is_active = True
                 from datetime import datetime
                 dpp_record.minted_at = datetime.utcnow()
