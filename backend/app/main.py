@@ -66,9 +66,32 @@ def create_app() -> FastAPI:
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=["*", "X-WK-Access"],
         expose_headers=["X-Request-ID", "X-RateLimit-Remaining"],
     )
+
+    # ── WellKOC Domain-Bound Access Guard ────────────────────
+    # Protects every /api/v1/* route with an HMAC-derived token
+    # that is bound to the domain secret — clone sites cannot
+    # replicate this without the private SECRET_KEY.
+    _OPEN_PATHS = frozenset({
+        "/health", "/ready", "/docs", "/redoc",
+        "/openapi.json", "/metrics", "/",
+    })
+
+    @app.middleware("http")
+    async def wk_access_guard(request: Request, call_next):
+        path = request.url.path
+        # Only guard /api/* paths in production
+        if settings.is_production and path.startswith("/api/"):
+            token = request.headers.get("X-WK-Access", "")
+            expected = settings.wk_api_token
+            if not token or not __import__("hmac").compare_digest(token, expected):
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Access denied — invalid domain token"},
+                )
+        return await call_next(request)
 
     # ── Request timing middleware ────────────────────────────
     @app.middleware("http")

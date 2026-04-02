@@ -2,6 +2,8 @@
 WellKOC Platform — Core Configuration
 Centralized settings using Pydantic Settings v2
 """
+import hashlib
+import hmac
 from functools import lru_cache
 from typing import Literal
 from pydantic import Field, field_validator
@@ -115,6 +117,12 @@ class Settings(BaseSettings):
     GHN_SHOP_ID: int = 0
     GHTK_TOKEN: str = ""
 
+    # ── Domain Security Token ────────────────────
+    # Optional override — set WK_ACCESS_TOKEN in Render + VITE_WK_ACCESS_TOKEN
+    # in frontend build env so both sides share the same literal token.
+    # Leave blank to use HMAC auto-derivation from SECRET_KEY.
+    WK_ACCESS_TOKEN: str = ""
+
     # ── Monitoring ──────────────────────────────
     SENTRY_DSN: str = ""
     PROMETHEUS_METRICS_PATH: str = "/metrics"
@@ -155,6 +163,21 @@ class Settings(BaseSettings):
     @property
     def is_development(self) -> bool:
         return self.APP_ENV == "development"
+
+    @property
+    def wk_api_token(self) -> str:
+        """Return the domain-bound access token.
+        Uses WK_ACCESS_TOKEN env var if set (recommended for production so the
+        frontend can share the same literal value via VITE_WK_ACCESS_TOKEN).
+        Falls back to an HMAC-SHA256 derivation from SECRET_KEY — competitors
+        cannot reproduce the token without the private key."""
+        if self.WK_ACCESS_TOKEN:
+            return self.WK_ACCESS_TOKEN
+        return hmac.new(
+            self.SECRET_KEY.encode("utf-8"),
+            b"wk-api-access-2026@wellkoc.com",
+            hashlib.sha256,
+        ).hexdigest()[:24]
 
 
 @lru_cache

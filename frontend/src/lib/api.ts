@@ -42,6 +42,11 @@ async function extractErrorMessage(res: Response): Promise<string> {
 
 // ─── Core API client ───────────────────────────────────────────────────────────
 
+// Domain-bound access token — prevents competitor sites from calling the API.
+// Set VITE_WK_ACCESS_TOKEN in your .env.production (and Netlify/Vercel build vars)
+// to the same value as WK_ACCESS_TOKEN in the Render backend env vars.
+const _WK_ACCESS = import.meta.env.VITE_WK_ACCESS_TOKEN as string | undefined;
+
 function buildHeaders(token?: string | null, extra?: HeadersInit): HeadersInit {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -50,6 +55,9 @@ function buildHeaders(token?: string | null, extra?: HeadersInit): HeadersInit {
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (_WK_ACCESS) {
+    headers['X-WK-Access'] = _WK_ACCESS;
   }
   return headers;
 }
