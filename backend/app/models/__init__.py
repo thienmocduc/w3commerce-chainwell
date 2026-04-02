@@ -6,7 +6,7 @@ from app.models.review import Review
 from app.models.membership import Membership
 from app.models.social import Follow
 from app.models.gamification import (
-    UserXP, XPTransaction, Achievement, UserAchievement,
+    UserWK, WKTransaction, Achievement, UserAchievement,
     Mission, UserMission, DailyCheckin, LeaderboardEntry, KOCBattle,
 )
 from app.models.pool_ranking import PoolRanking, PoolConfig, PoolDistribution
