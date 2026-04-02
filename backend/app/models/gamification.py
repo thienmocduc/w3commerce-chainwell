@@ -151,7 +151,7 @@ class WKTransaction(Base):
     multiplier_applied: Mapped[float] = mapped_column(Numeric(3, 2), default=1.0)
     total_after: Mapped[int] = mapped_column(Integer)
     reference_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # order_id, etc.
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    tx_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 

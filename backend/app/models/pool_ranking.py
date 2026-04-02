@@ -104,6 +104,6 @@ class PoolDistribution(Base):
     recipients_count: Mapped[int] = mapped_column(Integer, default=0)
     tx_hash: Mapped[Optional[str]] = mapped_column(String(66), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending/processing/completed/failed
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    dist_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     distributed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

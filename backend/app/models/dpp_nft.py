@@ -13,7 +13,7 @@ class DPPRecord(Base):
     token_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     ipfs_uri: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     tx_hash: Mapped[Optional[str]] = mapped_column(String(66), nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    nft_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
     scan_count: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     minted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
