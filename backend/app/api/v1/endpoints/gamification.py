@@ -124,7 +124,6 @@ async def my_missions(
             "progress": progress,
             "progress_pct": min(100, int(progress / m.target_count * 100)),
             "status": status,
-            "wk_reward": m.wk_reward,
             "wk_reward": float(m.wk_reward),
             "can_claim": status == MissionStatus.COMPLETED,
             "period": period,
@@ -184,7 +183,6 @@ async def claim_mission_reward(
     return {
         "claimed": True,
         "mission_name": mission.name,
-        "wk_reward": mission.wk_reward,
         "wk_reward": float(mission.wk_reward),
     }
 

@@ -123,7 +123,7 @@ def mint_dpp_nft(self, product_id: str, metadata: dict) -> dict:
                     token_id=token_id,
                     ipfs_uri=ipfs_uri,
                     tx_hash=tx_hash,
-                    metadata=dpp_metadata,
+                    nft_metadata=dpp_metadata,
                     is_active=True,
                     minted_at=datetime.utcnow(),
                 )

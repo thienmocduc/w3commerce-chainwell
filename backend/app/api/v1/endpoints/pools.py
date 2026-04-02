@@ -508,7 +508,7 @@ async def trigger_distribution(
             tx_hash=tx_hash,
             status="completed",
             distributed_at=now,
-            metadata={
+            dist_metadata={
                 "total_pool_amount": body.total_pool_amount,
                 "pool_percentage": cfg["percentage"],
                 "triggered_by": str(current_user.id),

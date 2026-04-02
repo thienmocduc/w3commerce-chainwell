@@ -85,7 +85,7 @@ class GamificationService:
             multiplier_applied=effective_multiplier,
             total_after=user_wk.total_wk,
             reference_id=reference_id,
-            metadata=metadata,
+            tx_metadata=metadata,
         )
         self.db.add(tx)
         await self.db.flush()
@@ -167,7 +167,6 @@ class GamificationService:
             user_id=user_id,
             checkin_date=today,
             streak_day=user_wk.current_streak,
-            wk_earned=total_wk,
             wk_earned=wk_reward,
             bonus_reason=bonus_reason,
         )
@@ -182,17 +181,17 @@ class GamificationService:
         # Real-time notify (WebSocket)
         from app.api.v1.endpoints.websocket import notify_user
         await notify_user(str(user_id), "daily_checkin", {
-            "wk_earned": total_wk,
-            "streak": user_wk.current_streak,
+            "xp_earned": total_wk,
             "wk_earned": float(wk_reward),
+            "streak": user_wk.current_streak,
             "bonus": streak_milestone_bonus > 0,
         })
 
         return {
-            "wk_earned": total_wk,
+            "xp_earned": total_wk,
+            "wk_earned": float(wk_reward),
             "streak": user_wk.current_streak,
             "longest_streak": user_wk.longest_streak,
-            "wk_earned": float(wk_reward),
             "streak_milestone": streak_milestone_bonus > 0,
             "milestone_bonus": streak_milestone_bonus,
         }
