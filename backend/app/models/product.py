@@ -8,7 +8,7 @@ from typing import Optional
 
 from sqlalchemy import (
     Boolean, DateTime, ForeignKey, Integer, Numeric,
-    String, Text, func, Index,
+    String, Text, func, Index, text,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
