@@ -295,7 +295,7 @@ export default function Checkout() {
           {toastMsg}
         </div>
       )}
-      <div className="container" style={{ paddingTop: 32, paddingBottom: 80 }}>
+      <div style={{ width: '100%', maxWidth: 1600, margin: '0 auto', padding: '32px 32px 80px' }}>
         <div className="section-badge">💳 {t('checkout.badge')}</div>
         <h1 className="display-md" style={{ marginBottom: 4 }}>{t('checkout.title')}</h1>
 
@@ -335,7 +335,7 @@ export default function Checkout() {
           })}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 32 }}>
           {/* Left - Step Content */}
           <div>
             {/* Step 1: Shipping */}

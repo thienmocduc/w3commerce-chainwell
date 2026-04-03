@@ -7,6 +7,19 @@ import type { Locale } from '@hooks/useI18n';
 import { useAuth } from '@hooks/useAuth';
 import ChatWidget from '@components/ChatWidget';
 
+/* ── Zeni Digital Logo ── */
+function ZeniLogo({ height = 36 }: { height?: number }) {
+  return (
+    <img
+      src="/zeni-logo.png"
+      alt="Zeni Digital"
+      height={height}
+      style={{ display: 'block', objectFit: 'contain' }}
+      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+    />
+  );
+}
+
 /* ── WK Logo SVG — Brand chuẩn từ Design System ── */
 function WKLogo({ size = 38 }: { size?: number }) {
   return (
@@ -340,7 +353,7 @@ export default function MainLayout() {
             flexShrink: 0,
           }}
         >
-          <WKLogo size={32} />
+          <ZeniLogo height={32} />
           <span
             style={{
               fontFamily: "'Noto Sans', sans-serif",
@@ -754,7 +767,7 @@ export default function MainLayout() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <WKLogo size={28} />
+            <ZeniLogo height={28} />
             <span
               style={{
                 fontFamily: 'var(--ff-display)',
@@ -1008,7 +1021,7 @@ export default function MainLayout() {
           padding: '64px 24px 32px',
         }}
       >
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1440, margin: '0 auto' }}>
           <div
             style={{
               display: 'grid',
@@ -1020,7 +1033,7 @@ export default function MainLayout() {
             {/* Brand column */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <WKLogo size={32} />
+                <ZeniLogo height={36} />
                 <span
                   style={{
                     fontFamily: 'var(--ff-display)',

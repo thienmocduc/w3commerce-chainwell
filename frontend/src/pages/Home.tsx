@@ -120,11 +120,11 @@ export default function Home() {
               flexWrap: 'wrap',
             }}
           >
-            <Link to="/marketplace" className="btn btn-primary btn-lg">
-              {t('home.hero.cta.explore')} →
+            <Link to="/login" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #22c55e, #06b6d4)', fontSize: '1.05rem', padding: '14px 36px' }}>
+              Bắt đầu →
             </Link>
-            <Link to="/about" className="btn btn-ghost btn-lg" style={{ border: '1px solid var(--border)' }}>
-              {t('home.hero.cta.story')}
+            <Link to="/marketplace" className="btn btn-ghost btn-lg" style={{ border: '1px solid var(--border)' }}>
+              {t('home.hero.cta.explore')}
             </Link>
           </div>
 
