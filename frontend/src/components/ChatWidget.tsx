@@ -83,7 +83,7 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* ── Floating button ── */}
+      {/* ── Floating button (3 cm ≈ 113 px at 96 dpi) ── */}
       <button
         onClick={() => setOpen(o => !o)}
         aria-label="Chat với WellKOC AI"
@@ -91,36 +91,59 @@ export default function ChatWidget() {
           position: 'fixed',
           bottom: 24,
           right: 24,
-          width: 56,
-          height: 56,
+          width: 113,
+          height: 113,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg,#22c55e,#06b6d4)',
+          background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(6,182,212,.4)',
+          boxShadow: '0 4px 24px rgba(6,182,212,.45)',
           zIndex: 9999,
           transition: 'transform .2s,box-shadow .2s',
           animation: pulse && !open ? 'wk-chat-pulse 2s ease-in-out infinite' : 'none',
+          padding: 0,
+          overflow: 'hidden',
         }}
-        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.07)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        {open
-          ? <svg width="22" height="22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="4" x2="18" y2="18"/><line x1="18" y1="4" x2="4" y2="18"/></svg>
-          : <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        }
+        {open ? (
+          /* Close overlay when chat is open */
+          <div style={{
+            width: '100%', height: '100%',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg,#22c55e,#06b6d4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="26" height="26" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="5" y1="5" x2="21" y2="21"/><line x1="21" y1="5" x2="5" y2="21"/>
+            </svg>
+          </div>
+        ) : (
+          <img
+            src="/chatbot-avatar.png"
+            alt="WellKOC AI"
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+            onError={e => {
+              // Fallback to gradient icon if image missing
+              const btn = e.currentTarget.parentElement!;
+              e.currentTarget.style.display = 'none';
+              btn.style.background = 'linear-gradient(135deg,#22c55e,#06b6d4)';
+            }}
+          />
+        )}
         {/* Unread dot */}
         {!open && (
           <span style={{
-            position: 'absolute', top: 2, right: 2,
-            width: 12, height: 12,
+            position: 'absolute', top: 6, right: 6,
+            width: 14, height: 14,
             background: '#f43f5e',
             borderRadius: '50%',
             border: '2px solid #fff',
-            fontSize: 7, color: '#fff',
+            fontSize: 8, color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 700,
           }}>1</span>
@@ -156,12 +179,14 @@ export default function ChatWidget() {
             gap: 10,
             flexShrink: 0,
           }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'rgba(255,255,255,.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18,
-            }}>🤖</div>
+            <img
+              src="/chatbot-avatar.png"
+              alt="WellKOC AI"
+              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              onError={e => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
             <div style={{ flex: 1 }}>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>WellKOC AI</div>
               <div style={{ color: 'rgba(255,255,255,.7)', fontSize: '0.72rem' }}>
