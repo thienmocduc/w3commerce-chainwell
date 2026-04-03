@@ -125,14 +125,18 @@ def create_app() -> FastAPI:
     @app.get("/ready", tags=["System"])
     async def readiness():
         """Deep readiness: checks DB + Redis + Polygon RPC"""
-        checks = {"database": False, "redis": False}
+        checks: dict = {"database": False, "redis": False}
+        db_error: str = ""
         try:
-            from app.core.database import async_session
+            from app.core.database import async_session, _db_url
             async with async_session() as session:
-                await session.execute("SELECT 1")
+                from sqlalchemy import text
+                await session.execute(text("SELECT 1"))
             checks["database"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            db_error = f"{type(e).__name__}: {e}"
+        if db_error:
+            checks["db_error"] = db_error[:200]
         try:
             from app.core.redis_client import redis_client
             await redis_client.ping()
@@ -140,7 +144,15 @@ def create_app() -> FastAPI:
         except Exception:
             pass
 
-        all_ok = all(checks.values())
+        # Show masked DB host for diagnosis
+        try:
+            from app.core.database import _db_url
+            import re
+            host_part = re.sub(r"://[^@]+@", "://***@", _db_url)
+            checks["db_url"] = host_part[:120]
+        except Exception:
+            pass
+        all_ok = checks.get("database") is True
         return JSONResponse(
             status_code=200 if all_ok else 503,
             content={"status": "ready" if all_ok else "degraded", "checks": checks},
