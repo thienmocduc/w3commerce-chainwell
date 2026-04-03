@@ -572,7 +572,7 @@ export default function Agents() {
                 <div style={{position:'absolute',top:'110%',right:0,background:isDark?'#0d2035':'#fff',border:`1px solid ${BORDER}`,borderRadius:10,padding:4,zIndex:200,boxShadow:'0 8px 32px rgba(0,0,0,.3)',minWidth:140}}>
                   {LANGUAGES.map(lang=>(
                     <button key={lang.code} onClick={()=>{setLocale(lang.code as Locale);setLangOpen(false);}} style={{display:'flex',alignItems:'center',gap:8,width:'100%',padding:'6px 10px',borderRadius:7,border:'none',background:locale===lang.code?(isDark?'rgba(0,201,200,.1)':'rgba(0,150,180,.08)'):'transparent',color:locale===lang.code?'#00c9c8':TEXT_DIM,cursor:'pointer',fontSize:'0.78rem',fontWeight:locale===lang.code?700:400}}>
-                      <span>{lang.flag}</span><span>{lang.name}</span>
+                      <span>{lang.flag}</span><span>{lang.label}</span>
                     </button>
                   ))}
                 </div>

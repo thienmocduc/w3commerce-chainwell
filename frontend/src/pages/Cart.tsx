@@ -71,8 +71,24 @@ export default function Cart() {
     setLoading(true);
     setError(null);
     try {
-      const data = await cartApi.get(token ?? undefined);
-      setItems(data.items || []);
+      const data = await cartApi.get(token!);
+      const GRADIENTS = [
+        'linear-gradient(135deg, var(--c4-500), var(--c5-500))',
+        'linear-gradient(135deg, var(--c5-500), var(--c6-500))',
+        'linear-gradient(135deg, var(--c6-500), var(--c7-500))',
+        'linear-gradient(135deg, var(--c7-500), var(--c4-500))',
+      ];
+      setItems((data.items || []).map((item: any, idx: number) => ({
+        id: item.id,
+        productId: item.product_id,
+        name: item.product_name,
+        price: item.unit_price,
+        quantity: item.quantity,
+        dpp: item.dpp_enabled,
+        gradient: GRADIENTS[idx % GRADIENTS.length],
+        imageUrl: item.product_image,
+        xpPerUnit: item.xp_reward ?? 10,
+      })));
     } catch (err: any) {
       if (err.status === 401) {
         navigate('/login', { replace: true });
@@ -95,7 +111,7 @@ export default function Cart() {
     // Optimistic update
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
     try {
-      await cartApi.updateItem(item.id, { quantity: newQty }, token ?? undefined);
+      await cartApi.updateItem(item.id, newQty, token!);
     } catch (err: any) {
       // Revert on failure
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: item.quantity } : i));

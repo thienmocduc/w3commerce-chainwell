@@ -437,7 +437,7 @@ export default function Vendor() {
     setShowAddProduct(false);
     showToast(`📦 Sản phẩm đã lưu — đang mint DPP lên blockchain...`, 'info');
     if (token) {
-      vendorApi.createProduct(payload as ApiProduct, token)
+      vendorApi.createProduct(payload as unknown as ApiProduct, token)
         .then(created => setProductList(prev => prev.map(x => x.id === newId ? mapApiProductToLocal(created, prev.indexOf(x)) : x)))
         .catch(() => {});
     }
@@ -919,7 +919,7 @@ export default function Vendor() {
                                   {mintingIds.has(p.id) && (
                                     <span style={{ fontSize: '.65rem', color: 'var(--c6-500)', fontWeight: 700 }}>⛓️ Minting...</span>
                                   )}
-                                  <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px' }} onClick={() => { setEditingProduct(p.id); setNewProduct({ name: p.name, price: p.price, stock: String(p.stock), commission: p.commission }); setShowAddProduct(false); }}>{t('vendor.products.editBtn')}</button>
+                                  <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px' }} onClick={() => { setEditingProduct(p.id); setNewProduct({ name: p.name, price: p.price, stock: String(p.stock), commission: p.commission, description: (p as any).description || '', category: (p as any).category || '', origin: (p as any).origin || '', weight: (p as any).weight || '', sku: (p as any).sku || '', imageUrl: (p as any).imageUrl || '' }); setShowAddProduct(false); }}>{t('vendor.products.editBtn')}</button>
                                   <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px' }} onClick={() => handleToggleProduct(p.id)}>{p.hidden ? t('vendor.products.showBtn') : t('vendor.products.hideBtn')}</button>
                                   <button className="btn btn-secondary btn-sm" style={{ fontSize: '.65rem', padding: '4px 8px', color: '#ef4444' }} onClick={() => handleDeleteProduct(p.id)}>{t('vendor.products.deleteBtn')}</button>
                                 </>

@@ -90,7 +90,7 @@ export default function ProductDetail() {
     if (!newReview.content.trim() || !product?.id) return;
     setSubmittingReview(true);
     try {
-      await reviewsApi.create({ product_id: product.id, rating: newReview.rating, text: newReview.content }, token);
+      await reviewsApi.create({ product_id: product.id, order_id: '', rating: newReview.rating, comment: newReview.content }, token);
       setReviewSubmitted(true);
       setNewReview({ rating: 5, content: '' });
       fetchReviews();
