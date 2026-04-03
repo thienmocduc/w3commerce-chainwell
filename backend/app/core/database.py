@@ -42,13 +42,13 @@ class Base(DeclarativeBase):
 async def init_db() -> None:
     """Import all models before creating tables"""
     from app.models import (  # noqa: F401
-        user, product, order, commission, cart, review,
+        user, product, order, cart, review,
         koc_profile, vendor, shipment, dpp_nft, membership,
         return_request, group_buy, live_stream, social,
         pool_ranking, flash_sale,
         recommendation, social_comment, coaching_report,
         publish_job, fraud,
-        shopping_event, compliance, analytics,
+        shopping_event, compliance, analytics, gamification,
     )
     async with engine.begin() as conn:
         # Only create tables in dev; use Alembic in production
