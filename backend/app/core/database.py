@@ -40,7 +40,10 @@ class Base(DeclarativeBase):
 
 # ── Lifecycle ───────────────────────────────────────────────
 async def init_db() -> None:
-    """Import all models before creating tables"""
+    """Import all models to register them with SQLAlchemy metadata.
+    In development: auto-creates tables via create_all.
+    In production: use Alembic migrations; no DB connection needed here.
+    """
     from app.models import (  # noqa: F401
         user, product, order, cart, review,
         koc_profile, vendor, shipment, dpp_nft, membership,
@@ -50,9 +53,9 @@ async def init_db() -> None:
         publish_job, fraud,
         shopping_event, compliance, analytics, gamification,
     )
-    async with engine.begin() as conn:
-        # Only create tables in dev; use Alembic in production
-        if settings.is_development:
+    # Only connect to DB in development — production uses Alembic migrations
+    if settings.is_development:
+        async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
 
