@@ -33,10 +33,9 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  // Pulse the button after 8 s to attract attention
+  // Start breathing animation immediately
   useEffect(() => {
-    const t = setTimeout(() => setPulse(true), 8000);
-    return () => clearTimeout(t);
+    setPulse(true);
   }, []);
 
   useEffect(() => {
@@ -102,13 +101,13 @@ export default function ChatWidget() {
           justifyContent: 'center',
           boxShadow: '0 4px 24px rgba(6,182,212,.45)',
           zIndex: 9999,
-          transition: 'transform .2s,box-shadow .2s',
-          animation: pulse && !open ? 'wk-chat-pulse 2s ease-in-out infinite' : 'none',
+          transition: 'box-shadow .2s',
+          animation: !open ? 'wk-breathe 2.8s ease-in-out infinite' : 'none',
           padding: 0,
           overflow: 'hidden',
         }}
-        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.07)')}
-        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+        onMouseEnter={e => { e.currentTarget.style.animationPlayState = 'paused'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+        onMouseLeave={e => { e.currentTarget.style.animationPlayState = 'running'; e.currentTarget.style.transform = ''; }}
       >
         {open ? (
           /* Close overlay when chat is open */
@@ -333,9 +332,15 @@ export default function ChatWidget() {
       )}
 
       <style>{`
-        @keyframes wk-chat-pulse {
-          0%,100% { box-shadow: 0 4px 20px rgba(6,182,212,.4); }
-          50%      { box-shadow: 0 4px 32px rgba(6,182,212,.8), 0 0 0 8px rgba(6,182,212,.15); }
+        @keyframes wk-breathe {
+          0%,100% {
+            transform: scale(1);
+            box-shadow: 0 4px 20px rgba(6,182,212,.35);
+          }
+          50% {
+            transform: scale(1.08);
+            box-shadow: 0 6px 36px rgba(6,182,212,.65), 0 0 0 10px rgba(6,182,212,.12);
+          }
         }
         @keyframes wk-slide-up {
           from { opacity: 0; transform: translateY(16px) scale(.97); }
