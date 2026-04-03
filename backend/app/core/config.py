@@ -117,6 +117,13 @@ class Settings(BaseSettings):
     GHN_SHOP_ID: int = 0
     GHTK_TOKEN: str = ""
 
+    # ── Supabase ─────────────────────────────────
+    # JWT Secret from Supabase Dashboard → Project Settings → API → JWT Secret
+    # Required so backend can validate Supabase-issued access tokens.
+    SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+
     # ── Domain Security Token ────────────────────
     # Optional override — set WK_ACCESS_TOKEN in Render + VITE_WK_ACCESS_TOKEN
     # in frontend build env so both sides share the same literal token.

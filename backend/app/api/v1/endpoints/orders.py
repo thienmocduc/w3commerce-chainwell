@@ -15,11 +15,20 @@ from app.models.user import User, UserRole
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 class CheckoutReq(BaseModel):
-    items: list
+    """
+    Frontend (CheckoutData) sends shipping_address + payment_method.
+    Items are loaded from cart (Redis). items field is optional for
+    direct API calls (admin/testing).
+    """
     shipping_address: dict
     payment_method: str
-    voucher_code: Optional[str] = None
+    coupon_code: Optional[str] = None
+    voucher_code: Optional[str] = None       # alias
     koc_ref_id: Optional[str] = None
+    koc_referral_code: Optional[str] = None  # alias
+    use_w3c_token: Optional[bool] = False
+    notes: Optional[str] = None
+    items: Optional[list] = None             # optional — loaded from cart if omitted
     idempotency_key: Optional[str] = None
 
 @router.post("", status_code=201)
@@ -28,18 +37,35 @@ async def create_order(body: CheckoutReq, current_user: CurrentUser, db: AsyncSe
     existing = await db.execute(select(Order).where(Order.idempotency_key == idem_key))
     if existing.scalar_one_or_none():
         raise HTTPException(409, "Đơn hàng đã tồn tại (idempotent)")
-    subtotal = sum(float(i.get("price",0)) * i.get("quantity",1) for i in body.items)
+
+    # Load items from cart if not provided directly
+    items = body.items
+    if not items:
+        from app.api.v1.endpoints.cart import _get_cart
+        items = await _get_cart(str(current_user.id))
+    if not items:
+        raise HTTPException(400, "Giỏ hàng trống — không thể tạo đơn hàng")
+
+    coupon = body.coupon_code or body.voucher_code
+    koc_ref = body.koc_ref_id or body.koc_referral_code
+
+    subtotal = sum(float(i.get("price", 0)) * i.get("quantity", 1) for i in items)
     order_num = f"ORD-{datetime.now().strftime('%Y%m')}-{secrets.token_hex(3).upper()}"
     order = Order(
         order_number=order_num, buyer_id=current_user.id,
-        vendor_id=body.items[0].get("vendor_id", current_user.id) if body.items else current_user.id,
-        items=body.items, subtotal=subtotal, total=subtotal,
+        vendor_id=items[0].get("vendor_id", current_user.id),
+        items=items, subtotal=subtotal, total=subtotal,
         shipping_address=body.shipping_address, payment_method=body.payment_method,
-        voucher_code=body.voucher_code, status=OrderStatus.PENDING,
+        voucher_code=coupon, status=OrderStatus.PENDING,
         idempotency_key=idem_key,
         status_history=[{"status": "pending", "timestamp": datetime.now(timezone.utc).isoformat()}],
     )
     db.add(order); await db.flush()
+
+    # Clear cart after successful order creation
+    from app.api.v1.endpoints.cart import _save_cart
+    await _save_cart(str(current_user.id), [])
+
     return {"order_id": str(order.id), "order_number": order.order_number, "total": order.total, "status": order.status}
 
 @router.get("")

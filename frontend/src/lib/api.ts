@@ -280,7 +280,7 @@ export const cartApi = {
   },
 
   applyCoupon(code: string, token: string): Promise<Cart> {
-    return apiClient.post('/cart/coupon', { coupon_code: code }, token);
+    return apiClient.post('/cart/coupon', { code }, token);
   },
 
   removeCoupon(token: string): Promise<Cart> {

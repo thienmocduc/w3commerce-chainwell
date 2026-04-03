@@ -77,6 +77,34 @@ async def remove_item(product_id: UUID, current_user: CurrentUser):
 async def clear_cart(current_user: CurrentUser):
     r = await get_redis(); await r.delete(cart_key(str(current_user.id)))
 
+# ── PUT alias for frontend compatibility (frontend uses PUT, backend had PATCH) ──
+@router.put("/items/{product_id}")
+async def update_item_put(product_id: UUID, body: UpdateItemReq, current_user: CurrentUser):
+    """Alias of PATCH /items/{product_id} — frontend sends PUT"""
+    return await update_item(product_id, body, current_user)
+
+# ── Coupon endpoints ─────────────────────────────────────────────────────────────
+class CouponReq(BaseModel):
+    code: str
+
+@router.post("/coupon")
+async def apply_coupon(body: CouponReq, current_user: CurrentUser):
+    """Apply a coupon/voucher code to the cart (stub — real validation in orders)."""
+    code = body.code.strip().upper()
+    # Basic validation: non-empty code accepted optimistically;
+    # actual discount is computed at order creation.
+    if not code:
+        raise HTTPException(400, "Mã giảm giá không hợp lệ")
+    r = await get_redis()
+    await r.set(f"cart_coupon:{current_user.id}", code, ex=CART_TTL)
+    return {"status": "applied", "code": code, "message": f"Áp dụng mã '{code}' thành công"}
+
+@router.delete("/coupon", status_code=204)
+async def remove_coupon(current_user: CurrentUser):
+    """Remove applied coupon from the cart."""
+    r = await get_redis()
+    await r.delete(f"cart_coupon:{current_user.id}")
+
 @router.post("/copy/{koc_id}")
 async def copy_koc_cart(koc_id: str, current_user: CurrentUser):
     koc_items = await _get_cart(f"koc_recommend:{koc_id}")

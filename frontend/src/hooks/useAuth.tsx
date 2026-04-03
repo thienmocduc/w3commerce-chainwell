@@ -184,13 +184,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Sync loginWithCredentials — backward compat (fires async login in background)
+  // Sync loginWithCredentials — kept for backward compat but now delegates to loginAsync
+  // Callers should prefer loginAsync directly for proper error handling.
   const loginWithCredentials = useCallback(
     (email: string, password: string, role: UserRole = 'user'): LoginResult => {
-      // Fire async login in background
-      loginAsync(email, password, role);
-      if (email && password.length >= 6) return { success: true };
-      return { success: false, error: 'Email hoặc mật khẩu không đúng' };
+      if (!email || password.length < 6) {
+        return { success: false, error: 'Email hoặc mật khẩu không đúng' };
+      }
+      // Fire async login without blocking — real result via onAuthStateChange
+      loginAsync(email, password, role).catch(() => {});
+      return { success: true };
     },
     [loginAsync],
   );
