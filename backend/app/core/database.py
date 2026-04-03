@@ -14,21 +14,26 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 
 # ── Engine ──────────────────────────────────────────────────
-# Production: NullPool (one connection per request) — safest with Supabase
-# session pooler. Each request opens a fresh asyncpg connection with a 12 s
-# timeout so cold connections don't hang for the asyncpg default 60 s.
 _is_production = settings.APP_ENV == "production"
 _is_test = settings.APP_ENV == "test"
 
+# In production, prefer the Supabase TRANSACTION pooler (port 6543).
+# The session pooler (port 5432) sometimes drops idle connections on Render.
+# Auto-rewrite the URL so we don't need to update the Render env var.
+_db_url = settings.DATABASE_URL
+if _is_production and "pooler.supabase.com:5432/" in _db_url:
+    _db_url = _db_url.replace("pooler.supabase.com:5432/", "pooler.supabase.com:6543/")
+
 if _is_production:
-    _pool_kwargs: dict = {}
+    # Small pool works well with PgBouncer transaction mode
+    _pool_kwargs: dict = {"pool_size": 3, "max_overflow": 2, "pool_recycle": 300, "pool_pre_ping": True}
     _connect_args: dict = {
         "ssl": "require",
-        "prepared_statement_cache_size": 0,
-        "timeout": 12,        # TCP+SSL handshake timeout (asyncpg default is 60 s)
+        "prepared_statement_cache_size": 0,  # required for PgBouncer transaction mode
+        "timeout": 12,         # asyncpg TCP+SSL connect timeout (default 60 s)
         "command_timeout": 25, # per-query timeout
     }
-    _poolclass = NullPool
+    _poolclass = None
 elif _is_test:
     _pool_kwargs = {}
     _connect_args = {}
@@ -39,7 +44,7 @@ else:
     _poolclass = None
 
 engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
+    _db_url,
     **_pool_kwargs,
     echo=settings.DB_ECHO,
     future=True,
