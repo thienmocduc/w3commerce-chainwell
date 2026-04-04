@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
+import { API_BASE } from '@hooks/useAuth';
 
 type RoleOption = 'buyer' | 'koc' | 'vendor';
 type Step = 1 | 2 | 3;
@@ -317,7 +318,7 @@ export default function Register() {
                 <button
                   onClick={() => {
                     // Redirect to VNeID OAuth for quick registration with verified identity
-                    fetch('/api/v1/verify/vneid/auth-url', {
+                    fetch(`${API_BASE}/verify/vneid/auth-url`, {
                       headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}` },
                     })
                       .then(r => r.json())

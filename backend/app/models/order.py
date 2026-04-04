@@ -64,9 +64,9 @@ class Order(Base):
     # ── Parties ──────────────────────────────────────────────
     buyer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     vendor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
-    koc_t1_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)  # KOC who referred buyer
-    koc_t2_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)  # KOC who referred T1 KOC
-    affiliate_link_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    koc_t1_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # KOC who referred buyer
+    koc_t2_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # KOC who referred T1 KOC
+    affiliate_link_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)  # FK to share_links.id — add when that table is created
 
     # ── Items snapshot ───────────────────────────────────────
     items: Mapped[list] = mapped_column(JSONB, default=list)

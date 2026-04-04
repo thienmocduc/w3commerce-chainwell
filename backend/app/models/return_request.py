@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import (
-    DateTime, Float, ForeignKey, String, Text, func, Index,
+    DateTime, ForeignKey, Numeric, String, Text, func, Index,
 )
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
@@ -60,7 +60,7 @@ class ReturnRequest(Base):
     )
     status: Mapped[str] = mapped_column(String(20), default=ReturnStatus.PENDING)
     vendor_response: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    refund_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    refund_amount: Mapped[Optional[float]] = mapped_column(Numeric(18, 2), nullable=True)
     refund_method: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()

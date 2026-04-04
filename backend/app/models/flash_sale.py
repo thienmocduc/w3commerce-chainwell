@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import (
-    DateTime, Float, ForeignKey, Integer, Numeric,
+    DateTime, ForeignKey, Integer, Numeric,
     String, func, Index,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -41,7 +41,7 @@ class FlashSale(Base):
 
     original_price: Mapped[float] = mapped_column(Numeric(20, 2))
     flash_price: Mapped[float] = mapped_column(Numeric(20, 2))
-    discount_percent: Mapped[float] = mapped_column(Float)
+    discount_percent: Mapped[float] = mapped_column(Numeric(5, 2))
 
     quantity_limit: Mapped[int] = mapped_column(Integer)
     quantity_sold: Mapped[int] = mapped_column(Integer, default=0)

@@ -74,16 +74,28 @@ export default function ProductDetail() {
         verified: r.verified_purchase ?? false,
         helpful_count: r.helpful_count ?? 0,
       })));
-      // Backend returns avg_rating + total at top level (not nested under 'summary')
-      if ((res as any).avg_rating != null) {
+      // Handle both backend response formats:
+      // Format A (flat): { avg_rating, total, items }
+      // Format B (nested): { summary: { average_rating, total_reviews }, items }
+      const flat = res as any;
+      const summary = flat.summary;
+      if (summary?.average_rating != null) {
         setReviewSummary(prev => ({
           ...prev,
-          average_rating: (res as any).avg_rating,
-          total_reviews: (res as any).total ?? prev.total_reviews,
+          average_rating: summary.average_rating,
+          total_reviews: summary.total_reviews ?? prev.total_reviews,
+          rating_distribution: summary.rating_distribution ?? prev.rating_distribution,
+        }));
+      } else if (flat.avg_rating != null) {
+        setReviewSummary(prev => ({
+          ...prev,
+          average_rating: flat.avg_rating,
+          total_reviews: flat.total ?? prev.total_reviews,
         }));
       }
-    } catch { /* silently fail */ }
-    finally { setReviewsLoading(false); }
+    } catch (err) {
+      console.error('[Reviews] fetch failed:', err);
+    } finally { setReviewsLoading(false); }
   }, [product?.id]);
 
   useEffect(() => {
@@ -577,7 +589,8 @@ export default function ProductDetail() {
                   const dist = reviewSummary.rating_distribution;
                   const total = reviewSummary.total_reviews || 1;
                   const count = dist[String(stars)] ?? 0;
-                  const pct = total > 0 ? Math.round((count / total) * 100) : (stars === 5 ? 65 : stars === 4 ? 25 : stars === 3 ? 7 : stars === 2 ? 2 : 1);
+                  const realTotal = reviewSummary.total_reviews || 0;
+                  const pct = realTotal > 0 ? Math.round((count / realTotal) * 100) : 0;
                   return (
                     <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: '.68rem', color: 'var(--text-3)', minWidth: 14, textAlign: 'right' }}>{stars}</span>

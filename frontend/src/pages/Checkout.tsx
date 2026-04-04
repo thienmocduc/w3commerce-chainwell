@@ -41,6 +41,7 @@ export default function Checkout() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartLoading, setCartLoading] = useState(true);
   const [cartId, setCartId] = useState<string>('');
+  const [confirmedOrderNumber, setConfirmedOrderNumber] = useState<string>('');
 
   // Shipping form
   const [fullName, setFullName] = useState('');
@@ -68,8 +69,8 @@ export default function Checkout() {
   const total = subtotal + shipping - w3cDiscount;
   const totalXP = cartItems.reduce((s, i) => s + i.xp_reward * i.quantity, 0);
 
-  const orderNumber = `ORD-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
-  const txHash = '0x7a3f8c2e1d5b9f4a6e3c7d8b2a1f5e9c4d6b8a3f7e2c1d5b9a4f6e3c7d8b2a1f';
+  // Order number comes from API response; fallback only for display before API returns
+  const orderNumber = confirmedOrderNumber || `ORD-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
 
   // Map frontend payment key to backend gateway name
   const gatewayMap: Record<PaymentMethod, string> = {
@@ -112,6 +113,10 @@ export default function Checkout() {
 
       const data = await res.json();
 
+      // Use order_number from API response
+      if (data.order_number) setConfirmedOrderNumber(data.order_number);
+      else if (data.order_id) setConfirmedOrderNumber(data.order_id);
+
       if (payment === 'crypto') {
         // USDT: show wallet address + amount
         setCryptoPayInfo({
@@ -130,10 +135,10 @@ export default function Checkout() {
         setSubmitted(true);
       }
     } catch (_err) {
-      // Backend unreachable — show toast but still show success for demo
-      setToastMsg(t('checkout.success.paymentMaintenance'));
+      // Backend unreachable — show error, do NOT show fake success
+      setToastMsg(t('checkout.error.networkError') || 'Lỗi kết nối. Vui lòng thử lại.');
       setCryptoPayInfo(null);
-      setSubmitted(true);
+      // setSubmitted(true) intentionally NOT called — user must retry
     } finally {
       setIsProcessing(false);
     }

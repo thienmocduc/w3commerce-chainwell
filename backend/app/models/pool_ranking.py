@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import (
-    Boolean, DateTime, Float, ForeignKey, Integer, Numeric,
+    Boolean, DateTime, ForeignKey, Integer, Numeric,
     String, func, Index, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -62,7 +62,7 @@ class PoolRanking(Base):
     score: Mapped[float] = mapped_column(Numeric(20, 4), default=0)
     orders_count: Mapped[int] = mapped_column(Integer, default=0)
     gmv: Mapped[float] = mapped_column(Numeric(20, 2), default=0)
-    cvr: Mapped[float] = mapped_column(Float, default=0)  # Conversion rate
+    cvr: Mapped[float] = mapped_column(Numeric(5, 4), default=0)  # Conversion rate (e.g. 0.2543)
     dpp_sales: Mapped[int] = mapped_column(Integer, default=0)
 
     # Distribution

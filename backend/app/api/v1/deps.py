@@ -18,8 +18,6 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from jose.utils import base64url_decode
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 import json
 
 from sqlalchemy import select
@@ -84,7 +82,6 @@ async def _decode_supabase_token(token: str) -> Optional[dict]:
                     token,
                     key_data,
                     algorithms=["ES256", "RS256"],
-                    # Supabase aud = "authenticated" — verify it
                     options={"verify_aud": True},
                     audience="authenticated",
                 )
@@ -93,14 +90,34 @@ async def _decode_supabase_token(token: str) -> Optional[dict]:
             except JWTError:
                 continue
 
-    # 2. Fall back to legacy HS256 shared secret
+        # All JWKS candidates failed — force cache refresh and retry once
+        # (handles Supabase key rotation during live session)
+        _jwks_cache["fetched_at"] = 0  # invalidate cache
+        refreshed_keys = await _get_jwks()
+        if refreshed_keys and refreshed_keys != keys:
+            for key_data in refreshed_keys:
+                try:
+                    payload = jwt.decode(
+                        token,
+                        key_data,
+                        algorithms=["ES256", "RS256"],
+                        options={"verify_aud": True},
+                        audience="authenticated",
+                    )
+                    payload["_source"] = "supabase"
+                    return payload
+                except JWTError:
+                    continue
+
+    # 2. Fall back to legacy HS256 shared secret (verify audience)
     if settings.SUPABASE_JWT_SECRET:
         try:
             payload = jwt.decode(
                 token,
                 settings.SUPABASE_JWT_SECRET,
                 algorithms=["HS256"],
-                options={"verify_aud": False},
+                options={"verify_aud": True},
+                audience="authenticated",
             )
             payload["_source"] = "supabase"
             return payload
