@@ -294,6 +294,7 @@ export default function Dashboard() {
   const handleNavClick = (groupKey: string, itemKey: string) => {
     setActiveNav(itemKey);
     if (!openGroups[groupKey]) setOpenGroups(prev => ({ ...prev, [groupKey]: true }));
+    setMobileSidebarOpen(false); // close sidebar on mobile after navigation
   };
 
   const [orderTab, setOrderTab] = useState('all');
@@ -364,6 +365,8 @@ export default function Dashboard() {
   const [bankList, setBankList] = useState(bankAccounts);
   // Payment methods state
   const [payMethods, setPayMethods] = useState(savedPaymentMethods);
+  // Mobile sidebar toggle
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -2006,8 +2009,16 @@ export default function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg-0)' }}>
     <div className="dash-wrap" style={{ flex: 1, minHeight: 0 }}>
+      {/* Mobile overlay — closes sidebar when tapping outside */}
+      {mobileSidebarOpen && (
+        <div
+          onClick={() => setMobileSidebarOpen(false)}
+          className="dash-mobile-overlay"
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="dash-sidebar">
+      <div className={`dash-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}>
         {/* Sidebar header — fixed */}
         <div className="dash-sidebar-header">
           <div style={{ padding: '16px 0 16px', borderBottom: '1px solid var(--border)' }}>
@@ -2081,7 +2092,7 @@ export default function Dashboard() {
           <div style={{ height: 1, background: 'var(--border)', margin: '12px 0' }} />
           <div
             className="dash-nav-item"
-            onClick={handleLogout}
+            onClick={() => { handleLogout(); setMobileSidebarOpen(false); }}
             style={{ color: '#ef4444', cursor: 'pointer' }}
           >
             <span className="dash-nav-icon">🚪</span>
@@ -2105,6 +2116,15 @@ export default function Dashboard() {
         {renderContent()}
       </div>
     </div>
+
+    {/* Mobile hamburger button — fixed bottom-left, hidden on desktop */}
+    <button
+      className="dash-mobile-fab"
+      onClick={() => setMobileSidebarOpen(prev => !prev)}
+      aria-label="Menu"
+    >
+      {mobileSidebarOpen ? '✕' : '☰'}
+    </button>
     </div>
   );
 }

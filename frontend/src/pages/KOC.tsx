@@ -893,7 +893,7 @@ export default function KOC() {
                 <div style={{ fontWeight: 800, fontSize: '1.5rem', color: 'var(--c6-500)' }}>{wkPayData.balanceWK.toLocaleString()} WK</div>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
               {[
                 { label: 'Nạp tiền', desc: 'Từ ngân hàng/MoMo', icon: '💰' },
                 { label: 'Rút tiền', desc: 'Về ngân hàng', icon: '🏦' },
@@ -1086,7 +1086,7 @@ export default function KOC() {
       case 'overview':
         return (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginBottom: 24 }}>
               {kpiData.map((kpi, i) => (
                 <div key={i} className="kpi-card">
                   <div className="kpi-label" style={{ whiteSpace: 'nowrap' }}>{kpi.label}</div>
@@ -1417,7 +1417,7 @@ export default function KOC() {
                         <div style={{ fontSize: '.7rem', color: 'var(--text-4)' }}>Chi: {agent.spent}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
                       {[
                         { label: 'Impressions', value: agent.impressions.toLocaleString() },
                         { label: 'Clicks', value: agent.clicks.toLocaleString() },
@@ -1926,7 +1926,7 @@ export default function KOC() {
         return (
           <>
             <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 20 }}>{t('koc.performance.title')}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginBottom: 24 }}>
               {perfKpis.map((kpi, i) => (
                 <div key={i} className="kpi-card">
                   <div className="kpi-label">{kpi.label}</div>
@@ -2035,7 +2035,7 @@ export default function KOC() {
 
             <div className="card" style={{ padding: 24, marginBottom: 28 }}>
               <div className="label" style={{ marginBottom: 14 }}>BADGES ĐÃ ĐẠT ĐƯỢC</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12 }}>
                 {gamificationBadges.map((b, i) => (
                   <div key={i} style={{
                     textAlign: 'center', padding: 14, borderRadius: 10,
@@ -2137,7 +2137,7 @@ export default function KOC() {
                   <span className="badge badge-c4">{creatorToken.priceChange}</span>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
                 {[
                   { label: 'Total Supply', value: creatorToken.totalSupply },
                   { label: 'Circulating', value: creatorToken.circulatingSupply },
@@ -2676,7 +2676,7 @@ export default function KOC() {
                             <label style={{ fontSize: '.72rem', color: 'var(--text-3)', display: 'block', marginBottom: 4 }}>Số giấy tờ</label>
                             <input type="text" placeholder="VD: 001234567890" value={kycData.idNumber} onChange={e => setKycData(prev => ({ ...prev, idNumber: e.target.value }))} style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text-1)', fontSize: '.82rem' }} />
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
                             {[
                               { key: 'idFront', label: 'Mặt trước', icon: '📄' },
                               { key: 'idBack', label: 'Mặt sau', icon: '📄' },
