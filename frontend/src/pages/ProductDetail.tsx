@@ -74,8 +74,13 @@ export default function ProductDetail() {
         verified: r.verified_purchase ?? false,
         helpful_count: r.helpful_count ?? 0,
       })));
-      if ((res as any).summary) {
-        setReviewSummary((res as any).summary);
+      // Backend returns avg_rating + total at top level (not nested under 'summary')
+      if ((res as any).avg_rating != null) {
+        setReviewSummary(prev => ({
+          ...prev,
+          average_rating: (res as any).avg_rating,
+          total_reviews: (res as any).total ?? prev.total_reviews,
+        }));
       }
     } catch { /* silently fail */ }
     finally { setReviewsLoading(false); }

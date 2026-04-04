@@ -23,6 +23,8 @@ from app.schemas.product import (
 )
 from app.services.product_service import ProductService
 from app.services.dpp_service import DPPService
+from app.models.product import Product as ProductModel
+from sqlalchemy import select, or_
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -78,6 +80,28 @@ async def search_products(
         per_page=per_page,
         lang=lang,
     )
+
+
+@router.get("/slug/{slug}", response_model=ProductResponse)
+async def get_product_by_slug(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get product by SKU or name slug (for human-readable URLs)."""
+    # Search by SKU exact match first, then by name ILIKE
+    r = await db.execute(
+        select(ProductModel).where(
+            or_(
+                ProductModel.sku == slug,
+                ProductModel.name.ilike(slug.replace("-", "%")),
+            ),
+            ProductModel.status == "active",
+        ).limit(1)
+    )
+    product = r.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
+    return product
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

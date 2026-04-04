@@ -103,9 +103,16 @@ export default function Marketplace() {
     try {
       const params: Record<string, string> = {};
       if (activeCategory !== 'all') params.category = activeCategory;
-      if (dppOnly) params.dpp = 'true';
+      if (dppOnly) params.dpp_only = 'true';
       if (search.trim()) params.search = search.trim();
-      if (sortBy !== 'newest') params.sort = sortBy;
+      // Map frontend sort keys to backend enum values
+      const sortMap: Record<string, string> = {
+        'newest': 'newest',
+        'bestseller': 'popular',
+        'price-asc': 'price_asc',
+        'price-desc': 'price_desc',
+      };
+      if (sortBy && sortMap[sortBy]) params.sort = sortMap[sortBy];
 
       const res = await productsApi.list(params);
       const items = (res as any).items ?? (Array.isArray(res) ? res : []);

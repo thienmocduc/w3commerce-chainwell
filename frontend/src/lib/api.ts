@@ -1097,7 +1097,7 @@ export const reviewsApi = {
     productId: string,
     params: { page?: number; per_page?: number; sort?: string; rating?: number } = {},
   ): Promise<PaginatedResponse<Review> & { summary: ReviewSummary }> {
-    return apiClient.get(`/products/${productId}/reviews${buildQuery(params as Record<string, unknown>)}`);
+    return apiClient.get(`/reviews/product/${productId}${buildQuery(params as Record<string, unknown>)}`);
   },
 
   create(data: CreateReviewInput, token: string): Promise<Review> {
@@ -1312,7 +1312,7 @@ export const socialApi = {
   },
 
   unfollow(userId: string, token: string): Promise<ApiMessage> {
-    return apiClient.delete(`/social/follow/${userId}`, token);
+    return apiClient.delete(`/social/unfollow/${userId}`, token);
   },
 
   getFollowers(userId: string, token?: string): Promise<{ followers: { id: string; name: string; avatar?: string }[]; count: number }> {
