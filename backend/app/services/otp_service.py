@@ -1,4 +1,5 @@
 """WellKOC — OTP Service"""
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from app.core.redis_client import get_redis
@@ -9,14 +10,24 @@ class OTPService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def send(self, target: str, purpose: str):
+    async def send(self, target: str, purpose: str, ip: Optional[str] = None):
         r = await get_redis()
 
-        # Rate limit: max 3 OTPs per 10 minutes per target+purpose
+        # BUG#10 FIX: Per-IP rate limit (guards against distributed attacks)
+        if ip:
+            ip_pipe = r.pipeline()
+            ip_pipe.incr(f"otp_rate_ip:{ip}")
+            ip_pipe.expire(f"otp_rate_ip:{ip}", 600)
+            ip_results = await ip_pipe.execute()
+            if ip_results[0] > 20:
+                raise HTTPException(429, "Quá nhiều yêu cầu OTP từ địa chỉ này")
+
+        # Rate limit: max 3 OTPs per 10 minutes per target+purpose (atomic pipeline)
         rate_key = f"otp_rate:{purpose}:{target}"
-        count = await r.incr(rate_key)
-        if count == 1:
-            await r.expire(rate_key, 600)  # 10 min window
+        pipe = r.pipeline()
+        pipe.incr(rate_key)
+        pipe.expire(rate_key, 600)
+        count = (await pipe.execute())[0]
         if count > 3:
             raise HTTPException(429, "Quá nhiều yêu cầu OTP. Vui lòng thử lại sau 10 phút")
 
@@ -30,18 +41,23 @@ class OTPService:
     async def verify(self, target: str, code: str, purpose: str):
         r = await get_redis()
 
-        # Brute-force protection: max 5 failed attempts
+        # BUG#8 FIX: Atomic fail counter check + increment via pipeline
         fail_key = f"otp_fail:{purpose}:{target}"
+        stored = await r.get(f"otp:{purpose}:{target}")
+        if stored != code:
+            # Atomically increment and set TTL
+            fail_pipe = r.pipeline()
+            fail_pipe.incr(fail_key)
+            fail_pipe.expire(fail_key, 600)
+            fails = (await fail_pipe.execute())[0]
+            if fails >= 5:
+                raise HTTPException(429, "Quá nhiều lần nhập sai. Vui lòng yêu cầu OTP mới")
+            return None
+
+        # Pre-check: verify fail count before proceeding
         fails = await r.get(fail_key)
         if fails and int(fails) >= 5:
             raise HTTPException(429, "Quá nhiều lần nhập sai. Vui lòng yêu cầu OTP mới")
-
-        stored = await r.get(f"otp:{purpose}:{target}")
-        if stored != code:
-            count = await r.incr(fail_key)
-            if count == 1:
-                await r.expire(fail_key, 600)
-            return None
 
         # Success: clean up both keys
         await r.delete(f"otp:{purpose}:{target}")

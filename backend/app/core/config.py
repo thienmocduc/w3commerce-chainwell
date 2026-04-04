@@ -20,11 +20,15 @@ class Settings(BaseSettings):
 
     # ── App ──────────────────────────────────────
     APP_NAME: str = "WellKOC"
-    APP_ENV: Literal["development", "staging", "production"] = "development"
+    APP_ENV: Literal["development", "staging", "production"] = "production"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False  # Must be explicitly set to True in dev — never expose in prod
     SECRET_KEY: str = Field(..., min_length=32)
-    ALLOWED_HOSTS: list[str] = ["*"]
+    ALLOWED_HOSTS: list[str] = [
+        "wellkoc.com", "www.wellkoc.com", "app.wellkoc.com",
+        "api.wellkoc.com", "wellkoc-api.onrender.com",
+        "localhost", "127.0.0.1",
+    ]
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://localhost:3000",

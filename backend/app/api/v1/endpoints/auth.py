@@ -84,11 +84,23 @@ async def login(
 @router.post("/otp/send")
 async def send_otp(
     body: OTPSendRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Send OTP to phone or email (rate limited: 1/min)"""
+    """Send OTP to phone or email (rate limited: 3/10min per target + 10/10min per IP)"""
+    # BUG#7 FIX: endpoint-level IP rate limit (guards against service-layer failures)
+    from app.core.redis_client import get_redis
+    r = await get_redis()
+    ip = request.client.host if request.client else "unknown"
+    ip_key = f"otp_send_ip:{ip}"
+    pipe = r.pipeline()
+    pipe.incr(ip_key)
+    pipe.expire(ip_key, 600)
+    ip_count = (await pipe.execute())[0]
+    if ip_count > 10:
+        raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu OTP từ địa chỉ này. Vui lòng thử lại sau")
     svc = OTPService(db)
-    await svc.send(target=body.target, purpose=body.purpose)
+    await svc.send(target=body.target, purpose=body.purpose, ip=ip)
     return {"message": "OTP đã được gửi", "expires_in": 300}
 
 
@@ -137,13 +149,19 @@ async def refresh_token(
     db: AsyncSession = Depends(get_db),
 ):
     """Exchange refresh token for new access token (rate limited: 10/min per IP)"""
+    # BUG#6 FIX: Basic token format validation
+    if not refresh_token or len(refresh_token) > 2000 or " " in refresh_token:
+        raise HTTPException(status_code=401, detail="Token không hợp lệ")
+    # BUG#5 FIX: Atomic pipeline to avoid race condition
     from app.core.redis_client import get_redis
     r = await get_redis()
     ip = request.client.host if request.client else "unknown"
     rate_key = f"refresh_rate:{ip}"
-    count = await r.incr(rate_key)
-    if count == 1:
-        await r.expire(rate_key, 60)
+    pipe = r.pipeline()
+    pipe.incr(rate_key)
+    pipe.expire(rate_key, 60)
+    results = await pipe.execute()
+    count = results[0]
     if count > 10:
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu. Vui lòng thử lại sau")
 
