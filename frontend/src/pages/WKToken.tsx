@@ -249,7 +249,7 @@ export default function WKToken() {
                   ⚠️ Bạn đang ở sai mạng. Chuyển sang {networkName} trong MetaMask.
                 </div>
               )}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:16}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:14,marginBottom:16}}>
                 {[
                   {label:'WK Balance',value:fmt(wallet.wkBalance),sub:`≈ $${(Number(BigInt(wallet.wkBalance||'0'))/1e18*0.012).toFixed(4)}`,color:'var(--c4-500)',icon:'💎'},
                   {label:'WK Staked',value:fmt(wallet.stakedAmount),sub:'5% APY',color:'var(--c6-500)',icon:'🔒'},
@@ -327,7 +327,7 @@ export default function WKToken() {
           !wallet ? <div style={{textAlign:'center',padding:40}}><button onClick={connectWallet} className="btn btn-primary">🦊 Kết nối ví trước</button></div> : (
             <>
               <div style={{...cardStyle,background:'rgba(99,102,241,.06)',border:'1px solid rgba(99,102,241,.2)'}}>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:16}}>
                   {[
                     {label:'APY',value:'5%',sub:'Trả WK mới',color:'var(--c4-500)'},
                     {label:'Đang stake',value:fmt(wallet.stakedAmount)+' WK',sub:'của bạn',color:'var(--c6-500)'},
@@ -412,7 +412,7 @@ export default function WKToken() {
           <>
             <div style={cardStyle}>
               <div style={{fontWeight:700,marginBottom:16}}>📋 Thông tin Token</div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:10}}>
                 {[
                   ['Tên token','WellKOC Token'],['Symbol','WK'],['Decimal','18'],
                   ['Blockchain','Polygon (MATIC)'],['Chuẩn','ERC-20 + Permit + Votes'],
@@ -448,7 +448,7 @@ export default function WKToken() {
 
             <div style={cardStyle}>
               <div style={{fontWeight:700,marginBottom:16}}>⚡ Ứng dụng WK Token</div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:12}}>
                 {UTILITY.map(u=>(
                   <div key={u.title} style={{padding:14,borderRadius:10,background:'var(--bg-2)',border:'1px solid var(--border)'}}>
                     <div style={{fontSize:'1.2rem',marginBottom:6}}>{u.icon}</div>

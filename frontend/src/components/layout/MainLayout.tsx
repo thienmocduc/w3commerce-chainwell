@@ -664,22 +664,41 @@ export default function MainLayout() {
               )}
             </div>
           ) : (
-            <Link
-              to="/login"
-              style={{
-                padding: '8px 20px',
-                borderRadius: 10,
-                background: 'var(--chakra-flow)',
-                color: '#fff',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                transition: 'var(--t-fast)',
-              }}
-            >
-              {t('layout.join')}
-            </Link>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Link
+                to="/login"
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border)',
+                  background: 'transparent',
+                  color: 'var(--text-2)',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'var(--t-fast)',
+                }}
+              >
+                {t('login.loginBtn') || 'Đăng nhập'}
+              </Link>
+              <Link
+                to="/register"
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 10,
+                  background: 'var(--chakra-flow)',
+                  color: '#fff',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'var(--t-fast)',
+                }}
+              >
+                {t('login.registerNow') || 'Đăng ký'}
+              </Link>
+            </div>
           )}
           </div>{/* /user-auth wrapper */}
 
@@ -921,27 +940,27 @@ export default function MainLayout() {
           ) : (
             <>
               <Link
-                to="/login"
+                to="/register"
                 onClick={() => setDrawerOpen(false)}
                 style={{
                   display: 'block', textAlign: 'center', padding: '12px 20px',
                   borderRadius: 12, background: 'var(--chakra-flow)', color: '#fff',
-                  fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none',
+                  fontSize: '0.9rem', fontWeight: 700, textDecoration: 'none',
                 }}
               >
-                {t('btn.joinFree')}
+                {t('login.registerNow') || 'Đăng ký'}
               </Link>
               <Link
-                to="/"
+                to="/login"
                 onClick={() => setDrawerOpen(false)}
                 style={{
                   display: 'block', textAlign: 'center', padding: '12px 20px',
                   borderRadius: 12, border: '1px solid var(--border)',
                   background: 'transparent', color: 'var(--text-2)',
-                  fontSize: '0.85rem', fontWeight: 500, textDecoration: 'none',
+                  fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none',
                 }}
               >
-                {t('btn.tryDemo')}
+                {t('login.loginBtn') || 'Đăng nhập'}
               </Link>
             </>
           )}

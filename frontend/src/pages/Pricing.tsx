@@ -455,7 +455,7 @@ export default function Pricing() {
           className="pricing-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: tab === 'buyer' ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: 24,
             marginBottom: 64,
             maxWidth: tab === 'buyer' ? 960 : undefined,

@@ -1008,7 +1008,7 @@ export default function Dashboard() {
             </div>
 
             {/* Quick actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12, marginBottom: 24 }}>
               {[
                 { label: 'Nạp tiền', desc: 'Từ ngân hàng/MoMo/Crypto', icon: '💰' },
                 { label: 'Rút tiền', desc: 'Về ngân hàng', icon: '🏦' },
@@ -1735,7 +1735,7 @@ export default function Dashboard() {
                   {/* Stats */}
                   <div className="card" style={{ padding: 20 }}>
                     <h3 style={{ fontSize: '.95rem', fontWeight: 700, margin: '0 0 16px' }}>📊 Thống kê Affiliate</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
                       {[
                         { label: 'Tổng clicks', value: '0', icon: '👆' },
                         { label: 'Conversions', value: '0', icon: '🎯' },

@@ -926,7 +926,7 @@ export default function Home() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
               gap: 16,
               maxWidth: 960,
               margin: '0 auto',
