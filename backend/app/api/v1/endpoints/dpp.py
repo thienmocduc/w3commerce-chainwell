@@ -1,6 +1,6 @@
 """WellKOC — DPP NFT Endpoints"""
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -90,3 +90,48 @@ async def scan_dpp(token_id: int, current_user: CurrentUser, db: AsyncSession = 
     svc = GamificationService(db)
     await svc.award_wk(current_user.id, WKEvent.DPP_VERIFIED_PURCHASE, reference_id=str(token_id))
     return {"scanned": True, "wk_earned": 15, "message": "Sản phẩm chính hãng đã xác minh"}
+
+
+@router.get("/product/{product_id}/scans")
+async def get_product_scan_history(
+    product_id: UUID,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get DPP scan history for a product (public — shows trust signal)."""
+    from sqlalchemy import func, desc
+    from app.models.gamification import WKTransaction, WKEvent
+
+    # Scans are recorded as WKTransaction entries with event_type=DPP_VERIFIED_PURCHASE
+    # and reference_id matching the product's token_id or product_id string
+    base_q = select(WKTransaction).where(
+        WKTransaction.event_type == WKEvent.DPP_VERIFIED_PURCHASE,
+        WKTransaction.reference_id == str(product_id),
+    )
+
+    total_r = await db.execute(select(func.count()).select_from(base_q.subquery()))
+    total = total_r.scalar() or 0
+
+    q = (
+        base_q
+        .order_by(desc(WKTransaction.created_at))
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    rows = (await db.execute(q)).scalars().all()
+
+    return {
+        "product_id": str(product_id),
+        "total_scans": total,
+        "page": page,
+        "per_page": per_page,
+        "items": [
+            {
+                "scanned_at": tx.created_at.isoformat() if tx.created_at else None,
+                "user_id": str(tx.user_id),
+                "wk_earned": tx.wk_earned,
+            }
+            for tx in rows
+        ],
+    }

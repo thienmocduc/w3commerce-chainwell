@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     verification,
     chatbot,
     notifications,
+    upload,
 )
 
 api_router = APIRouter()
@@ -93,6 +94,9 @@ api_router.include_router(compliance.router)
 
 # ── Vendor BI Analytics ─────────────────────────────────────
 api_router.include_router(analytics.router)
+
+# ── File Upload ─────────────────────────────────────────────
+api_router.include_router(upload.router)
 
 # ── Real-time (WebSocket) ────────────────────────────────────
 api_router.include_router(websocket.router)

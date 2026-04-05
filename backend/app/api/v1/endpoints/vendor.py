@@ -82,7 +82,8 @@ async def update_vendor_profile(
         setattr(profile, field, value)
 
     db.add(profile)
-    await db.flush()
+    await db.commit()
+    await db.refresh(profile)
 
     return {
         "message": "Vendor profile updated",

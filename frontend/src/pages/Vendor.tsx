@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { useI18n } from '@hooks/useI18n';
-import { vendorApi, type Product as ApiProduct, type Order as ApiOrder } from '@lib/api';
+import { vendorApi, uploadApi, type Product as ApiProduct, type Order as ApiOrder } from '@lib/api';
 
 const parsePrice = (s: string) => parseInt(s.replace(/[^0-9]/g, '')) || 0;
 
@@ -385,6 +385,46 @@ export default function Vendor() {
   // KOC search
   const [kocSearch, setKocSearch] = useState('');
 
+  // Vendor onboarding / KYC form state
+  const [onboardData, setOnboardData] = useState({
+    idNumber: '', fullName: '', frontUrl: '', backUrl: '',
+    businessName: '', licenseNo: '', licenseUrl: '',
+    taxCode: '', address: '',
+    bankName: '', bankAccount: '', bankHolder: '',
+    phone: '',
+  });
+  const setOD = (k: keyof typeof onboardData, v: string) =>
+    setOnboardData(prev => ({ ...prev, [k]: v }));
+  const [onboardStepDone, setOnboardStepDone] = useState({
+    identity: false, business: false, tax: false, bank: false, verified: false,
+  });
+  const [onboardLoading, setOnboardLoading] = useState(false);
+
+  const handleOnboardSubmit = async () => {
+    if (onboardLoading || !token) return;
+    setOnboardLoading(true);
+    try {
+      await vendorApi.onboard({
+        business_name: onboardData.businessName,
+        tax_code: onboardData.taxCode,
+        business_license_url: onboardData.licenseUrl,
+        bank_account: onboardData.bankAccount,
+        bank_name: onboardData.bankName,
+        address: onboardData.address,
+        phone: onboardData.phone || user?.phone || '',
+        product_categories: [],
+        dpp_certifications: [],
+      }, token);
+      setOnboardStepDone(prev => ({ ...prev, bank: true, verified: true }));
+      showToast('🎉 Đăng ký vendor thành công! Hồ sơ đang được xét duyệt.', 'success');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Đăng ký thất bại';
+      showToast(msg, 'error');
+    } finally {
+      setOnboardLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -752,18 +792,19 @@ export default function Vendor() {
                   <div>
                     <label style={{ fontSize: '.72rem', color: 'var(--text-3)', display: 'block', marginBottom: 4 }}>{t('vendor.products.labelImage')}</label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
-                      <div style={{ textAlign: 'center', padding: 20, border: '2px dashed var(--border)', borderRadius: 12, cursor: 'pointer', background: newProduct.imageUrl ? 'rgba(16,185,129,.06)' : 'var(--bg-2)' }}
-                        onClick={() => { setNewProduct(p => ({ ...p, imageUrl: 'uploaded' })); showToast(t('vendor.toast.imageUploaded')); }}>
+                      <label style={{ textAlign: 'center', padding: 20, border: `2px dashed ${newProduct.imageUrl ? '#22c55e' : 'var(--border)'}`, borderRadius: 12, cursor: 'pointer', background: newProduct.imageUrl ? 'rgba(16,185,129,.06)' : 'var(--bg-2)', display: 'block' }}>
                         <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{newProduct.imageUrl ? '✅' : '📷'}</div>
                         <div style={{ fontSize: '.68rem', color: 'var(--text-3)' }}>{newProduct.imageUrl ? t('vendor.products.imageUploaded') : t('vendor.products.mainImage')}</div>
-                      </div>
-                      {['Image 2', 'Image 3', 'Image 4'].map((label, i) => (
-                        <div key={i} style={{ textAlign: 'center', padding: 20, border: '2px dashed var(--border)', borderRadius: 12, cursor: 'pointer', background: 'var(--bg-2)', opacity: 0.6 }}
-                          onClick={() => showToast(`${t('vendor.toast.imageNUploaded')} ${label} ${t('vendor.toast.imageNSuccess')}`)}>
-                          <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>➕</div>
-                          <div style={{ fontSize: '.68rem', color: 'var(--text-4)' }}>{label}</div>
-                        </div>
-                      ))}
+                        <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                          const f = e.target.files?.[0]; if (!f || !token) return;
+                          try {
+                            showToast('⏳ Đang upload...');
+                            const r = await uploadApi.upload(f, 'product', token);
+                            setNewProduct(p => ({ ...p, imageUrl: r.url }));
+                            showToast(t('vendor.toast.imageUploaded'));
+                          } catch { showToast('Upload ảnh thất bại', 'error'); }
+                        }} />
+                      </label>
                     </div>
                   </div>
 
@@ -1368,11 +1409,11 @@ export default function Vendor() {
       /* ────── XÁC MINH DOANH NGHIỆP ────── */
       case 'vendor_kyc': {
         const vkycSteps = [
-          { key: 'identity', label: t('vendor.kyc.stepIdentity'), icon: '🪪', done: false, desc: t('vendor.kyc.stepIdentityDesc') },
-          { key: 'business', label: t('vendor.kyc.stepBusiness'), icon: '📋', done: false, desc: t('vendor.kyc.stepBusinessDesc') },
-          { key: 'tax', label: t('vendor.kyc.stepTax'), icon: '🏛️', done: false, desc: t('vendor.kyc.stepTaxDesc') },
-          { key: 'bank', label: t('vendor.kyc.stepBank'), icon: '🏦', done: false, desc: t('vendor.kyc.stepBankDesc') },
-          { key: 'verified', label: t('vendor.kyc.stepComplete'), icon: '✅', done: false, desc: t('vendor.kyc.stepCompleteDesc') },
+          { key: 'identity', label: t('vendor.kyc.stepIdentity'), icon: '🪪', done: onboardStepDone.identity, desc: t('vendor.kyc.stepIdentityDesc') },
+          { key: 'business', label: t('vendor.kyc.stepBusiness'), icon: '📋', done: onboardStepDone.business, desc: t('vendor.kyc.stepBusinessDesc') },
+          { key: 'tax', label: t('vendor.kyc.stepTax'), icon: '🏛️', done: onboardStepDone.tax, desc: t('vendor.kyc.stepTaxDesc') },
+          { key: 'bank', label: t('vendor.kyc.stepBank'), icon: '🏦', done: onboardStepDone.bank, desc: t('vendor.kyc.stepBankDesc') },
+          { key: 'verified', label: t('vendor.kyc.stepComplete'), icon: '✅', done: onboardStepDone.verified, desc: t('vendor.kyc.stepCompleteDesc') },
         ];
         const vCompletedCount = vkycSteps.filter(s => s.done).length;
         const vProgressPct = (vCompletedCount / vkycSteps.length) * 100;
@@ -1420,29 +1461,42 @@ export default function Vendor() {
                     <div className="flex-col gap-12" style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.idNumber')}</label>
-                        <input type="text" maxLength={12} placeholder="001234567890" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
+                        <input type="text" maxLength={12} placeholder="001234567890" value={onboardData.idNumber} onChange={e => setOD('idNumber', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.fullName')}</label>
-                        <input type="text" placeholder="NGUYEN VAN A" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
+                        <input type="text" placeholder="NGUYEN VAN A" value={onboardData.fullName} onChange={e => setOD('fullName', e.target.value.toUpperCase())} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
                       </div>
                       <div className="flex gap-12">
                         <div style={{ flex: 1 }}>
                           <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.frontPhoto')}</label>
-                          <div style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)' }}>
-                            <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>📄</div>
-                            <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{t('vendor.kyc.dragOrClick')}</div>
-                          </div>
+                          <label style={{ border: `2px dashed ${onboardData.frontUrl ? '#22c55e' : 'var(--border)'}`, borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)', display: 'block' }}>
+                            <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{onboardData.frontUrl ? '✅' : '📄'}</div>
+                            <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{onboardData.frontUrl ? 'Đã tải lên' : t('vendor.kyc.dragOrClick')}</div>
+                            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                              const f = e.target.files?.[0]; if (!f || !token) return;
+                              try { const r = await uploadApi.upload(f, 'kyc', token); setOD('frontUrl', r.url); showToast('Ảnh mặt trước đã tải lên'); } catch { showToast('Upload thất bại', 'error'); }
+                            }} />
+                          </label>
                         </div>
                         <div style={{ flex: 1 }}>
                           <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.backPhoto')}</label>
-                          <div style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)' }}>
-                            <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>📄</div>
-                            <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{t('vendor.kyc.dragOrClick')}</div>
-                          </div>
+                          <label style={{ border: `2px dashed ${onboardData.backUrl ? '#22c55e' : 'var(--border)'}`, borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)', display: 'block' }}>
+                            <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{onboardData.backUrl ? '✅' : '📄'}</div>
+                            <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{onboardData.backUrl ? 'Đã tải lên' : t('vendor.kyc.dragOrClick')}</div>
+                            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                              const f = e.target.files?.[0]; if (!f || !token) return;
+                              try { const r = await uploadApi.upload(f, 'kyc', token); setOD('backUrl', r.url); showToast('Ảnh mặt sau đã tải lên'); } catch { showToast('Upload thất bại', 'error'); }
+                            }} />
+                          </label>
                         </div>
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => showToast(t('vendor.toast.cccdSubmitted'))}>{t('vendor.kyc.submitVerify')}</button>
+                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          if (!onboardData.idNumber || !onboardData.fullName) { showToast('Vui lòng nhập đầy đủ thông tin', 'error'); return; }
+                          setOnboardStepDone(prev => ({ ...prev, identity: true }));
+                          showToast(t('vendor.toast.cccdSubmitted'));
+                        }}>{t('vendor.kyc.submitVerify')}</button>
                     </div>
                   )}
 
@@ -1454,21 +1508,30 @@ export default function Vendor() {
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.businessNameOnLicense')}</label>
-                        <input type="text" placeholder="CÔNG TY TNHH ABC" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
+                        <input type="text" placeholder="CÔNG TY TNHH ABC" value={onboardData.businessName} onChange={e => setOD('businessName', e.target.value.toUpperCase())} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.businessLicenseNo')}</label>
-                        <input type="text" placeholder="0123456789" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
+                        <input type="text" placeholder="0123456789" value={onboardData.licenseNo} onChange={e => setOD('licenseNo', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.uploadLicense')}</label>
-                        <div style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)' }}>
-                          <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>📋</div>
-                          <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{t('vendor.kyc.dragUploadLicense')}</div>
+                        <label style={{ border: `2px dashed ${onboardData.licenseUrl ? '#22c55e' : 'var(--border)'}`, borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer', background: 'var(--bg-2)', display: 'block' }}>
+                          <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{onboardData.licenseUrl ? '✅' : '📋'}</div>
+                          <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>{onboardData.licenseUrl ? 'Đã tải lên' : t('vendor.kyc.dragUploadLicense')}</div>
                           <div style={{ fontSize: '.65rem', color: 'var(--text-4)', marginTop: 4 }}>{t('vendor.kyc.fileFormats')}</div>
-                        </div>
+                          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={async e => {
+                            const f = e.target.files?.[0]; if (!f || !token) return;
+                            try { const r = await uploadApi.upload(f, 'license', token); setOD('licenseUrl', r.url); showToast('Giấy phép đã tải lên'); } catch { showToast('Upload thất bại', 'error'); }
+                          }} />
+                        </label>
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => showToast(t('vendor.toast.licenseSubmitted'))}>{t('vendor.kyc.submitLicense')}</button>
+                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          if (!onboardData.businessName || !onboardData.licenseNo) { showToast('Vui lòng nhập đầy đủ thông tin', 'error'); return; }
+                          setOnboardStepDone(prev => ({ ...prev, business: true }));
+                          showToast(t('vendor.toast.licenseSubmitted'));
+                        }}>{t('vendor.kyc.submitLicense')}</button>
                     </div>
                   )}
 
@@ -1477,13 +1540,18 @@ export default function Vendor() {
                     <div className="flex-col gap-12" style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.taxCode')}</label>
-                        <input type="text" placeholder="0123456789" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
+                        <input type="text" placeholder="0123456789" value={onboardData.taxCode} onChange={e => setOD('taxCode', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.businessAddress')}</label>
-                        <input type="text" placeholder="123 Nguyễn Huệ, Q.1, TP.HCM" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
+                        <input type="text" placeholder="123 Nguyễn Huệ, Q.1, TP.HCM" value={onboardData.address} onChange={e => setOD('address', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => showToast(t('vendor.toast.taxVerified'))}>{t('vendor.kyc.verifyTax')}</button>
+                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          if (!onboardData.taxCode || !onboardData.address) { showToast('Vui lòng nhập đầy đủ thông tin', 'error'); return; }
+                          setOnboardStepDone(prev => ({ ...prev, tax: true }));
+                          showToast(t('vendor.toast.taxVerified'));
+                        }}>{t('vendor.kyc.verifyTax')}</button>
                     </div>
                   )}
 
@@ -1495,7 +1563,7 @@ export default function Vendor() {
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.bankName')}</label>
-                        <select style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }}>
+                        <select value={onboardData.bankName} onChange={e => setOD('bankName', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }}>
                           <option value="">{t('vendor.kyc.selectBank')}</option>
                           <option>Vietcombank</option><option>BIDV</option><option>Agribank</option>
                           <option>VietinBank</option><option>Techcombank</option><option>MB Bank</option>
@@ -1504,13 +1572,24 @@ export default function Vendor() {
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.bankAccountNumber')}</label>
-                        <input type="text" placeholder="1234567890" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
+                        <input type="text" placeholder="1234567890" value={onboardData.bankAccount} onChange={e => setOD('bankAccount', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none' }} />
                       </div>
                       <div>
                         <label style={{ fontSize: '.72rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 4, display: 'block' }}>{t('vendor.kyc.bankAccountHolder')}</label>
-                        <input type="text" placeholder="CONG TY TNHH ABC" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
+                        <input type="text" placeholder="CONG TY TNHH ABC" value={onboardData.bankHolder} onChange={e => setOD('bankHolder', e.target.value.toUpperCase())} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }} />
                       </div>
-                      <button className="btn btn-primary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => showToast(t('vendor.toast.bankSubmitted'))}>{t('vendor.kyc.verifyBank')}</button>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ alignSelf: 'flex-start', opacity: onboardLoading ? 0.6 : 1 }}
+                        disabled={onboardLoading}
+                        onClick={() => {
+                          if (!onboardData.bankName || !onboardData.bankAccount || !onboardData.bankHolder) {
+                            showToast('Vui lòng nhập đầy đủ thông tin ngân hàng', 'error'); return;
+                          }
+                          handleOnboardSubmit();
+                        }}>
+                        {onboardLoading ? '⏳ Đang gửi...' : t('vendor.kyc.verifyBank')}
+                      </button>
                     </div>
                   )}
                 </div>

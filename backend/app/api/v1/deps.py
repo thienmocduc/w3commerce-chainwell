@@ -199,16 +199,33 @@ async def _upsert_supabase_user(payload: dict, db: AsyncSession) -> User:
         meta = payload.get("user_metadata") or {}
         app_meta = payload.get("app_metadata") or {}
         email = payload.get("email") or meta.get("email", "")
-        # Only trust app_metadata for elevated roles (set server-side via Supabase admin).
-        # user_metadata is user-controlled during sign-up — never grant elevated roles from it.
-        role_str = app_meta.get("role") or "user"
-        try:
-            role = UserRole(role_str)
-            # Hard guard: never auto-assign ADMIN/SUPER_ADMIN on first login
+
+        # Role resolution:
+        # - app_metadata (server-side): trusted for all roles
+        # - user_metadata (user-controlled): only allowed for non-privileged roles (koc, vendor)
+        # - ADMIN / SUPER_ADMIN can ONLY come from app_metadata
+        _APP_ROLE = app_meta.get("role") or ""
+        _META_ROLE = meta.get("role") or ""
+
+        NON_PRIVILEGED = {UserRole.KOC, UserRole.VENDOR, UserRole.BUYER}
+
+        def _parse_role(raw: str) -> UserRole:
+            try:
+                return UserRole(raw)
+            except ValueError:
+                return UserRole.BUYER
+
+        if _APP_ROLE:
+            role = _parse_role(_APP_ROLE)
+            # Hard guard: never auto-assign ADMIN/SUPER_ADMIN from app_metadata during auto-provision
             if role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
-                role = UserRole.USER
-        except ValueError:
-            role = UserRole.USER
+                role = UserRole.BUYER
+        elif _META_ROLE:
+            _candidate = _parse_role(_META_ROLE)
+            # Allow KOC and Vendor from user sign-up metadata (not privileged roles)
+            role = _candidate if _candidate in NON_PRIVILEGED else UserRole.BUYER
+        else:
+            role = UserRole.BUYER
 
         user = User(
             id=user_id,
@@ -221,6 +238,12 @@ async def _upsert_supabase_user(payload: dict, db: AsyncSession) -> User:
         )
         db.add(user)
         await db.flush()
+
+        # Auto-create KOCProfile for KOC users
+        if role == UserRole.KOC:
+            from app.models.koc_profile import KOCProfile
+            koc_profile = KOCProfile(user_id=user.id)
+            db.add(koc_profile)
 
     return user
 

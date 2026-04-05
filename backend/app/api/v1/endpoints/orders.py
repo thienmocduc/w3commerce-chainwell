@@ -86,7 +86,9 @@ async def create_order(body: CheckoutReq, current_user: CurrentUser, db: AsyncSe
         idempotency_key=idem_key,
         status_history=[{"status": "pending", "timestamp": datetime.now(timezone.utc).isoformat()}],
     )
-    db.add(order); await db.flush()
+    db.add(order)
+    await db.commit()
+    await db.refresh(order)
 
     # Clear cart after successful order creation
     from app.api.v1.endpoints.cart import _save_cart

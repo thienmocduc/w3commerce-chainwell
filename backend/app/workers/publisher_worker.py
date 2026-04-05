@@ -176,10 +176,10 @@ def publish_to_platform(self, job_id: str) -> dict:
                 logger.info(f"PublishJob {job_id} was cancelled, skipping")
                 return {"status": "cancelled"}
 
-            # Mark as publishing
+            # Mark as publishing — commit immediately so other workers see the lock
             job.status = PublishStatus.PUBLISHING
             db.add(job)
-            await db.flush()
+            await db.commit()
 
             try:
                 # Get adapter for this platform

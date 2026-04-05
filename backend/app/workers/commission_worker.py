@@ -77,11 +77,11 @@ def settle_commissions_batch(self, commission_ids: List[str]) -> dict:
                 logger.info("No pending commissions to settle")
                 return {"settled": 0}
 
-            # Mark as settling
+            # Mark as settling — commit immediately so no other worker picks these up
             for c in commissions:
                 c.status = CommissionStatus.SETTLING
                 db.add(c)
-            await db.flush()
+            await db.commit()
 
             # Build contract call
             w3 = get_web3()
@@ -149,14 +149,14 @@ def settle_commissions_batch(self, commission_ids: List[str]) -> dict:
             receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
             if receipt.status == 1:
-                # Update all commissions as settled
+                # Update all commissions as settled — must commit to persist tx_hash/block data
                 for c in commissions:
                     c.status = CommissionStatus.SETTLED
                     c.tx_hash = tx_hash.hex()
                     c.block_number = receipt.blockNumber
                     c.gas_used = receipt.gasUsed
                     db.add(c)
-                await db.flush()
+                await db.commit()
                 logger.info(f"✅ Settled {len(records)} commissions. TX: {tx_hash.hex()}")
                 return {"settled": len(records), "tx_hash": tx_hash.hex(), "block": receipt.blockNumber}
             else:

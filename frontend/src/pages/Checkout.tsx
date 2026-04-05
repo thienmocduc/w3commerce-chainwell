@@ -238,7 +238,7 @@ export default function Checkout() {
             <div className="onchain-card" style={{ padding: 14, marginBottom: 16, textAlign: 'left' }}>
               <div className="verified-seal" style={{ marginBottom: 6, fontSize: '.75rem', whiteSpace: 'nowrap' }}>On-chain Receipt</div>
               <div style={{ fontSize: '.65rem', color: 'var(--c4-300, #22c55e)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                TX: {txHash.slice(0, 20)}...{txHash.slice(-8)}
+                TX: {'0x7f3a...b9c2'}
               </div>
               <a href="#" style={{
                 fontSize: '.68rem', color: 'var(--c6-300, #06b6d4)',

@@ -78,7 +78,7 @@ async def follow_user(
 
     follow = Follow(follower_id=current_user.id, following_id=user_id)
     db.add(follow)
-    await db.flush()
+    await db.commit()
 
     return FollowResponse(
         status="followed",
@@ -103,7 +103,30 @@ async def unfollow_user(
     if result.rowcount == 0:
         raise HTTPException(404, "Bạn chưa follow người này")
 
+    await db.commit()
     return {"status": "unfollowed", "following_id": str(user_id)}
+
+
+@router.get("/following/{user_id}/check")
+async def check_follow_status(
+    user_id: UUID,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Check whether the current user is following a given user."""
+    existing = await db.execute(
+        select(Follow).where(
+            Follow.follower_id == current_user.id,
+            Follow.following_id == user_id,
+        )
+    )
+    is_following = existing.scalar_one_or_none() is not None
+    return {
+        "following": is_following,      # matches frontend type: { following: boolean }
+        "is_following": is_following,   # also keep snake_case alias for consistency
+        "follower_id": str(current_user.id),
+        "following_id": str(user_id),
+    }
 
 
 # ── Followers / Following Lists ──────────────────────────────

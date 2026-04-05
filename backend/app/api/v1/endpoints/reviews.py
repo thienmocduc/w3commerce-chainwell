@@ -157,7 +157,8 @@ async def create_review(
     order.review_unlocked = True
     db.add(order)
 
-    await db.flush()
+    await db.commit()
+    await db.refresh(review)
 
     # Award gamification XP
     try:
@@ -319,7 +320,7 @@ async def flag_review(
     review.flagged_reason = body.reason
     review.flagged_at = datetime.now(timezone.utc)
     db.add(review)
-    await db.flush()
+    await db.commit()
 
     return {
         "status": "flagged",
@@ -349,7 +350,7 @@ async def remove_review(
     review.removed_reason = body.reason
     review.removed_at = datetime.now(timezone.utc)
     db.add(review)
-    await db.flush()
+    await db.commit()
 
     return {
         "status": "removed",

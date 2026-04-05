@@ -104,6 +104,21 @@ export const apiClient = {
   delete<T>(path: string, token?: string | null): Promise<T> {
     return request<T>('DELETE', path, undefined, token);
   },
+  /** Upload multipart/form-data (file upload). Does NOT set Content-Type header — browser sets it with boundary. */
+  async postForm<T>(path: string, formData: FormData, token?: string | null): Promise<T> {
+    const url = `${API_BASE}${path}`;
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (_WK_ACCESS) headers['X-WK-Access'] = _WK_ACCESS;
+    const res = await fetch(url, { method: 'POST', headers, body: formData });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res);
+      const err = new Error(msg) as Error & { status: number };
+      err.status = res.status;
+      throw err;
+    }
+    return res.json() as Promise<T>;
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -628,6 +643,16 @@ export const kocApi = {
   requestPayout(amount: number, method: string, token: string): Promise<ApiMessage> {
     return apiClient.post('/koc/payout/request', { amount, method }, token);
   },
+
+  getAnalytics(token: string): Promise<{
+    gmv_total: number;
+    orders_total: number;
+    commission_total: number;
+    reputation_score: number;
+    referral_code: string;
+  }> {
+    return apiClient.get('/koc/analytics', token);
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -691,6 +716,18 @@ export interface VendorListParams {
   to_date?: string;
 }
 
+export interface VendorOnboardInput {
+  business_name: string;
+  tax_code: string;
+  business_license_url: string;
+  bank_account: string;
+  bank_name: string;
+  address: string;
+  phone: string;
+  product_categories?: string[];
+  dpp_certifications?: string[];
+}
+
 export const vendorApi = {
   getProfile(token: string): Promise<VendorProfile> {
     return apiClient.get('/vendor/profile', token);
@@ -725,15 +762,23 @@ export const vendorApi = {
   },
 
   createProduct(data: Partial<Product>, token: string): Promise<Product> {
-    return apiClient.post('/vendor/products', data, token);
+    return apiClient.post('/products', data, token);
   },
 
   updateProduct(id: string, data: Partial<Product>, token: string): Promise<Product> {
-    return apiClient.put(`/vendor/products/${id}`, data, token);
+    return apiClient.put(`/products/${id}`, data, token);
   },
 
   deleteProduct(id: string, token: string): Promise<ApiMessage> {
-    return apiClient.delete(`/vendor/products/${id}`, token);
+    return apiClient.delete(`/products/${id}`, token);
+  },
+
+  onboard(data: VendorOnboardInput, token: string): Promise<ApiMessage> {
+    return apiClient.post('/vendor/onboard', data, token);
+  },
+
+  getOnboardStatus(token: string): Promise<{ status: string; profile?: VendorProfile }> {
+    return apiClient.get('/vendor/onboard/status', token);
   },
 };
 
@@ -1325,5 +1370,32 @@ export const socialApi = {
 
   isFollowing(userId: string, token: string): Promise<{ following: boolean }> {
     return apiClient.get(`/social/following/${userId}/check`, token);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UPLOAD (S3 file upload)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type UploadFolder = 'product' | 'avatar' | 'license' | 'kyc' | 'other';
+
+export interface UploadResult {
+  url: string;
+  s3_key: string;
+  mime_type: string;
+  size_bytes: number;
+  folder: UploadFolder;
+}
+
+export const uploadApi = {
+  /**
+   * Upload a file to S3 via the backend.
+   * Returns the CDN URL for immediate use.
+   */
+  upload(file: File, folder: UploadFolder = 'other', token: string): Promise<UploadResult> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('folder', folder);
+    return apiClient.postForm<UploadResult>('/upload', form, token);
   },
 };

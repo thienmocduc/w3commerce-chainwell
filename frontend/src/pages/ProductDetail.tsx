@@ -132,6 +132,14 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Check follow status for the vendor when product loads and user is authenticated
+  useEffect(() => {
+    if (!token || !product?.vendor_id) return;
+    socialApi.isFollowing(product.vendor_id, token)
+      .then((res: any) => setFollowing(res?.is_following ?? res?.following ?? false))
+      .catch(() => {/* non-critical: default to false */});
+  }, [product?.vendor_id, token]);
+
   const handleAddToCart = async () => {
     if (!product) return;
     if (!token) { navigate('/login'); return; }
@@ -337,8 +345,8 @@ export default function ProductDetail() {
                     } else {
                       await socialApi.follow(product.vendor_id, token);
                     }
-                    setFollowing(f => !f);
-                  } catch { setFollowing(f => !f); } // revert on error
+                    setFollowing(f => !f); // only flip on success
+                  } catch { /* no-op: keep current state on error */ }
                   finally { setFollowLoading(false); }
                 }}
                 disabled={followLoading}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE } from '@hooks/useAuth';
-import { ordersApi } from '@lib/api';
+import { ordersApi, kocApi } from '@lib/api';
 import { useI18n } from '@hooks/useI18n';
 
 /* ── Helpers ─────────────────────────────────────── */
@@ -511,6 +511,26 @@ export default function KOC() {
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerPlatform, setPickerPlatform] = useState('direct');
+
+  /* ── KOC Analytics from API (perfKpis) ─── */
+  const [kocAnalytics, setKocAnalytics] = useState<{
+    gmv_total: number; orders_total: number; commission_total: number; reputation_score: number;
+  } | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    kocApi.getAnalytics(token)
+      .then(data => setKocAnalytics(data))
+      .catch(() => {});
+  }, [token]);
+
+  // Derived perfKpis (overrides static const when data loaded)
+  const dynamicPerfKpis = kocAnalytics ? [
+    { label: 'Tổng doanh số (GMV)', value: kocAnalytics.gmv_total.toLocaleString('vi-VN') + '₫', color: 'var(--c4-500)' },
+    { label: 'Tổng đơn hàng', value: String(kocAnalytics.orders_total), color: 'var(--c5-500)' },
+    { label: 'Hoa hồng đã nhận', value: kocAnalytics.commission_total.toLocaleString('vi-VN') + '₫', color: 'var(--c6-500)' },
+    { label: 'Điểm uy tín', value: String(kocAnalytics.reputation_score), color: 'var(--c7-500)' },
+    { label: 'Hoa hồng chờ', value: commBalance.toLocaleString('vi-VN') + '₫', color: 'var(--gold-400)' },
+  ] : perfKpis;
 
   /* ── Community teams from API ─── */
   const [communityTeamsData, setCommunityTeamsData] = useState(communityTeams);
@@ -1927,7 +1947,7 @@ export default function KOC() {
           <>
             <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 20 }}>{t('koc.performance.title')}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12, marginBottom: 24 }}>
-              {perfKpis.map((kpi, i) => (
+              {dynamicPerfKpis.map((kpi, i) => (
                 <div key={i} className="kpi-card">
                   <div className="kpi-label">{kpi.label}</div>
                   <div className="kpi-val" style={{ color: kpi.color }}>{kpi.value}</div>

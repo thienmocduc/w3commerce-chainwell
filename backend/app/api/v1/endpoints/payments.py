@@ -204,7 +204,7 @@ async def initiate_payment(
     order.payment_tx_id = txn_ref
     order.payment_method = body.gateway
     db.add(order)
-    await db.flush()
+    await db.commit()
 
     # ── VNPay ────────────────────────────────────────────────
     if body.gateway == "vnpay":
@@ -357,7 +357,7 @@ async def initiate_payment(
         # Store PayOS order_code for webhook matching
         order.payment_tx_id = f"{txn_ref}|{order_code}"
         db.add(order)
-        await db.flush()
+        await db.commit()
 
         return {
             "gateway": "payos",

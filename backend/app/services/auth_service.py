@@ -90,6 +90,12 @@ class AuthService:
 
         user.referral_code = wk_code
 
+        # Auto-create KOCProfile for KOC role
+        if role == UserRole.KOC:
+            from app.models.koc_profile import KOCProfile
+            koc_profile = KOCProfile(user_id=user.id)
+            self.db.add(koc_profile)
+
         tokens = await self.create_tokens(user)
         return tokens, user
 

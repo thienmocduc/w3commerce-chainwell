@@ -123,6 +123,7 @@ async def suspend_user(
         raise HTTPException(403, "Cannot suspend super admin")
     user.is_active = False
     db.add(user)
+    await db.commit()
 
     # Audit log
     from app.core.redis_client import redis_client
@@ -166,6 +167,7 @@ async def review_kyc(
     if not approved and rejection_reason:
         user.kyc_data = {**(user.kyc_data or {}), "rejection_reason": rejection_reason}
     db.add(user)
+    await db.commit()
 
     # TODO: Send notification to user (email/SMS)
     return {"status": "approved" if approved else "rejected", "user_id": str(user_id)}
@@ -184,6 +186,16 @@ async def pending_commissions(
     )
     count, total = r.one()
     return {"pending_count": count or 0, "pending_amount_vnd": float(total or 0)}
+
+
+# ── Overview alias ───────────────────────────────────────────
+@router.get("/overview")
+async def admin_overview(
+    current_user: User = Depends(admin_only),
+    db: AsyncSession = Depends(get_db),
+):
+    """Alias for /admin/dashboard — same real-time platform metrics."""
+    return await admin_dashboard(current_user=current_user, db=db)
 
 
 # ── Helpers ───────────────────────────────────────────────────

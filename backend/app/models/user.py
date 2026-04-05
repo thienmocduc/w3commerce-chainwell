@@ -43,6 +43,8 @@ class User(Base):
         Index("ix_users_role", "role"),
         Index("ix_users_referral_code", "referral_code"),
         Index("ix_users_verification_level", "verification_level"),
+        Index("ix_users_kyc_reviewer_id", "kyc_reviewer_id"),
+        Index("ix_users_stripe_customer_id", "stripe_customer_id"),
         {"schema": None},
     )
 
@@ -93,7 +95,9 @@ class User(Base):
     kyc_status: Mapped[str] = mapped_column(String(20), default=KYCStatus.PENDING)
     kyc_data: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     kyc_reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    kyc_reviewer_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    kyc_reviewer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     # ── Referral / Commission ────────────────────────────────
     referral_code: Mapped[str] = mapped_column(

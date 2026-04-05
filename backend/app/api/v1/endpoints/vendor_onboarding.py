@@ -67,6 +67,7 @@ async def vendor_onboard(
     profile.categories = payload.product_categories
 
     db.add(profile)
+    await db.flush()  # Ensure profile.id is generated before we use it
 
     # Store extended onboarding data in user's profile
     # (bank info, certifications, etc. stored alongside the vendor profile)
@@ -87,7 +88,7 @@ async def vendor_onboard(
         ex=60 * 60 * 24 * 90,  # 90 days TTL
     )
 
-    await db.flush()
+    await db.commit()
     return {
         "vendor_id": str(profile.id),
         "status": "pending_review",
@@ -182,7 +183,7 @@ async def review_vendor_application(
             pass  # Non-critical: notification failure should not block approval
 
         db.add(profile)
-        await db.flush()
+        await db.commit()
 
         return {
             "vendor_id": str(vendor_id),
@@ -209,7 +210,7 @@ async def review_vendor_application(
                 ex=60 * 60 * 24 * 90,
             )
 
-        await db.flush()
+        await db.commit()
 
         return {
             "vendor_id": str(vendor_id),
