@@ -32,6 +32,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 @router.get("", response_model=ProductListResponse)
 async def list_products(
     category: Optional[str] = Query(None),
+    search: Optional[str] = Query(None, max_length=200),
     brand: Optional[str] = Query(None),
     min_price: Optional[float] = Query(None, ge=0),
     max_price: Optional[float] = Query(None),
@@ -41,8 +42,17 @@ async def list_products(
     per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    """List products with filtering and sorting"""
+    """List products with filtering and sorting. Supports inline search via ?search=."""
     svc = ProductService(db)
+    # If a search query is provided, delegate to hybrid search for better relevance
+    if search and search.strip():
+        return await svc.hybrid_search(
+            query=search.strip(),
+            category=category,
+            dpp_only=dpp_only,
+            page=page,
+            per_page=per_page,
+        )
     return await svc.list_products(
         category=category,
         brand=brand,
