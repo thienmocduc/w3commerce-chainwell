@@ -54,7 +54,9 @@ class ProductService:
         q = select(Product).where(Product.status.in_(_VISIBLE_STATUSES))
         if category:
             resolved = _CATEGORY_ALIAS.get(category.lower(), category)
-            q = q.where(Product.category == resolved)
+            # Match both the frontend key ('food') and any legacy full name ('Thuc Pham Chuc Nang')
+            candidates = list({category, resolved})
+            q = q.where(Product.category.in_(candidates))
         if brand:
             q = q.where(Product.brand == brand)
         if min_price:
@@ -122,7 +124,8 @@ class ProductService:
         )
         if category:
             resolved = _CATEGORY_ALIAS.get(category.lower(), category)
-            fts_q = fts_q.where(Product.category == resolved)
+            candidates = list({category, resolved})
+            fts_q = fts_q.where(Product.category.in_(candidates))
         if dpp_only:
             fts_q = fts_q.where(Product.dpp_verified == True)  # noqa: E712
 
@@ -167,7 +170,8 @@ class ProductService:
         )
         if category:
             resolved = _CATEGORY_ALIAS.get(category.lower(), category)
-            fuzzy_q = fuzzy_q.where(Product.category == resolved)
+            candidates = list({category, resolved})
+            fuzzy_q = fuzzy_q.where(Product.category.in_(candidates))
         if dpp_only:
             fuzzy_q = fuzzy_q.where(Product.dpp_verified == True)  # noqa: E712
 
