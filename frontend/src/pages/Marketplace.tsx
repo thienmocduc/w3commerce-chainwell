@@ -47,6 +47,9 @@ const SKELETON_GRADIENTS = [
 ];
 
 const DEMO_PRODUCTS: Product[] = [
+  { id: 'anima-1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống (1 Hộp)', price: 1868000, originalPrice: undefined, category: 'food', dpp: false, rating: 0, sold: 0, kocAvatar: '', kocName: 'AnimaCare Global', gradient: 'linear-gradient(135deg, #14532d, #065f46)' },
+  { id: 'anima-2', name: 'ANIMA 119 - Liệu Trình 3 Hộp (30 Gói)', price: 5604000, originalPrice: undefined, category: 'food', dpp: false, rating: 0, sold: 0, kocAvatar: '', kocName: 'AnimaCare Global', gradient: 'linear-gradient(135deg, #1e3a5f, #0c4a6e)' },
+  { id: 'anima-3', name: 'ANIMA 119 - Phục Hưng Toàn Diện 12 Hộp (120 Gói)', price: 22416000, originalPrice: undefined, category: 'food', dpp: false, rating: 0, sold: 0, kocAvatar: '', kocName: 'AnimaCare Global', gradient: 'linear-gradient(135deg, #4c1d95, #2d1b69)' },
   { id: 'demo-1', name: 'Kem dưỡng trắng da ban đêm Sakura', price: 320000, originalPrice: 450000, category: 'skincare', dpp: true, rating: 4.8, sold: 1240, kocAvatar: '', kocName: 'Mai Linh', gradient: 'linear-gradient(135deg, #ff6b9d, #c44dff)' },
   { id: 'demo-2', name: 'Serum Vitamin C 20% Pure Glow', price: 185000, originalPrice: 250000, category: 'skincare', dpp: false, rating: 4.6, sold: 890, kocAvatar: '', kocName: 'Thu Hà', gradient: 'linear-gradient(135deg, #f7971e, #ffd200)' },
   { id: 'demo-3', name: 'Cà phê Arabica rang xay Đà Lạt 500g', price: 145000, originalPrice: 180000, category: 'food', dpp: true, rating: 4.9, sold: 3200, kocAvatar: '', kocName: 'Minh Tuấn', gradient: 'linear-gradient(135deg, #4e342e, #8d6e63)' },
