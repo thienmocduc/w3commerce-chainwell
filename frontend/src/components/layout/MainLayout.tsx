@@ -353,7 +353,7 @@ export default function MainLayout() {
             flexShrink: 0,
           }}
         >
-          <ZeniLogo height={32} />
+          <WKLogo size={32} />
           <span
             style={{
               fontFamily: "'Noto Sans', sans-serif",
@@ -786,7 +786,7 @@ export default function MainLayout() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ZeniLogo height={28} />
+            <WKLogo size={28} />
             <span
               style={{
                 fontFamily: 'var(--ff-display)',

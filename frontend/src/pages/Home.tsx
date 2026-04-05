@@ -71,9 +71,17 @@ const PRODUCT_GRADIENTS = [
 
 const formatVND = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
 
+// Fallback products shown while API is loading (Render free tier cold start)
+const FALLBACK_FEATURED = [
+  { id: 'f1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống', price: 1868000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f2', name: 'ANIMA 119 - Liệu Trình 3 Hộp (30 Gói)', price: 5604000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f3', name: 'ANIMA 119 - Phục Hưng Toàn Diện 12 Hộp', price: 22416000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f4', name: 'Trà Hoa Cúc Organic', price: 120000, compare_at_price: 160000, category: 'food', dpp_verified: false, thumbnail_url: null },
+];
+
 export default function Home() {
   const { t } = useI18n();
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>(FALLBACK_FEATURED);
 
   useEffect(() => {
     productsApi.list({ per_page: '6', sort: 'newest' } as any)
@@ -81,7 +89,7 @@ export default function Home() {
         const items = res?.items ?? (Array.isArray(res) ? res : []);
         if (items.length > 0) setFeaturedProducts(items.slice(0, 6));
       })
-      .catch(() => {});
+      .catch(() => {}); // Keep fallback on error
   }, []);
 
   return (
@@ -1132,8 +1140,7 @@ export default function Home() {
       {/* ═══════════════════════════════════════════
           SECTION 7 — SẢN PHẨM NỔI BẬT
       ═══════════════════════════════════════════ */}
-      {featuredProducts.length > 0 && (
-        <section className="section" style={{ background: 'var(--bg-0)' }}>
+      <section className="section" style={{ background: 'var(--bg-0)' }}>
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <div className="section-badge" style={{ marginBottom: 12 }}>
@@ -1243,7 +1250,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-      )}
 
       <div className="chakra-divider" />
 
