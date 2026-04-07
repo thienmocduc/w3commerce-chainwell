@@ -77,14 +77,38 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-def verify_ws_token(token: str) -> str | None:
+def verify_ws_token(token: str) -> tuple[str, str] | None:
+    """Returns (user_id, role) tuple or None if invalid."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("type") != "access":
             return None
-        return payload.get("sub")
+        user_id = payload.get("sub")
+        role = payload.get("role", "buyer")
+        if not user_id:
+            return None
+        return (user_id, role)
     except JWTError:
         return None
+
+
+def _can_subscribe_room(room: str, user_id: str, role: str) -> bool:
+    """
+    Room access control rules:
+    - live:*       → any authenticated user (public live streams)
+    - groupbuy:*   → any authenticated user
+    - koc:{id}     → only the KOC themselves or admins
+    - admin:*      → only admins
+    - others       → deny
+    """
+    if room.startswith("live:") or room.startswith("groupbuy:"):
+        return True
+    if room.startswith("koc:"):
+        koc_id = room.split(":", 1)[1]
+        return role == "admin" or user_id == koc_id
+    if room.startswith("admin:"):
+        return role == "admin"
+    return False
 
 
 @router.websocket("/ws")
@@ -108,11 +132,12 @@ async def websocket_endpoint(
       {"event": "groupbuy_progress", "data": {"id": "...", "count": 156, "target": 200}}
       {"event": "notification", "data": {"title": "...", "body": "..."}}
     """
-    user_id = verify_ws_token(token)
-    if not user_id:
+    identity = verify_ws_token(token)
+    if not identity:
         await ws.close(code=4001, reason="Invalid token")
         return
 
+    user_id, role = identity
     await manager.connect(ws, user_id)
     try:
         # Send connection confirmation
@@ -135,12 +160,16 @@ async def websocket_endpoint(
 
                 elif action == "subscribe" and msg.get("room"):
                     room = msg["room"]
-                    # Validate room format: live:id, groupbuy:id, koc:id
-                    if any(room.startswith(prefix + ":") for prefix in ["live", "groupbuy", "koc", "admin"]):
+                    if _can_subscribe_room(room, user_id, role):
                         await manager.join_room(ws, room)
                         await ws.send_text(json.dumps({
                             "event": "subscribed",
                             "data": {"room": room}
+                        }))
+                    else:
+                        await ws.send_text(json.dumps({
+                            "event": "error",
+                            "data": {"code": "forbidden", "room": room}
                         }))
 
                 elif action == "unsubscribe" and msg.get("room"):

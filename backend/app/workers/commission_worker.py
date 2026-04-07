@@ -85,7 +85,7 @@ def settle_commissions_batch(self, commission_ids: List[str]) -> dict:
 
             # Build contract call
             w3 = get_web3()
-            account = w3.eth.account.from_key(settings.WALLET_PRIVATE_KEY)
+            account = w3.eth.account.from_key(settings.WALLET_PRIVATE_KEY.get_secret_value())
             contract = w3.eth.contract(
                 address=Web3.to_checksum_address(settings.COMMISSION_CONTRACT_ADDRESS),
                 abi=DISTRIBUTOR_ABI,

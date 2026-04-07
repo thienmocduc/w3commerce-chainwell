@@ -6,7 +6,7 @@ import hashlib
 import hmac
 from functools import lru_cache
 from typing import Literal
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -57,7 +57,9 @@ class Settings(BaseSettings):
     # ── Blockchain / Polygon ────────────────────
     POLYGON_RPC_URL: str = "https://polygon-rpc.com"
     POLYGON_TESTNET_RPC: str = "https://rpc-amoy.polygon.technology"
-    WALLET_PRIVATE_KEY: str = ""
+    # SecretStr: value is masked in logs/repr as "**********"
+    WALLET_PRIVATE_KEY: SecretStr = SecretStr("")
+    WALLET_ADDRESS: str = ""   # Public address — safe to expose to clients
     COMMISSION_CONTRACT_ADDRESS: str = ""
     DPP_FACTORY_ADDRESS: str = ""
     WK_TOKEN_ADDRESS: str = ""

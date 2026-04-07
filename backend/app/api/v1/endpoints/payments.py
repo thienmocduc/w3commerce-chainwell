@@ -374,7 +374,7 @@ async def initiate_payment(
             "network": "Polygon",
             "contract": settings.COMMISSION_CONTRACT_ADDRESS,
             "amount_usdt": amount_usdt,
-            "wallet": settings.WALLET_PRIVATE_KEY[:10] + "...",
+            "wallet": settings.WALLET_ADDRESS,
             "txn_ref": txn_ref,
         }
 
