@@ -813,3 +813,618 @@ async def batch_coaching(
         triggered=len(triggered_ids),
         koc_ids=triggered_ids,
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AGENTS A02 – A60 (additional 10 agents)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Agent A02: Video Script Generator ────────────────────────
+class VideoScriptRequest(BaseModel):
+    product_name: str = Field(..., max_length=200)
+    product_desc: Optional[str] = Field(None, max_length=500)
+    platform: str = Field("tiktok", pattern="^(tiktok|youtube|instagram|facebook)$")
+    duration_seconds: int = Field(60, ge=15, le=600)
+    tone: str = Field("enthusiastic", pattern="^(enthusiastic|educational|storytelling|testimonial)$")
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/video-script")
+async def generate_video_script(
+    body: VideoScriptRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A02: Generate short-video script with hook, body, CTA for KOC content."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A02 — Video Script Specialist.
+
+Create a {body.duration_seconds}-second {body.platform.upper()} video script for:
+- Product: {body.product_name}
+- Description: {body.product_desc or 'N/A'}
+- Tone: {body.tone}
+- Language: {lang}
+
+Script structure:
+1. HOOK (0-3s): Attention-grabbing opening line
+2. PROBLEM (3-10s): Pain point the product solves
+3. SOLUTION (10-{body.duration_seconds - 10}s): Product demo/benefits (3-5 points)
+4. SOCIAL PROOF ({body.duration_seconds - 10}s): Rating/reviews/testimonial angle
+5. CTA (last 5s): Clear call-to-action + {{AFFILIATE_LINK}}
+
+Also provide:
+- B-roll suggestions for each segment
+- On-screen text overlays
+- Background music mood suggestion
+
+Format: labeled sections, Vietnamese subtitles if language=vi.
+Write the complete script only."""
+
+    async def stream_script():
+        with client.messages.stream(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1200,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
+    return StreamingResponse(stream_script(), media_type="text/plain")
+
+
+# ── Agent A05: Trend Radar ────────────────────────────────────
+class TrendRadarRequest(BaseModel):
+    category: str = Field(..., max_length=100, description="Product category to analyze")
+    market: str = Field("vietnam", pattern="^(vietnam|southeast_asia|global)$")
+    horizon: str = Field("week", pattern="^(day|week|month)$")
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+class TrendRadarResponse(BaseModel):
+    trending_topics: list[str]
+    rising_keywords: list[str]
+    declining_keywords: list[str]
+    opportunity_score: float
+    recommended_products: list[str]
+    posting_window: str
+    summary: str
+
+
+@router.post("/trend-radar", response_model=TrendRadarResponse)
+async def trend_radar(
+    body: TrendRadarRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A05: Analyze trending topics + keywords for KOC content strategy."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A05 — Trend Radar Specialist.
+
+Analyze trending content for:
+- Category: {body.category}
+- Market: {body.market}
+- Time horizon: {body.horizon}
+- Language: {lang}
+
+Return ONLY valid JSON matching this schema:
+{{
+  "trending_topics": ["topic1", "topic2", ...],
+  "rising_keywords": ["keyword1", ...],
+  "declining_keywords": ["keyword1", ...],
+  "opportunity_score": 0.0-10.0,
+  "recommended_products": ["product type 1", ...],
+  "posting_window": "best time to post (e.g. 7-9pm weekdays)",
+  "summary": "2-sentence strategic summary in {lang}"
+}}"""
+
+    msg = client.messages.create(
+        model=settings.ANTHROPIC_MODEL,
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    import json as _json
+    try:
+        raw = msg.content[0].text.strip()
+        # Strip markdown fences if any
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+        data = _json.loads(raw)
+        return TrendRadarResponse(**data)
+    except Exception:
+        raise HTTPException(500, "AI returned invalid response format")
+
+
+# ── Agent A08: Price Optimizer ────────────────────────────────
+class PriceOptimizerRequest(BaseModel):
+    product_name: str = Field(..., max_length=200)
+    current_price: float = Field(..., gt=0)
+    cost_price: Optional[float] = Field(None, gt=0)
+    category: str = Field(..., max_length=100)
+    competitor_prices: Optional[list[float]] = Field(None, max_length=10)
+    target_margin: Optional[float] = Field(None, ge=0, le=1, description="0.0-1.0")
+
+
+@router.post("/price-optimizer")
+async def price_optimizer(
+    body: PriceOptimizerRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A08: AI-powered price optimization with competitor benchmarking."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    comp_text = f"Competitor prices: {body.competitor_prices}" if body.competitor_prices else "No competitor data provided"
+    cost_text = f"Cost price: {body.cost_price:,.0f}đ" if body.cost_price else "Cost unknown"
+    margin_text = f"Target margin: {body.target_margin * 100:.0f}%" if body.target_margin else ""
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A08 — Pricing Intelligence Specialist.
+
+Optimize pricing for:
+- Product: {body.product_name}
+- Category: {body.category}
+- Current price: {body.current_price:,.0f}đ
+- {cost_text}
+- {comp_text}
+- {margin_text}
+
+Analyze and return JSON:
+{{
+  "recommended_price": number,
+  "price_range": {{"min": number, "max": number}},
+  "strategy": "penetration|competitive|premium|value",
+  "koc_commission_impact": "how this affects KOC earnings",
+  "flash_sale_price": number,
+  "justification": "2-3 sentences explaining the recommendation in Vietnamese",
+  "confidence": 0.0-1.0
+}}"""
+
+    msg = client.messages.create(
+        model=settings.ANTHROPIC_MODEL,
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    import json as _json
+    try:
+        raw = msg.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+        return _json.loads(raw)
+    except Exception:
+        raise HTTPException(500, "AI returned invalid response format")
+
+
+# ── Agent A10: Review Responder ───────────────────────────────
+class ReviewResponderRequest(BaseModel):
+    product_name: str = Field(..., max_length=200)
+    review_text: str = Field(..., max_length=1000)
+    review_rating: int = Field(..., ge=1, le=5)
+    vendor_name: str = Field(..., max_length=100)
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/review-responder")
+async def review_responder(
+    body: ReviewResponderRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A10: Generate empathetic, professional vendor responses to reviews."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    sentiment = "positive" if body.review_rating >= 4 else "neutral" if body.review_rating == 3 else "negative"
+    lang = "Vietnamese" if body.language == "vi" else "English"
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A10 — Customer Relations Specialist.
+
+Write a professional vendor response to this {sentiment} review:
+- Product: {body.product_name}
+- Vendor: {body.vendor_name}
+- Rating: {body.review_rating}/5 stars
+- Review: "{body.review_text}"
+- Language: {lang}
+
+Guidelines:
+- Thank the customer by name if mentioned
+- For negative reviews: acknowledge issue, apologize sincerely, offer solution
+- For positive reviews: express gratitude, highlight key benefit they mentioned
+- Keep it concise (2-3 sentences max)
+- Maintain professional yet warm tone
+- Include an offer for next purchase if negative
+- Write ONLY the response text, no labels"""
+
+    msg = client.messages.create(
+        model=settings.ANTHROPIC_MODEL,
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return {
+        "response": msg.content[0].text.strip(),
+        "sentiment": sentiment,
+        "recommended_action": "offer_discount" if body.review_rating <= 2 else "thank_and_encourage",
+    }
+
+
+# ── Agent A15: Product Description Writer ────────────────────
+class ProductDescRequest(BaseModel):
+    product_name: str = Field(..., max_length=200)
+    key_features: list[str] = Field(..., max_length=10)
+    target_audience: Optional[str] = Field(None, max_length=200)
+    brand: Optional[str] = Field(None, max_length=100)
+    origin: Optional[str] = Field(None, max_length=100)
+    certifications: Optional[list[str]] = Field(None, max_length=5)
+    dpp_verified: bool = False
+    language: str = Field("vi", pattern="^(vi|en)$")
+    style: str = Field("ecommerce", pattern="^(ecommerce|luxury|health|tech|food)$")
+
+
+@router.post("/product-description")
+async def product_description_writer(
+    body: ProductDescRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A15: Generate SEO-optimized product descriptions for vendor listings."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    features = "\n".join(f"- {f}" for f in body.key_features)
+    certs = ", ".join(body.certifications) if body.certifications else "None"
+    dpp_text = "Sản phẩm có DPP NFT — xác thực blockchain, đảm bảo nguồn gốc 100%." if body.dpp_verified else ""
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A15 — Product Content Specialist.
+
+Write an SEO-optimized product description in {lang}:
+- Product: {body.product_name}
+- Brand: {body.brand or 'N/A'}
+- Origin: {body.origin or 'N/A'}
+- Target audience: {body.target_audience or 'general consumers'}
+- Style: {body.style}
+- Key features:
+{features}
+- Certifications: {certs}
+- DPP: {dpp_text}
+
+Sections to include:
+1. Intro paragraph (2-3 sentences, hook the reader)
+2. Key Benefits (bullet list, 4-6 points)
+3. How to Use / Specifications
+4. Quality Guarantee / Certifications
+5. SEO-friendly meta description (155 chars max)
+
+Write the complete description in {lang}."""
+
+    async def stream_desc():
+        with client.messages.stream(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
+    return StreamingResponse(stream_desc(), media_type="text/plain")
+
+
+# ── Agent A22: Campaign Performance Analyzer ─────────────────
+class CampaignAnalyzerRequest(BaseModel):
+    campaign_name: str = Field(..., max_length=200)
+    platform: str = Field("tiktok", pattern="^(tiktok|instagram|facebook|youtube|all)$")
+    impressions: int = Field(..., ge=0)
+    clicks: int = Field(..., ge=0)
+    conversions: int = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
+    ad_spend: float = Field(0, ge=0)
+    duration_days: int = Field(..., ge=1, le=365)
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/campaign-analyzer")
+async def campaign_analyzer(
+    body: CampaignAnalyzerRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A22: Analyze campaign KPIs and generate improvement recommendations."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    ctr = (body.clicks / body.impressions * 100) if body.impressions > 0 else 0
+    cvr = (body.conversions / body.clicks * 100) if body.clicks > 0 else 0
+    roas = (body.revenue / body.ad_spend) if body.ad_spend > 0 else 0
+    rpi = body.revenue / body.impressions if body.impressions > 0 else 0
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A22 — Campaign Performance Analyst.
+
+Analyze this campaign and provide actionable insights in {lang}:
+- Campaign: {body.campaign_name}
+- Platform: {body.platform}
+- Duration: {body.duration_days} days
+- Impressions: {body.impressions:,}
+- Clicks: {body.clicks:,} (CTR: {ctr:.2f}%)
+- Conversions: {body.conversions:,} (CVR: {cvr:.2f}%)
+- Revenue: {body.revenue:,.0f}đ
+- Ad Spend: {body.ad_spend:,.0f}đ (ROAS: {roas:.2f}x)
+
+Return JSON:
+{{
+  "performance_grade": "A/B/C/D/F",
+  "ctr_benchmark": "above/below/at industry average",
+  "cvr_benchmark": "above/below/at industry average",
+  "top_3_issues": ["issue1", ...],
+  "top_3_recommendations": ["rec1", ...],
+  "budget_recommendation": "increase/maintain/decrease",
+  "projected_improvement_pct": number,
+  "summary": "2-3 sentence executive summary in {lang}"
+}}"""
+
+    msg = client.messages.create(
+        model=settings.ANTHROPIC_MODEL,
+        max_tokens=600,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    import json as _json
+    try:
+        raw = msg.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+        data = _json.loads(raw)
+        data.update({"ctr": round(ctr, 2), "cvr": round(cvr, 2), "roas": round(roas, 2)})
+        return data
+    except Exception:
+        raise HTTPException(500, "AI returned invalid response format")
+
+
+# ── Agent A30: Customer Segment Profiler ─────────────────────
+class SegmentProfilerRequest(BaseModel):
+    segment_name: str = Field(..., max_length=100)
+    age_range: Optional[str] = Field(None, description="e.g. 25-35")
+    gender: Optional[str] = Field(None, pattern="^(male|female|all)$")
+    location: Optional[str] = Field(None, max_length=100)
+    avg_order_value: Optional[float] = Field(None, gt=0)
+    purchase_frequency: Optional[str] = Field(None, pattern="^(weekly|monthly|quarterly|occasional)$")
+    top_categories: Optional[list[str]] = Field(None, max_length=5)
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/segment-profiler")
+async def segment_profiler(
+    body: SegmentProfilerRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A30: Profile a customer segment and recommend targeting strategies."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    details = []
+    if body.age_range: details.append(f"Age: {body.age_range}")
+    if body.gender: details.append(f"Gender: {body.gender}")
+    if body.location: details.append(f"Location: {body.location}")
+    if body.avg_order_value: details.append(f"AOV: {body.avg_order_value:,.0f}đ")
+    if body.purchase_frequency: details.append(f"Purchase frequency: {body.purchase_frequency}")
+    if body.top_categories: details.append(f"Top categories: {', '.join(body.top_categories)}")
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A30 — Customer Intelligence Specialist.
+
+Profile this customer segment and provide KOC targeting recommendations in {lang}:
+- Segment: {body.segment_name}
+- {chr(10).join(details) or 'No demographic data provided'}
+
+Return JSON:
+{{
+  "persona_name": "catchy persona name",
+  "pain_points": ["pain1", "pain2", "pain3"],
+  "motivations": ["motivation1", ...],
+  "preferred_content_format": ["format1", ...],
+  "best_platforms": ["platform1", ...],
+  "best_posting_times": ["time1", ...],
+  "messaging_angle": "key message to resonate with this segment",
+  "product_categories": ["recommended category1", ...],
+  "koc_profile_fit": "what type of KOC appeals to this segment",
+  "summary": "2-3 sentence segment summary in {lang}"
+}}"""
+
+    msg = client.messages.create(
+        model=settings.ANTHROPIC_MODEL,
+        max_tokens=700,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    import json as _json
+    try:
+        raw = msg.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0]
+        return _json.loads(raw)
+    except Exception:
+        raise HTTPException(500, "AI returned invalid response format")
+
+
+# ── Agent A40: Live Stream Script Planner ────────────────────
+class LiveStreamPlannerRequest(BaseModel):
+    session_title: str = Field(..., max_length=200)
+    products: list[str] = Field(..., max_length=20, description="List of product names to feature")
+    duration_minutes: int = Field(60, ge=15, le=240)
+    koc_name: Optional[str] = Field(None, max_length=100)
+    platform: str = Field("tiktok", pattern="^(tiktok|shopee|facebook|youtube)$")
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/livestream-planner")
+async def livestream_planner(
+    body: LiveStreamPlannerRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A40: Create minute-by-minute live stream script with engagement tactics."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    products_list = "\n".join(f"- {p}" for p in body.products)
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A40 — Live Commerce Strategist.
+
+Create a {body.duration_minutes}-minute live stream plan in {lang}:
+- Session: {body.session_title}
+- Platform: {body.platform}
+- KOC: {body.koc_name or 'WellKOC KOC'}
+- Products to feature:
+{products_list}
+
+Provide a minute-by-minute script with:
+1. Opening hook (first 2 min): greeting + teaser
+2. Warm-up (2-10 min): audience engagement + poll
+3. Product segments (10-{body.duration_minutes - 10} min): each product with demo + price reveal
+4. Flash sale trigger timing (pick best moment for max urgency)
+5. Q&A segment
+6. Closing (last 5 min): summary + CTA + affiliate link
+
+Include engagement prompts (questions to ask audience) every 5 minutes.
+Format as clear timeline with timestamps."""
+
+    async def stream_plan():
+        with client.messages.stream(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
+    return StreamingResponse(stream_plan(), media_type="text/plain")
+
+
+# ── Agent A50: DPP Story Generator ───────────────────────────
+class DPPStoryRequest(BaseModel):
+    product_name: str = Field(..., max_length=200)
+    origin_country: str = Field(..., max_length=100)
+    manufacturer: Optional[str] = Field(None, max_length=200)
+    certifications: Optional[list[str]] = Field(None, max_length=10)
+    nft_token_id: Optional[str] = Field(None, max_length=100)
+    supply_chain_steps: Optional[list[str]] = Field(None, max_length=10)
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/dpp-story")
+async def dpp_story_generator(
+    body: DPPStoryRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A50: Generate blockchain-verified product origin story for DPP marketing."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    chain = "\n".join(f"- {s}" for s in body.supply_chain_steps) if body.supply_chain_steps else "Not provided"
+    certs = ", ".join(body.certifications) if body.certifications else "None"
+    nft_text = f"NFT Token #{body.nft_token_id} on Polygon blockchain" if body.nft_token_id else "DPP verified on WellKOC blockchain"
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A50 — DPP Authenticity Storyteller.
+
+Write a compelling origin story for this blockchain-verified product in {lang}:
+- Product: {body.product_name}
+- Origin: {body.origin_country}
+- Manufacturer: {body.manufacturer or 'N/A'}
+- Certifications: {certs}
+- Blockchain verification: {nft_text}
+- Supply chain journey:
+{chain}
+
+Create:
+1. Short story (3-4 sentences) about the product's journey from origin to consumer
+2. Trust-building statement highlighting blockchain verification
+3. 3 social media captions (TikTok/IG/Facebook) that emphasize authenticity
+4. FAQ answers for "How do I verify this product is authentic?"
+
+Write in {lang}, emphasize trust and transparency."""
+
+    async def stream_story():
+        with client.messages.stream(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
+    return StreamingResponse(stream_story(), media_type="text/plain")
+
+
+# ── Agent A60: KOC Onboarding Coach ──────────────────────────
+class OnboardingCoachRequest(BaseModel):
+    user_name: str = Field(..., max_length=100)
+    niche: str = Field(..., max_length=100, description="e.g. skincare, food, fashion")
+    platform_experience: str = Field("beginner", pattern="^(beginner|intermediate|advanced)$")
+    follower_count: int = Field(0, ge=0)
+    goals: Optional[list[str]] = Field(None, max_length=5)
+    language: str = Field("vi", pattern="^(vi|en)$")
+
+
+@router.post("/onboarding-coach")
+async def onboarding_coach(
+    body: OnboardingCoachRequest,
+    current_user: User = Depends(get_current_user),
+    _rl: None = Depends(ai_rate_limit),
+):
+    """Agent A60: Personalized 30-day onboarding plan for new KOCs."""
+    if not client:
+        raise HTTPException(503, "AI service unavailable")
+
+    lang = "Vietnamese" if body.language == "vi" else "English"
+    goals_text = ", ".join(body.goals) if body.goals else "earn commission, grow audience"
+
+    prompt = f"""{PLATFORM_CONTEXT}
+You are Agent A60 — KOC Success Coach.
+
+Create a personalized 30-day onboarding plan in {lang} for:
+- Name: {body.user_name}
+- Niche: {body.niche}
+- Experience level: {body.platform_experience}
+- Current followers: {body.follower_count:,}
+- Goals: {goals_text}
+
+WellKOC commission structure: T1 (direct referral) = 40%, T2 = 13%
+DPP NFT products available for authenticity marketing angle.
+
+Provide:
+1. Week 1 (Days 1-7): Foundation tasks (profile, first content, first product link)
+2. Week 2 (Days 8-14): Growth tactics (engagement, collaborations, hashtag strategy)
+3. Week 3 (Days 15-21): Monetization (affiliate links, flash sales, group buys)
+4. Week 4 (Days 22-30): Scale (analytics review, tier upgrade strategy, mentoring T2)
+5. First 3 products to promote (based on niche)
+6. Success metrics to track (week-by-week targets)
+
+Be specific, actionable, and encouraging. Write in {lang}."""
+
+    async def stream_plan():
+        with client.messages.stream(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
+    return StreamingResponse(stream_plan(), media_type="text/plain")

@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     chatbot,
     notifications,
     upload,
+    academy,
 )
 
 api_router = APIRouter()
@@ -97,6 +98,9 @@ api_router.include_router(analytics.router)
 
 # ── File Upload ─────────────────────────────────────────────
 api_router.include_router(upload.router)
+
+# ── Academy / Learning ───────────────────────────────────────
+api_router.include_router(academy.router)
 
 # ── Real-time (WebSocket) ────────────────────────────────────
 api_router.include_router(websocket.router)
