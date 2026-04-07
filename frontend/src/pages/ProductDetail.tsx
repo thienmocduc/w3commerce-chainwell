@@ -36,26 +36,37 @@ type TabKey = 'description' | 'dpp' | 'reviews';
 const ANIMA_STATIC: Record<string, Partial<Product>> = {
   'anima-1': {
     id: 'anima-1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống (1 Hộp)', price: 1868000,
-    description: 'ANIMA 119 — Công nghệ sinh học lượng tử thế hệ mới. Một hộp gồm 10 gói, mỗi gói 10g. Sản phẩm kết hợp 119 dưỡng chất từ thiên nhiên, lên men vi sinh vật 72 giờ, hấp thu 98%.\n\nPhù hợp cho: Người mệt mỏi, suy nhược, khí huyết kém lưu thông.',
+    description: 'ANIMA 119 — Công nghệ sinh học lượng tử thế hệ mới. Một hộp gồm 10 gói, mỗi gói 10g. Sản phẩm kết hợp 119 dưỡng chất từ thiên nhiên, lên men vi sinh vật 72 giờ, hấp thu 98%.\n\nPhù hợp cho: Người mệt mỏi, suy nhược, khí huyết kém lưu thông. Dùng 1 gói/ngày vào buổi sáng trước ăn 30 phút.',
     thumbnail_url: '/images/anima119-hero.jpg',
     images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg','/images/anima119-slide4.jpg'],
-    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+    category: 'food', vendor_name: 'AnimaCare Global', brand: 'AnimaCare', origin: 'Việt Nam',
+    rating: 4.9, review_count: 128, sold_count: 456, stock_qty: 999, xp_reward: 180, dpp_enabled: false,
   },
   'anima-2': {
     id: 'anima-2', name: 'ANIMA 119 - Liệu Trình 3 Hộp (30 Gói)', price: 5604000,
-    description: 'Liệu trình 1 tháng — 3 hộp ANIMA 119 (30 gói). Tiết kiệm so với mua lẻ. Phù hợp cho người bắt đầu liệu trình phục hồi sức khoẻ từ nền tảng tế bào.\n\nCông nghệ lên men 72 giờ, 119 dưỡng chất, hấp thu 98%.',
+    description: 'Liệu trình 1 tháng — 3 hộp ANIMA 119 (30 gói). Tiết kiệm so với mua lẻ. Phù hợp cho người bắt đầu liệu trình phục hồi sức khoẻ từ nền tảng tế bào.\n\nCông nghệ lên men 72 giờ, 119 dưỡng chất, hấp thu 98%. Tiết kiệm 5% so với mua 3 hộp lẻ.',
     thumbnail_url: '/images/anima119-hero.jpg',
     images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg'],
-    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+    category: 'food', vendor_name: 'AnimaCare Global', brand: 'AnimaCare', origin: 'Việt Nam',
+    rating: 4.8, review_count: 74, sold_count: 213, stock_qty: 999, xp_reward: 540, dpp_enabled: false,
   },
   'anima-3': {
     id: 'anima-3', name: 'ANIMA 119 - Phục Hưng Toàn Diện 12 Hộp (120 Gói)', price: 22416000,
-    description: 'Liệu trình 4 tháng — 12 hộp ANIMA 119 (120 gói). Gói phục hưng toàn diện cho người muốn tái thiết sức khoẻ từ gốc rễ tế bào. Bao gồm hỗ trợ tư vấn chuyên gia từ AnimaCare Global.\n\nĐây là gói được khuyến nghị cho kết quả tối ưu.',
+    description: 'Liệu trình 4 tháng — 12 hộp ANIMA 119 (120 gói). Gói phục hưng toàn diện cho người muốn tái thiết sức khoẻ từ gốc rễ tế bào. Bao gồm hỗ trợ tư vấn chuyên gia từ AnimaCare Global.\n\nĐây là gói được khuyến nghị cho kết quả tối ưu. Tiết kiệm 10% so với mua lẻ.',
     thumbnail_url: '/images/anima119-hero.jpg',
     images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg','/images/anima119-slide4.jpg'],
-    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+    category: 'food', vendor_name: 'AnimaCare Global', brand: 'AnimaCare', origin: 'Việt Nam',
+    rating: 5.0, review_count: 38, sold_count: 89, stock_qty: 999, xp_reward: 2200, dpp_enabled: false,
   },
 };
+
+// Static related products shown at bottom
+const RELATED_PRODUCTS = [
+  { id: 'demo-9', name: 'Collagen nước Fish Collagen 5000mg', price: 420000, originalPrice: 560000, gradient: 'linear-gradient(135deg, #00695c, #00897b)', rating: 4.7, sold: 920, category: 'health' },
+  { id: 'demo-3', name: 'Cà phê Arabica rang xay Đà Lạt 500g', price: 145000, originalPrice: 180000, gradient: 'linear-gradient(135deg, #4e342e, #8d6e63)', rating: 4.9, sold: 3200, category: 'food' },
+  { id: 'demo-4', name: 'Mật ong rừng nguyên chất Tây Nguyên', price: 220000, originalPrice: 280000, gradient: 'linear-gradient(135deg, #f9a825, #f57f17)', rating: 4.7, sold: 1560, category: 'food' },
+  { id: 'demo-10', name: 'Viên uống vitamin tổng hợp Daily Multi', price: 165000, originalPrice: 210000, gradient: 'linear-gradient(135deg, #1b5e20, #2e7d32)', rating: 4.3, sold: 670, category: 'health' },
+];
 
 export default function ProductDetail() {
   const { t } = useI18n();
@@ -709,6 +720,42 @@ export default function ProductDetail() {
             ))}
           </div>
         )}
+
+        {/* Related Products */}
+        <div style={{ marginTop: 56 }}>
+          <h2 style={{ fontFamily: 'var(--ff-display, system-ui)', fontWeight: 800, fontSize: '1.2rem', marginBottom: 20 }}>
+            🛍️ Sản phẩm liên quan
+          </h2>
+          <div className="grid-4" style={{ gap: 16 }}>
+            {RELATED_PRODUCTS.filter(r => r.id !== id).slice(0, 4).map(r => {
+              const disc = r.originalPrice ? Math.round((1 - r.price / r.originalPrice) * 100) : 0;
+              return (
+                <div
+                  key={r.id}
+                  className="card card-hover"
+                  style={{ overflow: 'hidden', cursor: 'pointer' }}
+                  onClick={() => navigate(`/products/${r.id}`)}
+                >
+                  <div style={{ height: 140, background: r.gradient, position: 'relative', overflow: 'hidden' }}>
+                    {disc > 0 && (
+                      <span style={{ position: 'absolute', top: 8, right: 8, padding: '2px 7px', borderRadius: 6, background: 'rgba(239,68,68,.9)', color: '#fff', fontSize: '.62rem', fontWeight: 700 }}>
+                        -{disc}%
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ padding: '12px 14px' }}>
+                    <div style={{ fontSize: '.78rem', fontWeight: 700, marginBottom: 6, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{r.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--c6-300, #06b6d4)' }}>{new Intl.NumberFormat('vi-VN').format(r.price)}₫</span>
+                      {r.originalPrice && <span style={{ fontSize: '.68rem', color: 'var(--text-4)', textDecoration: 'line-through' }}>{new Intl.NumberFormat('vi-VN').format(r.originalPrice)}₫</span>}
+                    </div>
+                    <div style={{ fontSize: '.65rem', color: 'var(--text-3)' }}>⭐ {r.rating} · Đã bán {r.sold.toLocaleString('vi-VN')}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

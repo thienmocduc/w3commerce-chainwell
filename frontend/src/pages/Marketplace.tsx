@@ -24,12 +24,12 @@ const formatVND = (price: number): string =>
   new Intl.NumberFormat('vi-VN').format(price) + ' ₫';
 
 const categories = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'skincare', label: 'Skincare' },
-  { key: 'food', label: 'Thực phẩm' },
-  { key: 'tech', label: 'Công nghệ' },
-  { key: 'fashion', label: 'Thời trang' },
-  { key: 'health', label: 'Sức khoẻ' },
+  { key: 'all', label: 'Tất cả', icon: '🛍️' },
+  { key: 'skincare', label: 'Skincare', icon: '✨' },
+  { key: 'food', label: 'Thực phẩm', icon: '🥗' },
+  { key: 'tech', label: 'Công nghệ', icon: '💻' },
+  { key: 'fashion', label: 'Thời trang', icon: '👗' },
+  { key: 'health', label: 'Sức khoẻ', icon: '💊' },
 ];
 
 const sortOptions = [
@@ -62,6 +62,14 @@ const DEMO_PRODUCTS: Product[] = [
   { id: 'demo-10', name: 'Viên uống vitamin tổng hợp Daily Multi', price: 165000, originalPrice: 210000, category: 'health', dpp: false, rating: 4.3, sold: 670, kocAvatar: '', kocName: 'Đức Anh', gradient: 'linear-gradient(135deg, #1b5e20, #2e7d32)' },
   { id: 'demo-11', name: 'Toner cân bằng da Hoa Hồng Dưỡng Ẩm', price: 135000, originalPrice: 175000, category: 'skincare', dpp: true, rating: 4.5, sold: 1890, kocAvatar: '', kocName: 'Phương Linh', gradient: 'linear-gradient(135deg, #b71c1c, #c62828)' },
   { id: 'demo-12', name: 'Trà xanh matcha Nhật Bản premium 100g', price: 380000, originalPrice: 490000, category: 'food', dpp: false, rating: 4.8, sold: 760, kocAvatar: '', kocName: 'Bảo Châu', gradient: 'linear-gradient(135deg, #33691e, #558b2f)' },
+  { id: 'demo-13', name: 'Kem chống nắng SPF50+ PA++++ không nhờn', price: 275000, originalPrice: 350000, category: 'skincare', dpp: true, rating: 4.9, sold: 3450, kocAvatar: '', kocName: 'Yến Nhi', gradient: 'linear-gradient(135deg, #ff8a65, #ff7043)' },
+  { id: 'demo-14', name: 'Nước tẩy trang dịu nhẹ Micellar 400ml', price: 125000, originalPrice: 160000, category: 'skincare', dpp: false, rating: 4.6, sold: 2200, kocAvatar: '', kocName: 'Kim Anh', gradient: 'linear-gradient(135deg, #80deea, #26c6da)' },
+  { id: 'demo-15', name: 'Yến sào nguyên chất hộp 100g', price: 1200000, originalPrice: 1500000, category: 'food', dpp: true, rating: 4.9, sold: 320, kocAvatar: '', kocName: 'Hải Yến', gradient: 'linear-gradient(135deg, #ffe082, #ffd54f)' },
+  { id: 'demo-16', name: 'Bộ nồi inox 3 đáy cao cấp 5 món', price: 1450000, originalPrice: 1980000, category: 'tech', dpp: false, rating: 4.7, sold: 580, kocAvatar: '', kocName: 'Tuấn Minh', gradient: 'linear-gradient(135deg, #90a4ae, #607d8b)' },
+  { id: 'demo-17', name: 'Áo sơ mi lụa cao cấp dáng suông', price: 450000, originalPrice: 620000, category: 'fashion', dpp: false, rating: 4.5, sold: 940, kocAvatar: '', kocName: 'Như Quỳnh', gradient: 'linear-gradient(135deg, #f48fb1, #e91e63)' },
+  { id: 'demo-18', name: 'Túi tote canvas organic sustainable', price: 195000, originalPrice: 250000, category: 'fashion', dpp: true, rating: 4.4, sold: 1120, kocAvatar: '', kocName: 'Thu Trang', gradient: 'linear-gradient(135deg, #a5d6a7, #66bb6a)' },
+  { id: 'demo-19', name: 'Omega-3 EPA/DHA 1000mg 90 viên', price: 320000, originalPrice: 420000, category: 'health', dpp: true, rating: 4.8, sold: 1870, kocAvatar: '', kocName: 'Minh Khoa', gradient: 'linear-gradient(135deg, #4dd0e1, #0097a7)' },
+  { id: 'demo-20', name: 'Lắc tay vòng thạch anh phong thủy', price: 280000, originalPrice: 350000, category: 'health', dpp: false, rating: 4.3, sold: 450, kocAvatar: '', kocName: 'Bảo Ngọc', gradient: 'linear-gradient(135deg, #ce93d8, #ab47bc)' },
 ];
 
 function ProductSkeleton() {
@@ -205,53 +213,97 @@ export default function Marketplace() {
         }
       `}</style>
       <div className="container" style={{ paddingBottom: 80 }}>
-        {/* Slim page header — title + sort controls on one row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, gap: 16, flexWrap: 'wrap',
-          paddingBottom: 16, borderBottom: '1px solid var(--border)',
-        }}>
-          <h1 className="display-lg gradient-text" style={{ whiteSpace: 'nowrap', margin: 0 }}>
-            {t('marketplace.title')}
-          </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '.8rem', color: 'var(--text-3)', fontWeight: 600 }}>{t('marketplace.sort.label')}</span>
-            <select
-              value={sortBy}
-              onChange={e => { setSortBy(e.target.value); setVisibleCount(8); }}
-              style={{
-                padding: '6px 12px', borderRadius: 8,
-                border: '1px solid var(--border)', background: 'var(--surface-card, var(--bg-1))',
-                color: 'var(--text-1)', fontSize: '.8rem',
-                fontFamily: 'var(--ff-body, system-ui)', cursor: 'pointer',
-              }}
-            >
-              {sortOptions.map(opt => (
-                <option key={opt.key} value={opt.key}>{opt.key === 'newest' ? t('marketplace.sort.newest') : opt.key === 'bestseller' ? t('marketplace.sort.bestseller') : opt.key === 'price-asc' ? t('marketplace.sort.priceAsc') : t('marketplace.sort.priceDesc')}</option>
-              ))}
-            </select>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '.8rem', color: 'var(--text-2)' }}>
-              <div
+        {/* Page header */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+            <h1 className="display-lg gradient-text" style={{ whiteSpace: 'nowrap', margin: 0 }}>
+              {t('marketplace.title')}
+            </h1>
+            {/* Search bar */}
+            <div style={{ flex: 1, maxWidth: 420, minWidth: 220, position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: '.9rem', color: 'var(--text-3)', pointerEvents: 'none' }}>🔍</span>
+              <input
+                type="text"
+                placeholder={t('marketplace.searchPlaceholder') || 'Tìm kiếm sản phẩm...'}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setVisibleCount(8); setSearchParams(prev => { const p = new URLSearchParams(prev); e.target.value ? p.set('q', e.target.value) : p.delete('q'); return p; }); }}
                 style={{
-                  width: 36, height: 20, borderRadius: 10, padding: 2,
-                  background: dppOnly ? '#22c55e' : 'var(--border)',
-                  transition: 'background .2s', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center',
+                  width: '100%', padding: '9px 14px 9px 38px', borderRadius: 24,
+                  border: '1px solid var(--border)', background: 'var(--surface-card, var(--bg-1))',
+                  color: 'var(--text-1)', fontSize: '.85rem', boxSizing: 'border-box',
+                  outline: 'none', transition: 'border-color .2s',
                 }}
-                onClick={() => { setDppOnly(!dppOnly); setVisibleCount(8); }}
+                onFocus={e => (e.target.style.borderColor = 'var(--c6-400)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+              />
+              {search && (
+                <button
+                  onClick={() => { setSearch(''); setVisibleCount(8); setSearchParams(prev => { const p = new URLSearchParams(prev); p.delete('q'); return p; }); }}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '1rem', lineHeight: 1 }}
+                >✕</button>
+              )}
+            </div>
+          </div>
+
+          {/* Category tabs + controls row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            {/* Category pills */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flex: 1 }}>
+              {categories.map(cat => (
+                <button
+                  key={cat.key}
+                  onClick={() => { setActiveCategory(cat.key); setVisibleCount(8); setSearchParams(prev => { const p = new URLSearchParams(prev); cat.key === 'all' ? p.delete('cat') : p.set('cat', cat.key); return p; }); }}
+                  style={{
+                    padding: '6px 14px', borderRadius: 20, fontSize: '.78rem', fontWeight: 600, cursor: 'pointer',
+                    border: activeCategory === cat.key ? '1.5px solid var(--c6-400)' : '1px solid var(--border)',
+                    background: activeCategory === cat.key ? 'var(--c6-500)' : 'transparent',
+                    color: activeCategory === cat.key ? '#fff' : 'var(--text-2)',
+                    transition: 'all .15s',
+                  }}
+                >
+                  {cat.icon} {cat.label}
+                </button>
+              ))}
+            </div>
+            {/* Sort + DPP + Count */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+              <select
+                value={sortBy}
+                onChange={e => { setSortBy(e.target.value); setVisibleCount(8); }}
+                style={{
+                  padding: '6px 12px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--surface-card, var(--bg-1))',
+                  color: 'var(--text-1)', fontSize: '.8rem',
+                  fontFamily: 'var(--ff-body, system-ui)', cursor: 'pointer',
+                }}
               >
-                <div style={{
-                  width: 16, height: 16, borderRadius: '50%',
-                  background: '#fff', transition: 'transform .2s',
-                  transform: dppOnly ? 'translateX(16px)' : 'translateX(0)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,.2)',
-                }} />
-              </div>
-              <span style={{ fontWeight: 600 }}>DPP</span>
-            </label>
-            <span style={{ fontSize: '.8rem', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-              {loading ? '...' : `${filtered.length} ${t('marketplace.productCount')}`}
-            </span>
+                {sortOptions.map(opt => (
+                  <option key={opt.key} value={opt.key}>{opt.key === 'newest' ? t('marketplace.sort.newest') : opt.key === 'bestseller' ? t('marketplace.sort.bestseller') : opt.key === 'price-asc' ? t('marketplace.sort.priceAsc') : t('marketplace.sort.priceDesc')}</option>
+                ))}
+              </select>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '.8rem', color: 'var(--text-2)' }}>
+                <div
+                  style={{
+                    width: 36, height: 20, borderRadius: 10, padding: 2,
+                    background: dppOnly ? '#22c55e' : 'var(--border)',
+                    transition: 'background .2s', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center',
+                  }}
+                  onClick={() => { setDppOnly(!dppOnly); setVisibleCount(8); }}
+                >
+                  <div style={{
+                    width: 16, height: 16, borderRadius: '50%',
+                    background: '#fff', transition: 'transform .2s',
+                    transform: dppOnly ? 'translateX(16px)' : 'translateX(0)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                  }} />
+                </div>
+                <span style={{ fontWeight: 600 }}>DPP</span>
+              </label>
+              <span style={{ fontSize: '.8rem', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                {loading ? '...' : `${filtered.length} ${t('marketplace.productCount')}`}
+              </span>
+            </div>
           </div>
         </div>
 

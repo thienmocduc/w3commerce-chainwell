@@ -253,10 +253,10 @@ const bankAccounts = [
 
 /* ── Suggested products ──────────────────────────── */
 const suggestedProducts = [
-  { id: 101, name: 'Tinh Dầu Tràm Huế', price: 165000, emoji: '🌿' },
-  { id: 102, name: 'Yến Sào Khánh Hòa', price: 1200000, emoji: '🥣' },
-  { id: 103, name: 'Bột Cacao Đắk Lắk', price: 198000, emoji: '🍫' },
-  { id: 104, name: 'Hạt Điều Rang Muối', price: 220000, emoji: '🥜' },
+  { id: 'anima-1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống (1 Hộp)', price: 1868000, emoji: '✨', gradient: 'linear-gradient(135deg, #14532d, #065f46)', rating: 4.9 },
+  { id: 'demo-9', name: 'Collagen nước Fish Collagen 5000mg', price: 420000, emoji: '💧', gradient: 'linear-gradient(135deg, #00695c, #00897b)', rating: 4.7 },
+  { id: 'demo-3', name: 'Cà phê Arabica rang xay Đà Lạt 500g', price: 145000, emoji: '☕', gradient: 'linear-gradient(135deg, #4e342e, #8d6e63)', rating: 4.9 },
+  { id: 'demo-4', name: 'Mật ong rừng nguyên chất Tây Nguyên', price: 220000, emoji: '🍯', gradient: 'linear-gradient(135deg, #f9a825, #f57f17)', rating: 4.7 },
 ];
 
 /* ── Component ───────────────────────────────────── */
@@ -487,17 +487,36 @@ export default function Dashboard() {
               })}
             </div>
 
+            {/* Quick nav shortcuts */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
+              {[
+                { label: 'Mua sắm', icon: '🛍️', path: '/marketplace', color: 'var(--c6-500)' },
+                { label: 'Giỏ hàng', icon: '🛒', path: '/cart', color: '#f59e0b' },
+                { label: 'KOC Hub', icon: '⭐', path: '/koc', color: 'var(--c5-500)' },
+                { label: 'Gian hàng', icon: '🏪', path: '/vendor', color: '#10b981' },
+              ].map(q => (
+                <Link key={q.label} to={q.path} style={{ textDecoration: 'none' }}>
+                  <div className="card card-hover" style={{ padding: '14px 10px', textAlign: 'center', borderColor: `${q.color}30` }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{q.icon}</div>
+                    <div style={{ fontSize: '.72rem', fontWeight: 700, color: q.color }}>{q.label}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
             {/* Gợi ý sản phẩm */}
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: 12 }}>
               <span style={{ fontWeight: 700, fontSize: '.88rem' }}>{t('dashboard.suggestions')}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
               {suggestedProducts.map(p => (
-                <div key={p.id} className="card card-hover" style={{ padding: 16, textAlign: 'center' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: 8 }}>{p.emoji}</div>
-                  <div style={{ fontSize: '.78rem', fontWeight: 600, marginBottom: 6 }}>{p.name}</div>
-                  <div style={{ fontWeight: 700, color: 'var(--c4-500)', marginBottom: 8 }}>{formatVND(p.price)}</div>
-                  <Link to="/products" className="btn btn-primary btn-sm" style={{ width: '100%', textAlign: 'center', display: 'block' }}>{t('dashboard.viewNow')}</Link>
+                <div key={p.id} className="card card-hover" style={{ overflow: 'hidden', cursor: 'pointer' }} onClick={() => navigate(`/products/${p.id}`)}>
+                  <div style={{ height: 100, background: p.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>{p.emoji}</div>
+                  <div style={{ padding: '12px 14px' }}>
+                    <div style={{ fontSize: '.72rem', fontWeight: 600, marginBottom: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{p.name}</div>
+                    <div style={{ fontWeight: 700, color: 'var(--c4-500)', fontSize: '.82rem', marginBottom: 6 }}>{formatVND(p.price)}</div>
+                    <div style={{ fontSize: '.62rem', color: '#f59e0b' }}>⭐ {p.rating}</div>
+                  </div>
                 </div>
               ))}
             </div>
