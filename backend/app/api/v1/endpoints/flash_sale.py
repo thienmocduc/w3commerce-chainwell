@@ -175,7 +175,7 @@ async def create_flash_sale(
         status=FlashSaleStatus.SCHEDULED,
     )
     db.add(flash_sale)
-    await db.flush()
+    await db.commit()
     await db.refresh(flash_sale)
 
     # Set Redis stock counter for atomic decrement during purchases
@@ -215,7 +215,7 @@ async def list_active_flash_sales(
         )
         .values(status=FlashSaleStatus.ENDED)
     )
-    await db.flush()
+    await db.commit()
 
     # Fetch active + upcoming scheduled
     query = (
@@ -397,13 +397,13 @@ async def purchase_flash_sale(
     if now >= end_aware:
         # Auto-end
         fs.status = FlashSaleStatus.ENDED
-        await db.flush()
+        await db.commit()
         raise HTTPException(400, "Flash sale has ended")
 
     # Auto-activate if scheduled and time has come
     if fs.status == FlashSaleStatus.SCHEDULED and now >= start_aware:
         fs.status = FlashSaleStatus.ACTIVE
-        await db.flush()
+        await db.commit()
 
     redis = await get_redis()
     stock_key = _flash_stock_key(sale_id)
@@ -453,7 +453,7 @@ async def purchase_flash_sale(
             .values(status=FlashSaleStatus.ENDED)
         )
 
-    await db.flush()
+    await db.commit()
 
     return {
         "success": True,
@@ -503,7 +503,7 @@ async def cancel_flash_sale(
     except Exception:
         pass  # Redis cleanup is best-effort
 
-    await db.flush()
+    await db.commit()
     await db.refresh(fs)
 
     return _build_flash_sale_out(fs)

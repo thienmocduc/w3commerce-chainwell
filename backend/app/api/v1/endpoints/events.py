@@ -102,7 +102,7 @@ async def create_event(
         created_by=current_user.id,
     )
     db.add(event)
-    await db.flush()
+    await db.commit()
     return _serialize_event(event)
 
 
@@ -229,7 +229,7 @@ async def join_event(
         .where(ShoppingEvent.id == event_id)
         .values(total_participants=ShoppingEvent.total_participants + 1)
     )
-    await db.flush()
+    await db.commit()
 
     return {
         "message": "Tham gia sự kiện thành công",
@@ -325,7 +325,7 @@ async def trigger_nft_awards(
                 "token_id": mock_token_id,
             })
 
-    await db.flush()
+    await db.commit()
     return {
         "event_id": str(event_id),
         "awards_issued": len(awards_issued),

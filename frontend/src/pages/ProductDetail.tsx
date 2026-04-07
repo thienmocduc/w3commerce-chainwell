@@ -32,6 +32,31 @@ interface Review {
 
 type TabKey = 'description' | 'dpp' | 'reviews';
 
+// Static fallback data for ANIMA products (shown when API is cold/unavailable)
+const ANIMA_STATIC: Record<string, Partial<Product>> = {
+  'anima-1': {
+    id: 'anima-1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống (1 Hộp)', price: 1868000,
+    description: 'ANIMA 119 — Công nghệ sinh học lượng tử thế hệ mới. Một hộp gồm 10 gói, mỗi gói 10g. Sản phẩm kết hợp 119 dưỡng chất từ thiên nhiên, lên men vi sinh vật 72 giờ, hấp thu 98%.\n\nPhù hợp cho: Người mệt mỏi, suy nhược, khí huyết kém lưu thông.',
+    thumbnail_url: '/images/anima119-hero.jpg',
+    images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg','/images/anima119-slide4.jpg'],
+    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+  },
+  'anima-2': {
+    id: 'anima-2', name: 'ANIMA 119 - Liệu Trình 3 Hộp (30 Gói)', price: 5604000,
+    description: 'Liệu trình 1 tháng — 3 hộp ANIMA 119 (30 gói). Tiết kiệm so với mua lẻ. Phù hợp cho người bắt đầu liệu trình phục hồi sức khoẻ từ nền tảng tế bào.\n\nCông nghệ lên men 72 giờ, 119 dưỡng chất, hấp thu 98%.',
+    thumbnail_url: '/images/anima119-hero.jpg',
+    images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg'],
+    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+  },
+  'anima-3': {
+    id: 'anima-3', name: 'ANIMA 119 - Phục Hưng Toàn Diện 12 Hộp (120 Gói)', price: 22416000,
+    description: 'Liệu trình 4 tháng — 12 hộp ANIMA 119 (120 gói). Gói phục hưng toàn diện cho người muốn tái thiết sức khoẻ từ gốc rễ tế bào. Bao gồm hỗ trợ tư vấn chuyên gia từ AnimaCare Global.\n\nĐây là gói được khuyến nghị cho kết quả tối ưu.',
+    thumbnail_url: '/images/anima119-hero.jpg',
+    images: ['/images/anima119-hero.jpg','/images/anima119-slide2.jpg','/images/anima119-slide3.jpg','/images/anima119-slide4.jpg'],
+    category: 'food', vendor_name: 'AnimaCare Global', rating_avg: 0, review_count: 0, stock_qty: 999,
+  },
+};
+
 export default function ProductDetail() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
@@ -117,16 +142,24 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!id) return;
+    // Use static fallback immediately for known ANIMA demo IDs
+    if (ANIMA_STATIC[id]) {
+      setProduct(ANIMA_STATIC[id] as Product);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     // Try UUID lookup first, then slug
     const isUuid = /^[0-9a-f-]{36}$/.test(id);
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
     const fetch$ = isUuid ? productsApi.getById(id) : productsApi.getBySlug(id);
-    fetch$
-      .then(p => setProduct(p))
+    Promise.race([fetch$, timeout])
+      .then(p => setProduct(p as Product))
       .catch(() => {
-        // Fallback: try the other lookup
-        (isUuid ? productsApi.getBySlug(id) : productsApi.getById(id))
-          .then(p => setProduct(p))
+        // Fallback: try the other lookup with timeout
+        const fetch2$ = isUuid ? productsApi.getBySlug(id) : productsApi.getById(id);
+        Promise.race([fetch2$, new Promise<never>((_, r) => setTimeout(() => r(new Error('timeout')), 5000))])
+          .then(p => setProduct(p as Product))
           .catch(() => setProduct(null));
       })
       .finally(() => setLoading(false));

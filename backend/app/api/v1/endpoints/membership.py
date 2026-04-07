@@ -176,7 +176,7 @@ async def subscribe(
         current_user.membership_tier = "free"
         current_user.membership_expires_at = None
         db.add(current_user)
-        await db.flush()
+        await db.commit()
         return {"status": "subscribed", "plan": "free", "price_vnd": 0}
 
     # Deactivate existing subscription
@@ -203,7 +203,7 @@ async def subscribe(
     current_user.membership_expires_at = expires_at
     db.add(current_user)
 
-    await db.flush()
+    await db.commit()
 
     return {
         "status": "subscribed",
@@ -256,7 +256,7 @@ async def cancel_subscription(
     current_user.membership_tier = "free"
     current_user.membership_expires_at = None
     db.add(current_user)
-    await db.flush()
+    await db.commit()
 
     if not deactivated:
         return {"status": "no_active_subscription", "tier": "free"}

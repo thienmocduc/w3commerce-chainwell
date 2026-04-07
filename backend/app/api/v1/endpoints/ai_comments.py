@@ -187,7 +187,7 @@ async def receive_comment_webhook(
         platform_data=body.platform_data,
     )
     db.add(comment)
-    await db.flush()
+    await db.commit()
 
     return comment
 
@@ -265,7 +265,7 @@ async def approve_comment_reply(
         raise HTTPException(422, f"Comment đang ở trạng thái '{comment.status}', không thể phê duyệt")
 
     comment.status = CommentStatus.APPROVED
-    await db.flush()
+    await db.commit()
 
     return comment
 
@@ -298,7 +298,7 @@ async def reject_comment_reply(
 
     comment.status = CommentStatus.REJECTED
     comment.custom_reply = body.custom_reply
-    await db.flush()
+    await db.commit()
 
     return comment
 

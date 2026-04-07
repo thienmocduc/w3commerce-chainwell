@@ -435,7 +435,7 @@ async def trigger_snapshot(
         db.add(ranking)
         entries_created += 1
 
-    await db.flush()
+    await db.commit()
 
     return {
         "message": f"Snapshot created for week {week}/{year}",
@@ -527,7 +527,7 @@ async def trigger_distribution(
             "tx_hash": tx_hash,
         })
 
-    await db.flush()
+    await db.commit()
 
     return {
         "week": body.week,

@@ -696,7 +696,7 @@ Return this exact JSON structure:
         improvement_score=improvement,
     )
     db.add(report)
-    await db.flush()
+    await db.commit()
 
     return {
         "report_id": str(report.id),
@@ -801,7 +801,7 @@ async def batch_coaching(
         db.add(report)
         triggered_ids.append(str(kid))
 
-    await db.flush()
+    await db.commit()
 
     return BatchCoachingResponse(
         triggered=len(triggered_ids),

@@ -114,7 +114,7 @@ async def create_group_buy(
         expires_at=now + timedelta(hours=body.duration_hours),
     )
     db.add(group_buy)
-    await db.flush()
+    await db.commit()
     await db.refresh(group_buy)
 
     return _build_group_buy_out(group_buy)
@@ -143,7 +143,7 @@ async def list_group_buys(
             gb.status = GroupBuyStatus.EXPIRED
             expired_ids.append(gb.id)
     if expired_ids:
-        await db.flush()
+        await db.commit()
 
     return [_build_group_buy_out(gb) for gb in group_buys]
 
@@ -164,7 +164,7 @@ async def get_group_buy(
     # Auto-expire if needed
     if gb.status == GroupBuyStatus.ACTIVE and gb.expires_at < datetime.utcnow():
         gb.status = GroupBuyStatus.EXPIRED
-        await db.flush()
+        await db.commit()
         await db.refresh(gb)
 
     out = _build_group_buy_detail(gb)
@@ -191,7 +191,7 @@ async def join_group_buy(
 
     if gb.expires_at < datetime.utcnow():
         gb.status = GroupBuyStatus.EXPIRED
-        await db.flush()
+        await db.commit()
         raise HTTPException(400, "Group buy has expired")
 
     if gb.current_count + body.quantity > gb.max_participants:
@@ -239,7 +239,7 @@ async def join_group_buy(
             .values(status=GroupBuyStatus.COMPLETED, completed_at=func.now())
         )
 
-    await db.flush()
+    await db.commit()
     await db.refresh(gb)
 
     return _build_group_buy_detail(gb)
@@ -270,7 +270,7 @@ async def cancel_group_buy(
 
     gb.status = GroupBuyStatus.CANCELLED
     gb.cancelled_at = datetime.utcnow()
-    await db.flush()
+    await db.commit()
     await db.refresh(gb)
 
     return _build_group_buy_out(gb)

@@ -301,7 +301,7 @@ async def get_fraud_score(
             )
             db.add(alert)
 
-    await db.flush()
+    await db.commit()
 
     return _score_dict(fraud_score)
 
@@ -367,7 +367,7 @@ async def resolve_fraud_alert(
         fraud_score.is_fraud = (body.resolution == AlertResolution.CONFIRM_FRAUD)
         db.add(fraud_score)
 
-    await db.flush()
+    await db.commit()
     return {"message": "Đã xử lý cảnh báo", "alert": _alert_dict(alert)}
 
 
@@ -593,7 +593,7 @@ async def trigger_fraud_scan(
         except Exception:
             continue  # skip individual failures during bulk scan
 
-    await db.flush()
+    await db.commit()
 
     return {
         "message": f"Quét xong {scanned} đơn hàng trong {body.days} ngày gần nhất",

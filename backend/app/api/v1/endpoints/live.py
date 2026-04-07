@@ -174,7 +174,7 @@ async def start_live_stream(
         status=LiveStreamStatus.LIVE,
     )
     db.add(live_stream)
-    await db.flush()
+    await db.commit()
     await db.refresh(live_stream)
 
     return LiveStartResponse(
@@ -244,7 +244,7 @@ async def push_product_popup(
         display_seconds=body.display_seconds,
     )
     db.add(popup)
-    await db.flush()
+    await db.commit()
     await db.refresh(popup)
 
     # TODO: Push via WebSocket to connected viewers
@@ -300,7 +300,7 @@ async def trigger_flash_sale(
         ends_at=now + timedelta(seconds=body.duration_seconds),
     )
     db.add(flash_sale)
-    await db.flush()
+    await db.commit()
     await db.refresh(flash_sale)
 
     # TODO: Push flash sale event via WebSocket to connected viewers
@@ -349,7 +349,7 @@ async def end_live_stream(
         .values(is_active=False)
     )
 
-    await db.flush()
+    await db.commit()
     await db.refresh(stream)
 
     return _build_stream_out(stream)

@@ -144,6 +144,9 @@ const vendorSidebarGroups: VendorSidebarGroup[] = [
       { key: 'overview', icon: '📊', labelKey: 'vendor.sidebar.overview' },
       { key: 'products', icon: '📦', labelKey: 'vendor.sidebar.products' },
       { key: 'orders', icon: '🛒', labelKey: 'vendor.sidebar.orders' },
+      { key: 'inventory', icon: '🏭', labelKey: 'vendor.sidebar.inventory' },
+      { key: 'returns', icon: '↩️', labelKey: 'vendor.sidebar.returns' },
+      { key: 'logistics', icon: '🚚', labelKey: 'vendor.sidebar.logistics' },
       { key: 'analytics', icon: '📈', labelKey: 'vendor.analytics.title' },
     ],
   },
@@ -152,6 +155,30 @@ const vendorSidebarGroups: VendorSidebarGroup[] = [
     items: [
       { key: 'koc', icon: '🌟', labelKey: 'vendor.koc.title' },
       { key: 'commission', icon: '💰', labelKey: 'vendor.commissionRules.title' },
+    ],
+  },
+  {
+    key: 'koc_network', labelKey: 'vendor.sidebar.kocNetwork', color: 'var(--c5-500)', icon: '🤝',
+    items: [
+      { key: 'koc_hub', icon: '⭐', labelKey: 'vendor.sidebar.kocHub' },
+      { key: 'koc_collab', icon: '💬', labelKey: 'vendor.sidebar.kocCollab' },
+      { key: 'koc_analytics', icon: '📊', labelKey: 'vendor.sidebar.kocAnalytics' },
+    ],
+  },
+  {
+    key: 'finance', labelKey: 'vendor.sidebar.finance', color: '#10b981', icon: '💰',
+    items: [
+      { key: 'accounting', icon: '📒', labelKey: 'vendor.sidebar.accounting' },
+      { key: 'payment', icon: '💳', labelKey: 'vendor.sidebar.payment' },
+      { key: 'reports', icon: '📋', labelKey: 'vendor.sidebar.reports' },
+    ],
+  },
+  {
+    key: 'growth', labelKey: 'vendor.sidebar.growth', color: '#f59e0b', icon: '🚀',
+    items: [
+      { key: 'crm', icon: '🤖', labelKey: 'vendor.sidebar.crm' },
+      { key: 'marketing', icon: '📣', labelKey: 'vendor.sidebar.marketing' },
+      { key: 'media', icon: '🖼️', labelKey: 'vendor.sidebar.media' },
     ],
   },
   {
@@ -166,6 +193,7 @@ const vendorSidebarGroups: VendorSidebarGroup[] = [
     items: [
       { key: 'vendor_kyc', icon: '🛡️', labelKey: 'vendor.sidebar.verifyBusiness' },
       { key: 'settings', icon: '⚙️', labelKey: 'vendor.sidebar.settings' },
+      { key: 'role_switch', icon: '🔄', labelKey: 'vendor.sidebar.roleSwitch' },
     ],
   },
 ];
@@ -320,7 +348,7 @@ function mapApiOrderToLocal(o: ApiOrder, idx: number) {
 export default function Vendor() {
   const { t } = useI18n();
   const [activeNav, setActiveNav] = useState('overview');
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ shop: true, network: false, web3: false, account: false });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ shop: true, network: false, koc_network: false, finance: false, growth: false, web3: false, account: false });
   const toggleGroup = (key: string) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
   const handleNavClick = (groupKey: string, itemKey: string) => {
     setActiveNav(itemKey);
@@ -1642,6 +1670,894 @@ export default function Vendor() {
               ))}
             </div>
           </>
+        );
+
+      /* ────── KHO HÀNG ────── */
+      case 'inventory':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>🏭 Quản lý Kho hàng</h2>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Theo dõi tồn kho, cập nhật số lượng, cảnh báo hết hàng</p>
+              </div>
+              <button className="btn btn-primary" style={{ fontSize:'.82rem' }}>+ Nhập kho mới</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+              {[
+                { label:'Tổng SKU', value:'24', icon:'📦', color:'var(--c6-400)' },
+                { label:'Còn hàng', value:'18', icon:'✅', color:'#10b981' },
+                { label:'Sắp hết (≤10)', value:'4', icon:'⚠️', color:'#f59e0b' },
+                { label:'Hết hàng', value:'2', icon:'🔴', color:'#ef4444' },
+              ].map(s => (
+                <div key={s.label} className="card" style={{ padding:16, textAlign:'center' }}>
+                  <div style={{ fontSize:'1.5rem', marginBottom:6 }}>{s.icon}</div>
+                  <div style={{ fontSize:'1.4rem', fontWeight:800, color:s.color }}>{s.value}</div>
+                  <div style={{ fontSize:'.72rem', color:'var(--text-3)', marginTop:2 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:12 }}>
+                <span style={{ fontWeight:700, fontSize:'.9rem' }}>📦 Danh sách hàng hoá</span>
+                <div style={{ display:'flex', gap:8, marginLeft:'auto' }}>
+                  {['Tất cả','Còn hàng','Sắp hết','Hết hàng'].map(f => (
+                    <button key={f} className="btn" style={{ fontSize:'.72rem', padding:'4px 10px', background:'var(--bg-2)', border:'none', borderRadius:6, cursor:'pointer', color:'var(--text-2)' }}>{f}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'.78rem' }}>
+                  <thead>
+                    <tr style={{ background:'var(--bg-2)' }}>
+                      {['Sản phẩm','SKU','Tổng nhập','Đã bán','Tồn kho','Giá vốn','Trạng thái','Thao tác'].map(h => (
+                        <th key={h} style={{ padding:'10px 14px', textAlign:'left', color:'var(--text-3)', fontWeight:600, whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { name:'ANIMA 119 - 1 Hộp', sku:'ACG-001', total:100, sold:34, stock:66, cost:800000, status:'Còn hàng' },
+                      { name:'ANIMA 119 - 3 Hộp', sku:'ACG-002', total:50, sold:22, stock:28, cost:2200000, status:'Còn hàng' },
+                      { name:'Serum Vitamin C 20%', sku:'SKC-003', total:200, sold:198, stock:2, cost:80000, status:'Sắp hết' },
+                      { name:'Kem dưỡng ban đêm', sku:'SKC-004', total:80, sold:80, stock:0, cost:150000, status:'Hết hàng' },
+                    ].map((p,i) => (
+                      <tr key={i} style={{ borderTop:'1px solid var(--border)' }}>
+                        <td style={{ padding:'10px 14px', fontWeight:600, color:'var(--text-1)' }}>{p.name}</td>
+                        <td style={{ padding:'10px 14px', color:'var(--text-3)', fontFamily:'monospace' }}>{p.sku}</td>
+                        <td style={{ padding:'10px 14px', textAlign:'center' }}>{p.total}</td>
+                        <td style={{ padding:'10px 14px', textAlign:'center', color:'var(--c6-400)' }}>{p.sold}</td>
+                        <td style={{ padding:'10px 14px', textAlign:'center' }}>
+                          <span style={{ fontWeight:700, color: p.stock === 0 ? '#ef4444' : p.stock <= 10 ? '#f59e0b' : '#10b981' }}>
+                            {p.stock}
+                          </span>
+                        </td>
+                        <td style={{ padding:'10px 14px' }}>{new Intl.NumberFormat('vi-VN').format(p.cost)}₫</td>
+                        <td style={{ padding:'10px 14px' }}>
+                          <span style={{
+                            padding:'3px 10px', borderRadius:20, fontSize:'.68rem', fontWeight:700,
+                            background: p.status==='Hết hàng' ? 'rgba(239,68,68,.15)' : p.status==='Sắp hết' ? 'rgba(245,158,11,.15)' : 'rgba(16,185,129,.15)',
+                            color: p.status==='Hết hàng' ? '#ef4444' : p.status==='Sắp hết' ? '#f59e0b' : '#10b981',
+                          }}>{p.status}</span>
+                        </td>
+                        <td style={{ padding:'10px 14px' }}>
+                          <button className="btn" style={{ fontSize:'.7rem', padding:'4px 10px', marginRight:6 }}>Nhập kho</button>
+                          <button className="btn" style={{ fontSize:'.7rem', padding:'4px 10px' }}>Sửa</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="card" style={{ padding:16, borderColor:'rgba(239,68,68,.3)', background:'rgba(239,68,68,.05)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+                <span style={{ fontSize:'1.2rem' }}>🔴</span>
+                <span style={{ fontWeight:700, color:'#ef4444' }}>Cảnh báo hết hàng — 2 sản phẩm</span>
+              </div>
+              <p style={{ fontSize:'.82rem', color:'var(--text-3)' }}>
+                Sản phẩm hết hàng sẽ tự động hiển thị "Hết hàng" trên Marketplace và ngăn người mua đặt đơn. Vui lòng nhập kho sớm.
+              </p>
+            </div>
+          </div>
+        );
+
+      /* ────── LOGISTICS ────── */
+      case 'logistics':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>🚚 Cập nhật Logistics</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Cập nhật trạng thái vận chuyển cho từng đơn hàng. Người mua theo dõi realtime.</p>
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem', display:'flex', alignItems:'center', gap:8 }}>
+                ⏳ Đơn cần cập nhật vận chuyển
+                <span style={{ marginLeft:'auto', padding:'2px 10px', borderRadius:20, background:'rgba(239,68,68,.15)', color:'#ef4444', fontSize:'.7rem', fontWeight:700 }}>5 đơn</span>
+              </div>
+              {[
+                { id:'WK-00234', buyer:'Nguyễn Văn A', product:'ANIMA 119 x1', address:'12 Lê Lợi, Q1, HCM', status:'Chờ lấy hàng', date:'06/04/2026' },
+                { id:'WK-00231', buyer:'Trần Thị B', product:'Serum Vitamin C x2', address:'45 Nguyễn Huệ, Q3, HCM', status:'Đang đóng gói', date:'05/04/2026' },
+                { id:'WK-00228', buyer:'Lê Minh C', product:'ANIMA 119 x3', address:'78 Bà Triệu, Hai Bà Trưng, HN', status:'Chờ lấy hàng', date:'05/04/2026' },
+              ].map(o => (
+                <div key={o.id} style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:16 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:4 }}>
+                      <span style={{ fontWeight:700, color:'var(--c6-400)', fontFamily:'monospace', fontSize:'.82rem' }}>{o.id}</span>
+                      <span style={{ padding:'2px 8px', borderRadius:20, background:'rgba(245,158,11,.15)', color:'#f59e0b', fontSize:'.68rem', fontWeight:700 }}>{o.status}</span>
+                    </div>
+                    <div style={{ fontSize:'.78rem', color:'var(--text-2)' }}>{o.buyer} · {o.product}</div>
+                    <div style={{ fontSize:'.72rem', color:'var(--text-3)', marginTop:2 }}>📍 {o.address}</div>
+                  </div>
+                  <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                    <select style={{ fontSize:'.72rem', padding:'6px 10px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-2)', color:'var(--text-1)', cursor:'pointer' }}>
+                      <option>Đang đóng gói</option>
+                      <option>Chờ lấy hàng</option>
+                      <option>Đã giao ĐVVC</option>
+                      <option>Đang vận chuyển</option>
+                      <option>Đã giao thành công</option>
+                    </select>
+                    <input placeholder="Mã vận đơn..." style={{ fontSize:'.72rem', padding:'6px 10px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-2)', color:'var(--text-1)', width:130 }} />
+                    <button className="btn btn-primary" style={{ fontSize:'.72rem', padding:'6px 14px', whiteSpace:'nowrap' }}>Cập nhật</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:16, fontSize:'.9rem' }}>📍 Lộ trình vận chuyển — WK-00220</div>
+              <div style={{ position:'relative', paddingLeft:24 }}>
+                {[
+                  { time:'06/04 14:30', event:'Đã giao hàng thành công', loc:'Quận 1, TP.HCM', done:true },
+                  { time:'06/04 09:15', event:'Đang phát hàng', loc:'Bưu cục Q1 - Giao Hàng Nhanh', done:true },
+                  { time:'05/04 22:00', event:'Đến kho trung chuyển HCM', loc:'Kho GHN - Bình Dương', done:true },
+                  { time:'05/04 18:30', event:'Đang vận chuyển', loc:'HN → HCM', done:true },
+                  { time:'05/04 16:00', event:'Đã lấy hàng từ người bán', loc:'Hà Nội', done:true },
+                  { time:'05/04 13:00', event:'Người bán xác nhận giao ĐVVC', loc:'', done:true },
+                ].map((e,i) => (
+                  <div key={i} style={{ position:'relative', paddingBottom:16, paddingLeft:16 }}>
+                    <div style={{ position:'absolute', left:-9, top:4, width:10, height:10, borderRadius:'50%', background: e.done ? '#10b981' : 'var(--bg-2)', border:'2px solid', borderColor: e.done ? '#10b981' : 'var(--border)' }} />
+                    {i < 5 && <div style={{ position:'absolute', left:-5, top:14, width:2, height:'100%', background:'var(--border)' }} />}
+                    <div style={{ fontSize:'.78rem', fontWeight:600, color:'var(--text-1)' }}>{e.event}</div>
+                    <div style={{ fontSize:'.72rem', color:'var(--text-3)', marginTop:2 }}>{e.time}{e.loc && ` · ${e.loc}`}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>⚙️ Cài đặt đơn vị vận chuyển</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+                {['Giao Hàng Nhanh (GHN)','Giao Hàng Tiết Kiệm (GHTK)','J&T Express','Viettel Post','BEST Express','Vietnam Post'].map(c => (
+                  <label key={c} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', cursor:'pointer', fontSize:'.78rem' }}>
+                    <input type="checkbox" defaultChecked={c.includes('GHN') || c.includes('GHTK')} />
+                    <span>{c}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ────── HÀNG HOÀN ────── */
+      case 'returns':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>↩️ Quản lý Hàng Hoàn / Trả hàng</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Xử lý yêu cầu hoàn hàng, hoàn tiền từ khách. Phải xử lý trong 48h.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+              {[
+                { label:'Chờ xử lý', value:'3', icon:'⏳', color:'#f59e0b' },
+                { label:'Đã chấp nhận', value:'8', icon:'✅', color:'#10b981' },
+                { label:'Từ chối', value:'1', icon:'❌', color:'#ef4444' },
+                { label:'Tổng hoàn tiền', value:'2.4tr₫', icon:'💸', color:'var(--c6-400)' },
+              ].map(s => (
+                <div key={s.label} className="card" style={{ padding:16, textAlign:'center' }}>
+                  <div style={{ fontSize:'1.4rem', marginBottom:6 }}>{s.icon}</div>
+                  <div style={{ fontSize:'1.3rem', fontWeight:800, color:s.color }}>{s.value}</div>
+                  <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>
+                ⏳ Yêu cầu đang chờ xử lý
+              </div>
+              {[
+                { id:'RT-001', order:'WK-00210', buyer:'Phạm Thị D', product:'Kem dưỡng ban đêm x1', reason:'Sản phẩm bị hỏng khi nhận', amount:320000, requested:'04/04/2026', deadline:'06/04/2026' },
+                { id:'RT-002', order:'WK-00215', buyer:'Hoàng Văn E', product:'Serum Vitamin C x1', reason:'Không đúng mô tả', amount:185000, requested:'05/04/2026', deadline:'07/04/2026' },
+                { id:'RT-003', order:'WK-00218', buyer:'Vũ Minh F', product:'ANIMA 119 x1', reason:'Đổi ý, không cần nữa', amount:1868000, requested:'05/04/2026', deadline:'07/04/2026' },
+              ].map(r => (
+                <div key={r.id} style={{ padding:'16px 20px', borderBottom:'1px solid var(--border)' }}>
+                  <div style={{ display:'flex', alignItems:'flex-start', gap:16 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:6 }}>
+                        <span style={{ fontWeight:700, color:'var(--c6-400)', fontFamily:'monospace', fontSize:'.82rem' }}>{r.id}</span>
+                        <span style={{ fontSize:'.72rem', color:'var(--text-3)' }}>→ {r.order}</span>
+                        <span style={{ padding:'2px 8px', borderRadius:20, background:'rgba(245,158,11,.15)', color:'#f59e0b', fontSize:'.68rem', fontWeight:700 }}>Chờ xử lý</span>
+                      </div>
+                      <div style={{ fontSize:'.82rem', fontWeight:600 }}>{r.buyer} — {r.product}</div>
+                      <div style={{ fontSize:'.78rem', color:'var(--text-3)', margin:'4px 0' }}>Lý do: {r.reason}</div>
+                      <div style={{ display:'flex', gap:16, fontSize:'.72rem', color:'var(--text-3)' }}>
+                        <span>Yêu cầu ngày: {r.requested}</span>
+                        <span style={{ color:'#ef4444' }}>⚠️ Hạn xử lý: {r.deadline}</span>
+                        <span style={{ fontWeight:700, color:'var(--c6-400)' }}>Hoàn: {new Intl.NumberFormat('vi-VN').format(r.amount)}₫</span>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                      <button className="btn btn-primary" style={{ fontSize:'.72rem', padding:'6px 14px', background:'#10b981', borderColor:'#10b981' }}>✅ Chấp nhận</button>
+                      <button className="btn" style={{ fontSize:'.72rem', padding:'6px 14px', color:'#ef4444', borderColor:'rgba(239,68,68,.3)' }}>❌ Từ chối</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── KOC HUB ────── */
+      case 'koc_hub':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>⭐ KOC Hub — Mạng lưới KOC</h2>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>KOC đang quảng cáo sản phẩm của bạn. Đo lường hiệu quả từng KOC.</p>
+              </div>
+              <button className="btn btn-primary" style={{ fontSize:'.82rem' }}>+ Mời KOC</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+              {[
+                { label:'KOC đang hợp tác', value:'12', icon:'👥', color:'var(--c5-400)' },
+                { label:'Đơn từ KOC (tháng)', value:'89', icon:'🛒', color:'var(--c6-400)' },
+                { label:'Doanh thu qua KOC', value:'67.2tr₫', icon:'💰', color:'#10b981' },
+                { label:'Hoa hồng đã chi', value:'6.7tr₫', icon:'💸', color:'#f59e0b' },
+              ].map(s => (
+                <div key={s.label} className="card" style={{ padding:16, textAlign:'center' }}>
+                  <div style={{ fontSize:'1.4rem', marginBottom:6 }}>{s.icon}</div>
+                  <div style={{ fontSize:'1.3rem', fontWeight:800, color:s.color }}>{s.value}</div>
+                  <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>
+                👥 KOC đang quảng cáo sản phẩm
+              </div>
+              {[
+                { name:'@beautyLien', avatar:'BL', products:3, orders:34, revenue:25600000, commission:2560000, rating:4.9, status:'Đang hoạt động' },
+                { name:'@minhtuanfit', avatar:'MT', products:1, orders:28, revenue:18200000, commission:1820000, rating:4.7, status:'Đang hoạt động' },
+                { name:'@ngocbich_style', avatar:'NB', products:2, orders:15, revenue:12400000, commission:1240000, rating:4.8, status:'Đang hoạt động' },
+                { name:'@thanhthao_skin', avatar:'TT', products:2, orders:12, revenue:10800000, commission:1080000, rating:4.6, status:'Tạm ngừng' },
+              ].map((k,i) => (
+                <div key={i} style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:16 }}>
+                  <div style={{ width:40, height:40, borderRadius:'50%', background:'linear-gradient(135deg, var(--c5-500), var(--c6-500))', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'.82rem', flexShrink:0 }}>{k.avatar}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3 }}>
+                      <span style={{ fontWeight:700, fontSize:'.88rem' }}>{k.name}</span>
+                      <span style={{ fontSize:'.65rem', fontWeight:700, padding:'2px 8px', borderRadius:20, background: k.status==='Đang hoạt động' ? 'rgba(16,185,129,.15)' : 'rgba(107,114,128,.15)', color: k.status==='Đang hoạt động' ? '#10b981' : 'var(--text-3)' }}>{k.status}</span>
+                    </div>
+                    <div style={{ display:'flex', gap:16, fontSize:'.72rem', color:'var(--text-3)' }}>
+                      <span>{k.products} sản phẩm</span>
+                      <span>{k.orders} đơn hàng</span>
+                      <span style={{ color:'#10b981', fontWeight:600 }}>{new Intl.NumberFormat('vi-VN').format(k.revenue)}₫ doanh thu</span>
+                      <span>⭐ {k.rating}</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign:'right', flexShrink:0 }}>
+                    <div style={{ fontSize:'.78rem', fontWeight:700, color:'#f59e0b' }}>{new Intl.NumberFormat('vi-VN').format(k.commission)}₫</div>
+                    <div style={{ fontSize:'.65rem', color:'var(--text-3)' }}>hoa hồng tháng này</div>
+                    <button className="btn" style={{ fontSize:'.68rem', padding:'4px 10px', marginTop:6 }}>💬 Nhắn tin</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── KOC COLLAB ────── */
+      case 'koc_collab':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>💬 Hợp tác KOC</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Tương tác trực tiếp với KOC, gửi mẫu sản phẩm, đàm phán hoa hồng.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'320px 1fr', gap:20, minHeight:500 }}>
+              <div className="card" style={{ padding:0, overflow:'hidden' }}>
+                <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.85rem' }}>💬 Hội thoại</div>
+                {[
+                  { name:'@beautyLien', last:'Bạn có thể tăng hoa hồng lên 15%...', time:'14:32', unread:2, avatar:'BL' },
+                  { name:'@minhtuanfit', last:'Em đã đăng clip ANIMA rồi ạ', time:'11:20', unread:0, avatar:'MT' },
+                  { name:'@ngocbich_style', last:'Gửi em thêm 5 hộp mẫu nhé', time:'Hôm qua', unread:1, avatar:'NB' },
+                  { name:'KOC mới - @linh_beauty', last:'Em muốn hợp tác bán sản phẩm...', time:'Thứ 5', unread:3, avatar:'LB' },
+                ].map((c,i) => (
+                  <div key={i} style={{ padding:'12px 16px', borderBottom:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', gap:12, background: i===0 ? 'var(--bg-2)' : 'transparent' }}>
+                    <div style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,var(--c5-500),var(--c6-500))', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'.75rem', flexShrink:0 }}>{c.avatar}</div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span style={{ fontWeight:700, fontSize:'.82rem' }}>{c.name}</span>
+                        <span style={{ fontSize:'.65rem', color:'var(--text-3)' }}>{c.time}</span>
+                      </div>
+                      <div style={{ fontSize:'.72rem', color:'var(--text-3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.last}</div>
+                    </div>
+                    {c.unread > 0 && <span style={{ minWidth:18, height:18, borderRadius:'50%', background:'#ef4444', color:'#fff', fontSize:'.65rem', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>{c.unread}</span>}
+                  </div>
+                ))}
+              </div>
+              <div className="card" style={{ padding:0, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+                <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
+                  <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,var(--c5-500),var(--c6-500))', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'.72rem' }}>BL</div>
+                  <div>
+                    <div style={{ fontWeight:700, fontSize:'.85rem' }}>@beautyLien</div>
+                    <div style={{ fontSize:'.7rem', color:'#10b981' }}>● Đang online</div>
+                  </div>
+                  <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
+                    <button className="btn" style={{ fontSize:'.72rem', padding:'4px 10px' }}>📤 Gửi mẫu SP</button>
+                    <button className="btn" style={{ fontSize:'.72rem', padding:'4px 10px' }}>📊 Xem hiệu quả</button>
+                  </div>
+                </div>
+                <div style={{ flex:1, padding:16, display:'flex', flexDirection:'column', gap:10, overflowY:'auto', minHeight:300 }}>
+                  {[
+                    { from:'koc', text:'Chào nhà bán! Em đang chạy campaign ANIMA 119, hiệu quả rất tốt. Bạn có thể tăng commission lên 15% không?', time:'14:28' },
+                    { from:'vendor', text:'Chào @beautyLien! Cảm ơn em đã làm việc hiệu quả. Anh xem xét tăng lên 13% + bonus 500k nếu đạt 50 đơn/tháng nhé.', time:'14:30' },
+                    { from:'koc', text:'Bạn có thể tăng hoa hồng lên 15% không? Em có thể cam kết 60 đơn/tháng.', time:'14:32' },
+                  ].map((m,i) => (
+                    <div key={i} style={{ display:'flex', justifyContent: m.from==='vendor' ? 'flex-end' : 'flex-start' }}>
+                      <div style={{ maxWidth:'70%', padding:'8px 14px', borderRadius:12, background: m.from==='vendor' ? 'var(--c6-500)' : 'var(--bg-2)', color: m.from==='vendor' ? '#fff' : 'var(--text-1)', fontSize:'.82rem', lineHeight:1.5 }}>
+                        {m.text}
+                        <div style={{ fontSize:'.65rem', opacity:0.7, marginTop:4, textAlign:'right' }}>{m.time}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
+                  <input placeholder="Nhắn tin với KOC..." style={{ flex:1, padding:'8px 14px', borderRadius:20, border:'1px solid var(--border)', background:'var(--bg-2)', color:'var(--text-1)', fontSize:'.82rem' }} />
+                  <button className="btn btn-primary" style={{ borderRadius:20, padding:'8px 18px' }}>Gửi</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ────── KOC ANALYTICS ────── */
+      case 'koc_analytics':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>📊 Phân tích hiệu quả KOC</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Đo lường chính xác từng KOC: chuyển đổi, doanh thu, ROI hoa hồng.</p>
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>🏆 Bảng xếp hạng KOC</div>
+              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'.78rem' }}>
+                <thead>
+                  <tr style={{ background:'var(--bg-2)' }}>
+                    {['#','KOC','Lượt xem video','Click link','Đơn hàng','Doanh thu','Hoa hồng','ROI','Hiệu quả'].map(h => (
+                      <th key={h} style={{ padding:'10px 14px', textAlign:'left', color:'var(--text-3)', fontWeight:600, whiteSpace:'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { rank:1, name:'@beautyLien', views:'124K', clicks:3420, orders:34, revenue:63512000, commission:6351200, roi:9.99, badge:'🥇' },
+                    { rank:2, name:'@minhtuanfit', views:'89K', clicks:2180, orders:28, revenue:47012000, commission:4701200, roi:9.99, badge:'🥈' },
+                    { rank:3, name:'@ngocbich_style', views:'67K', clicks:1890, orders:15, revenue:28200000, commission:2820000, roi:9.99, badge:'🥉' },
+                    { rank:4, name:'@thanhthao_skin', views:'45K', clicks:980, orders:12, revenue:22416000, commission:2241600, roi:9.99, badge:'' },
+                  ].map(k => (
+                    <tr key={k.rank} style={{ borderTop:'1px solid var(--border)' }}>
+                      <td style={{ padding:'12px 14px', fontWeight:700, fontSize:'1rem' }}>{k.badge || k.rank}</td>
+                      <td style={{ padding:'12px 14px', fontWeight:700, color:'var(--c5-400)' }}>{k.name}</td>
+                      <td style={{ padding:'12px 14px' }}>{k.views}</td>
+                      <td style={{ padding:'12px 14px' }}>{k.clicks.toLocaleString()}</td>
+                      <td style={{ padding:'12px 14px', fontWeight:700 }}>{k.orders}</td>
+                      <td style={{ padding:'12px 14px', color:'#10b981', fontWeight:700 }}>{new Intl.NumberFormat('vi-VN').format(k.revenue)}₫</td>
+                      <td style={{ padding:'12px 14px', color:'#f59e0b' }}>{new Intl.NumberFormat('vi-VN').format(k.commission)}₫</td>
+                      <td style={{ padding:'12px 14px' }}>
+                        <span style={{ color:'#10b981', fontWeight:700 }}>x{k.roi}</span>
+                      </td>
+                      <td style={{ padding:'12px 14px' }}>
+                        <div style={{ width:80, height:6, borderRadius:3, background:'var(--bg-2)', overflow:'hidden' }}>
+                          <div style={{ width:`${Math.min(100, k.orders * 3)}%`, height:'100%', background:'linear-gradient(90deg, var(--c5-500), var(--c6-500))', borderRadius:3 }} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>📝 KOC Review sản phẩm gần đây</div>
+              {[
+                { koc:'@beautyLien', product:'ANIMA 119 - 1 Hộp', rating:5, snippet:'Sản phẩm này thực sự amazing! Sau 2 tuần dùng mình cảm thấy...', views:'24K', date:'03/04/2026', platform:'TikTok' },
+                { koc:'@minhtuanfit', product:'ANIMA 119 - 3 Hộp', rating:5, snippet:'Mình đã thử rất nhiều sản phẩm nhưng ANIMA 119 thực sự...', views:'18K', date:'01/04/2026', platform:'YouTube' },
+              ].map((r,i) => (
+                <div key={i} style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', display:'flex', gap:14, alignItems:'flex-start' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:4 }}>
+                      <span style={{ fontWeight:700, color:'var(--c5-400)', fontSize:'.85rem' }}>{r.koc}</span>
+                      <span style={{ fontSize:'.7rem', padding:'2px 8px', borderRadius:20, background:'var(--bg-2)', color:'var(--text-3)' }}>{r.platform}</span>
+                      <span style={{ fontSize:'.7rem', color:'var(--text-3)', marginLeft:'auto' }}>{r.date}</span>
+                    </div>
+                    <div style={{ fontSize:'.78rem', marginBottom:4 }}>Sản phẩm: <span style={{ fontWeight:600 }}>{r.product}</span> · {'⭐'.repeat(r.rating)}</div>
+                    <div style={{ fontSize:'.78rem', color:'var(--text-3)', fontStyle:'italic' }}>"{r.snippet}"</div>
+                  </div>
+                  <div style={{ textAlign:'right', flexShrink:0 }}>
+                    <div style={{ fontWeight:700, color:'var(--c6-400)' }}>{r.views} lượt xem</div>
+                    <button className="btn" style={{ fontSize:'.68rem', padding:'4px 10px', marginTop:6 }}>Xem video</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── KẾ TOÁN AI ────── */
+      case 'accounting':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>📒 Kế toán thông minh</h2>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>AI tự động phân loại thu chi, tạo báo cáo tài chính, phát hiện bất thường.</p>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button className="btn" style={{ fontSize:'.78rem' }}>📥 Nhập liệu</button>
+                <button className="btn btn-primary" style={{ fontSize:'.78rem' }}>🤖 AI Phân tích</button>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+              <div className="card" style={{ padding:20 }}>
+                <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>💰 Lợi nhuận & Doanh thu — Tháng 4/2026</div>
+                {[
+                  { label:'Doanh thu gộp', value:145600000, type:'revenue' },
+                  { label:'Trả hàng & Giảm giá', value:-3200000, type:'deduct' },
+                  { label:'Doanh thu thuần', value:142400000, type:'net' },
+                  { label:'Giá vốn hàng bán', value:-72000000, type:'deduct' },
+                  { label:'Lợi nhuận gộp', value:70400000, type:'profit' },
+                  { label:'Chi phí vận chuyển', value:-8400000, type:'deduct' },
+                  { label:'Hoa hồng KOC', value:-14240000, type:'deduct' },
+                  { label:'Chi phí marketing', value:-5000000, type:'deduct' },
+                  { label:'Phí nền tảng WellKOC', value:-4272000, type:'deduct' },
+                  { label:'🎯 Lợi nhuận ròng', value:38488000, type:'final' },
+                ].map(item => (
+                  <div key={item.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid var(--border)', fontSize:'.82rem' }}>
+                    <span style={{ color: item.type==='final' ? 'var(--text-1)' : item.type==='profit' ? '#10b981' : 'var(--text-2)', fontWeight: item.type==='final' || item.type==='net' ? 700 : 400 }}>{item.label}</span>
+                    <span style={{ fontWeight: item.type==='final' ? 800 : 600, color: item.value > 0 ? (item.type==='final' ? '#10b981' : 'var(--text-1)') : '#ef4444' }}>
+                      {item.value > 0 ? '+' : ''}{new Intl.NumberFormat('vi-VN').format(item.value)}₫
+                    </span>
+                  </div>
+                ))}
+                <div style={{ marginTop:12, padding:'10px 14px', borderRadius:10, background:'rgba(16,185,129,.1)', border:'1px solid rgba(16,185,129,.2)' }}>
+                  <div style={{ fontSize:'.78rem', color:'#10b981', fontWeight:700 }}>🤖 AI Nhận xét: Biên lợi nhuận ròng 27.1% — Tốt hơn trung bình ngành (18-22%). Có thể tối ưu chi phí vận chuyển thêm ~15% bằng cách gộp đơn hàng cùng khu vực.</div>
+                </div>
+              </div>
+              <div className="flex-col gap-16">
+                <div className="card" style={{ padding:20 }}>
+                  <div style={{ fontWeight:700, marginBottom:12, fontSize:'.9rem' }}>💸 Dòng tiền 7 ngày gần nhất</div>
+                  {['30/3','31/3','1/4','2/4','3/4','4/4','5/4'].map((d,i) => {
+                    const vals = [8400000, 12600000, 6800000, 15200000, 9400000, 18600000, 11200000];
+                    const maxVal = Math.max(...vals);
+                    return (
+                      <div key={d} style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+                        <span style={{ fontSize:'.72rem', color:'var(--text-3)', width:36, flexShrink:0 }}>{d}</span>
+                        <div style={{ flex:1, height:8, borderRadius:4, background:'var(--bg-2)', overflow:'hidden' }}>
+                          <div style={{ width:`${(vals[i]/maxVal)*100}%`, height:'100%', background:'linear-gradient(90deg, #10b981, #34d399)', borderRadius:4 }} />
+                        </div>
+                        <span style={{ fontSize:'.72rem', fontWeight:600, color:'#10b981', width:70, textAlign:'right' }}>{new Intl.NumberFormat('vi-VN').format(vals[i])}₫</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="card" style={{ padding:20, borderColor:'rgba(245,158,11,.3)', background:'rgba(245,158,11,.05)' }}>
+                  <div style={{ fontWeight:700, marginBottom:10, fontSize:'.9rem' }}>🤖 Trợ lý Thuế & Kế toán AI</div>
+                  <div style={{ fontSize:'.8rem', color:'var(--text-2)', marginBottom:14, lineHeight:1.6 }}>
+                    Thuế VAT phải nộp tháng 4: <strong style={{ color:'#f59e0b' }}>14.240.000₫</strong><br/>
+                    Thuế TNDN tạm tính Q1: <strong style={{ color:'#f59e0b' }}>9.622.000₫</strong><br/>
+                    Deadline khai báo: <strong style={{ color:'#ef4444' }}>20/04/2026</strong>
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button className="btn btn-primary" style={{ fontSize:'.75rem', flex:1 }}>📄 Xuất báo cáo thuế</button>
+                    <button className="btn" style={{ fontSize:'.75rem', flex:1 }}>💬 Hỏi AI</button>
+                  </div>
+                </div>
+                <div className="card" style={{ padding:20 }}>
+                  <div style={{ fontWeight:700, marginBottom:10, fontSize:'.9rem' }}>📦 Giá trị tồn kho</div>
+                  <div style={{ fontSize:'1.4rem', fontWeight:800, color:'var(--c6-400)', marginBottom:4 }}>48.200.000₫</div>
+                  <div style={{ fontSize:'.75rem', color:'var(--text-3)' }}>24 SKU · Giá vốn trung bình · Cập nhật tự động</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ────── THANH TOÁN ────── */
+      case 'payment':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>💳 Quản lý Thanh toán</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Số dư, lịch sử giải ngân, kết nối ngân hàng & ví điện tử.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+              {[
+                { label:'Số dư khả dụng', value:'38.488.000₫', icon:'💰', color:'#10b981', action:'Rút tiền' },
+                { label:'Chờ giải ngân (T+3)', value:'14.760.000₫', icon:'⏳', color:'#f59e0b', action:'Chi tiết' },
+                { label:'Đã giải ngân tháng này', value:'92.300.000₫', icon:'✅', color:'var(--c6-400)', action:'Lịch sử' },
+              ].map(s => (
+                <div key={s.label} className="card" style={{ padding:20 }}>
+                  <div style={{ fontSize:'1.5rem', marginBottom:8 }}>{s.icon}</div>
+                  <div style={{ fontSize:'1.3rem', fontWeight:800, color:s.color, marginBottom:4 }}>{s.value}</div>
+                  <div style={{ fontSize:'.75rem', color:'var(--text-3)', marginBottom:12 }}>{s.label}</div>
+                  <button className="btn" style={{ fontSize:'.75rem', width:'100%' }}>{s.action}</button>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:16, fontSize:'.9rem' }}>🏦 Tài khoản nhận tiền</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                {[
+                  { name:'Vietcombank', account:'1234567890', owner:'NGUYEN VAN A', linked:true },
+                  { name:'MoMo', account:'0901234567', owner:'Nguyễn Văn A', linked:true },
+                  { name:'VPBank', account:'—', owner:'—', linked:false },
+                  { name:'ZaloPay', account:'—', owner:'—', linked:false },
+                ].map(b => (
+                  <div key={b.name} style={{ padding:'14px 16px', borderRadius:12, border:'1px solid var(--border)', display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ width:40, height:40, borderRadius:10, background:'var(--bg-2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.2rem' }}>🏦</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:'.85rem' }}>{b.name}</div>
+                      {b.linked ? <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>{b.account} · {b.owner}</div> : <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>Chưa kết nối</div>}
+                    </div>
+                    <span style={{ fontSize:'.7rem', fontWeight:700, color: b.linked ? '#10b981' : 'var(--text-3)' }}>{b.linked ? '● Đã liên kết' : '+ Kết nối'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>📋 Lịch sử giải ngân</div>
+              {[
+                { date:'05/04/2026', amount:24600000, bank:'Vietcombank', status:'Thành công', ref:'TXN-240405-001' },
+                { date:'01/04/2026', amount:18200000, bank:'Vietcombank', status:'Thành công', ref:'TXN-240401-002' },
+                { date:'28/03/2026', amount:31400000, bank:'MoMo', status:'Thành công', ref:'TXN-240328-001' },
+              ].map((txItem,i) => (
+                <div key={i} style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:16, fontSize:'.82rem' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600 }}>{txItem.date} · {txItem.bank}</div>
+                    <div style={{ fontSize:'.72rem', color:'var(--text-3)', fontFamily:'monospace' }}>{txItem.ref}</div>
+                  </div>
+                  <div style={{ fontWeight:800, fontSize:'1rem', color:'#10b981' }}>+{new Intl.NumberFormat('vi-VN').format(txItem.amount)}₫</div>
+                  <span style={{ padding:'3px 10px', borderRadius:20, background:'rgba(16,185,129,.15)', color:'#10b981', fontSize:'.68rem', fontWeight:700 }}>{txItem.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── CRM AI ────── */
+      case 'crm':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                  <h2 style={{ fontSize:'1.3rem', fontWeight:800 }}>🤖 CRM thông minh</h2>
+                  <span style={{ padding:'3px 10px', borderRadius:20, background:'linear-gradient(135deg,#f59e0b,#ef4444)', color:'#fff', fontSize:'.65rem', fontWeight:700 }}>PRO</span>
+                </div>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>AI Agent tự động chăm sóc khách hàng 24/7 qua phễu bán hàng thông minh.</p>
+              </div>
+              <button className="btn btn-primary" style={{ fontSize:'.82rem', background:'linear-gradient(135deg,#f59e0b,#ef4444)', borderColor:'transparent' }}>Nâng cấp PRO</button>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+              {[
+                { icon:'🤖', title:'AI Chatbot 24/7', desc:'Agent tự động trả lời khách, xử lý đơn hàng, tư vấn sản phẩm theo kịch bản thông minh.', locked:false },
+                { icon:'📊', title:'Phễu bán hàng', desc:'Tự động phân loại khách theo hành vi: Mới → Quan tâm → Sắp mua → Đã mua → Trung thành.', locked:false },
+                { icon:'📱', title:'Omnichannel', desc:'Tích hợp Zalo OA, Facebook Messenger, Email, SMS — quản lý 1 nơi.', locked:true },
+                { icon:'🎯', title:'Cá nhân hoá', desc:'Gửi ưu đãi cá nhân hoá tự động theo lịch sử mua hàng và sở thích.', locked:true },
+                { icon:'📈', title:'Phân tích RFM', desc:'Recency, Frequency, Monetary — phân khúc khách hàng theo giá trị.', locked:false },
+                { icon:'🔔', title:'Auto Follow-up', desc:'Tự động nhắc khách hàng bỏ giỏ hàng, gửi tin chăm sóc sau mua.', locked:true },
+              ].map(f => (
+                <div key={f.title} className="card" style={{ padding:16, position:'relative', opacity: f.locked ? 0.6 : 1 }}>
+                  {f.locked && <div style={{ position:'absolute', top:10, right:10, fontSize:'.65rem', fontWeight:700, padding:'2px 8px', borderRadius:20, background:'rgba(245,158,11,.2)', color:'#f59e0b' }}>🔒 PRO</div>}
+                  <div style={{ fontSize:'1.5rem', marginBottom:8 }}>{f.icon}</div>
+                  <div style={{ fontWeight:700, fontSize:'.88rem', marginBottom:6 }}>{f.title}</div>
+                  <div style={{ fontSize:'.75rem', color:'var(--text-3)', lineHeight:1.5 }}>{f.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>🤖 AI Agent đang hoạt động — Demo</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:8, padding:16, background:'var(--bg-2)', borderRadius:12, minHeight:150 }}>
+                <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--c6-500)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.7rem', flexShrink:0 }}>🤖</div>
+                  <div style={{ padding:'8px 12px', borderRadius:10, background:'var(--surface-card)', fontSize:'.8rem', maxWidth:'80%', lineHeight:1.5 }}>
+                    Xin chào! Bạn đang quan tâm đến ANIMA 119? Tôi có thể giúp bạn tìm gói phù hợp nhất. Bạn đang muốn dùng lần đầu hay đã từng dùng?
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:8, alignItems:'flex-start', justifyContent:'flex-end' }}>
+                  <div style={{ padding:'8px 12px', borderRadius:10, background:'var(--c6-500)', color:'#fff', fontSize:'.8rem', maxWidth:'80%' }}>
+                    Tôi muốn dùng thử lần đầu
+                  </div>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--bg-2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.7rem', flexShrink:0 }}>👤</div>
+                </div>
+                <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:'var(--c6-500)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.7rem', flexShrink:0 }}>🤖</div>
+                  <div style={{ padding:'8px 12px', borderRadius:10, background:'var(--surface-card)', fontSize:'.8rem', maxWidth:'80%', lineHeight:1.5 }}>
+                    Tuyệt vời! Cho khách hàng lần đầu, mình khuyến nghị gói 1 hộp (1.868.000₫) để trải nghiệm. Gói này đã phục vụ 34 khách và đạt 4.9⭐.
+                    <div style={{ marginTop:8, display:'flex', gap:8 }}>
+                      <button className="btn btn-primary" style={{ fontSize:'.7rem', padding:'4px 10px' }}>Mua ngay</button>
+                      <button className="btn" style={{ fontSize:'.7rem', padding:'4px 10px' }}>Xem thêm</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }}>
+              {[
+                { plan:'Basic', price:'499.000₫/tháng', features:['AI Chatbot cơ bản','100 cuộc hội thoại/tháng','Phễu 3 bước'], cta:'Bắt đầu', highlight:false },
+                { plan:'Pro', price:'1.499.000₫/tháng', features:['AI Chatbot nâng cao','Không giới hạn hội thoại','Phễu 7 bước','Omnichannel','RFM phân tích','Auto follow-up'], cta:'Nâng cấp PRO', highlight:true },
+                { plan:'Enterprise', price:'Liên hệ', features:['Tất cả tính năng Pro','Tích hợp API riêng','Hỗ trợ 24/7','Đào tạo team'], cta:'Liên hệ tư vấn', highlight:false },
+              ].map(p => (
+                <div key={p.plan} className="card" style={{ padding:20, border: p.highlight ? '2px solid var(--c6-500)' : '1px solid var(--border)', position:'relative' }}>
+                  {p.highlight && <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', padding:'3px 16px', borderRadius:20, background:'var(--c6-500)', color:'#fff', fontSize:'.7rem', fontWeight:700, whiteSpace:'nowrap' }}>Được chọn nhiều nhất</div>}
+                  <div style={{ fontWeight:800, fontSize:'1rem', marginBottom:6 }}>{p.plan}</div>
+                  <div style={{ fontSize:'1.2rem', fontWeight:800, color:'var(--c6-400)', marginBottom:12 }}>{p.price}</div>
+                  {p.features.map(f => <div key={f} style={{ fontSize:'.78rem', color:'var(--text-2)', marginBottom:6 }}>✓ {f}</div>)}
+                  <button className="btn btn-primary" style={{ width:'100%', marginTop:16, fontSize:'.8rem', background: p.highlight ? 'linear-gradient(135deg,#f59e0b,#ef4444)' : undefined, borderColor: p.highlight ? 'transparent' : undefined }}>{p.cta}</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── MARKETING ────── */
+      case 'marketing':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                  <h2 style={{ fontSize:'1.3rem', fontWeight:800 }}>📣 Marketing Tự động</h2>
+                  <span style={{ padding:'3px 10px', borderRadius:20, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', color:'#fff', fontSize:'.65rem', fontWeight:700 }}>PRO</span>
+                </div>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Tự động đăng bài đa nền tảng, gắn link gian hàng, đo lường hiệu quả.</p>
+              </div>
+              <button className="btn btn-primary" style={{ fontSize:'.82rem', background:'linear-gradient(135deg,#6366f1,#8b5cf6)', borderColor:'transparent' }}>+ Tạo chiến dịch</button>
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:16, fontSize:'.9rem' }}>🖼️ Đăng bài đa nền tảng — Soạn 1 lần, đăng khắp nơi</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                <div>
+                  <textarea placeholder="Soạn nội dung bài đăng... (AI sẽ tự động tối ưu cho từng nền tảng)" style={{ width:'100%', height:100, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-2)', color:'var(--text-1)', fontSize:'.82rem', resize:'vertical', boxSizing:'border-box' }} />
+                  <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(99,102,241,.1)', border:'1px solid rgba(99,102,241,.2)', fontSize:'.78rem', color:'#a5b4fc' }}>
+                    🔗 Link gian hàng sẽ được tự động gắn vào cuối mỗi bài đăng — <strong>bắt buộc theo chính sách WellKOC</strong>
+                  </div>
+                  <div style={{ marginTop:12 }}>
+                    <div style={{ fontSize:'.78rem', fontWeight:600, marginBottom:8, color:'var(--text-2)' }}>Chọn nền tảng đăng:</div>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                      {[
+                        { name:'Facebook', icon:'📘' },
+                        { name:'TikTok', icon:'🎵' },
+                        { name:'Instagram', icon:'📸' },
+                        { name:'Zalo', icon:'💬' },
+                        { name:'YouTube', icon:'▶️' },
+                        { name:'Shopee', icon:'🛍️' },
+                      ].map(pl => (
+                        <label key={pl.name} style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:20, border:'1px solid var(--border)', cursor:'pointer', fontSize:'.78rem' }}>
+                          <input type="checkbox" defaultChecked={['Facebook','TikTok','Zalo'].includes(pl.name)} style={{ accentColor:'var(--c6-500)' }} />
+                          {pl.icon} {pl.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize:'.78rem', fontWeight:600, marginBottom:8, color:'var(--text-2)' }}>Lịch đăng bài:</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {['Đăng ngay','Lên lịch: Tối nay 20:00','Lên lịch: Sáng mai 08:00','Tùy chỉnh thời gian...'].map(sched => (
+                      <label key={sched} style={{ display:'flex', alignItems:'center', gap:8, fontSize:'.82rem', cursor:'pointer' }}>
+                        <input type="radio" name="schedule" defaultChecked={sched==='Đăng ngay'} style={{ accentColor:'var(--c6-500)' }} />
+                        {sched}
+                      </label>
+                    ))}
+                  </div>
+                  <button className="btn btn-primary" style={{ width:'100%', marginTop:20, fontSize:'.85rem' }}>🚀 Đăng bài ngay</button>
+                  <div style={{ marginTop:8, fontSize:'.72rem', color:'var(--text-3)', textAlign:'center' }}>AI sẽ tối ưu caption, hashtag và thời điểm đăng cho từng nền tảng</div>
+                </div>
+              </div>
+            </div>
+            <div className="card" style={{ padding:0, overflow:'hidden' }}>
+              <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', fontWeight:700, fontSize:'.9rem' }}>📊 Chiến dịch đang chạy</div>
+              {[
+                { name:'Flash Sale ANIMA 4/4', platforms:['FB','TK','ZL'], reach:'45.2K', clicks:3420, orders:28, spend:2000000, revenue:52304000, status:'Đang chạy' },
+                { name:'KOC Seeding Vitamin C', platforms:['TK','IG'], reach:'89K', clicks:6780, orders:45, spend:0, revenue:83250000, status:'Đang chạy' },
+                { name:'Email Khách VIP tháng 3', platforms:['Email'], reach:'1.2K', clicks:380, orders:15, spend:500000, revenue:28020000, status:'Kết thúc' },
+              ].map((camp,i) => (
+                <div key={i} style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+                    <span style={{ fontWeight:700, fontSize:'.88rem' }}>{camp.name}</span>
+                    <div style={{ display:'flex', gap:4 }}>
+                      {camp.platforms.map(pl => <span key={pl} style={{ padding:'2px 8px', borderRadius:20, background:'var(--bg-2)', fontSize:'.65rem', fontWeight:700, color:'var(--text-2)' }}>{pl}</span>)}
+                    </div>
+                    <span style={{ marginLeft:'auto', padding:'3px 10px', borderRadius:20, background: camp.status==='Đang chạy' ? 'rgba(16,185,129,.15)' : 'rgba(107,114,128,.15)', color: camp.status==='Đang chạy' ? '#10b981' : 'var(--text-3)', fontSize:'.68rem', fontWeight:700 }}>{camp.status}</span>
+                  </div>
+                  <div style={{ display:'flex', gap:20, fontSize:'.78rem', color:'var(--text-3)' }}>
+                    <span>👁️ {camp.reach} reach</span>
+                    <span>🖱️ {camp.clicks.toLocaleString()} clicks</span>
+                    <span>🛒 {camp.orders} đơn</span>
+                    <span style={{ color:'var(--c6-400)', fontWeight:700 }}>💰 {new Intl.NumberFormat('vi-VN').format(camp.revenue)}₫ doanh thu</span>
+                    {camp.spend > 0 && <span style={{ color:'#ef4444' }}>Chi phí: {new Intl.NumberFormat('vi-VN').format(camp.spend)}₫</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      /* ────── MEDIA & LINK ────── */
+      case 'media':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>🖼️ Media & Link gian hàng</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Quản lý hình ảnh sản phẩm và tạo link gian hàng để chia sẻ đa nền tảng.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+              <div className="card" style={{ padding:20 }}>
+                <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>📤 Upload hình ảnh sản phẩm</div>
+                <div style={{ border:'2px dashed var(--border)', borderRadius:12, padding:32, textAlign:'center', cursor:'pointer', marginBottom:14 }}>
+                  <div style={{ fontSize:'2rem', marginBottom:8 }}>📸</div>
+                  <div style={{ fontWeight:600, fontSize:'.88rem', marginBottom:4 }}>Kéo thả hoặc click để upload</div>
+                  <div style={{ fontSize:'.75rem', color:'var(--text-3)' }}>JPG, PNG, WebP · Tối đa 5MB · Tỷ lệ 1:1 khuyến nghị</div>
+                  <button className="btn btn-primary" style={{ marginTop:12, fontSize:'.8rem' }}>Chọn file</button>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+                  {[1,2,3,4].map(idx => (
+                    <div key={idx} style={{ aspectRatio:'1', borderRadius:8, background:'linear-gradient(135deg, var(--bg-2), var(--bg-1))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.2rem', border:'1px solid var(--border)', cursor:'pointer', position:'relative' }}>
+                      {idx <= 2 ? '🖼️' : '+'}
+                      {idx <= 2 && <div style={{ position:'absolute', top:4, right:4, width:16, height:16, borderRadius:'50%', background:'#ef4444', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.55rem', color:'#fff', cursor:'pointer' }}>✕</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="card" style={{ padding:20 }}>
+                <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>🔗 Link gian hàng</div>
+                {[
+                  { label:'Link gian hàng chính', url:'wellkoc.com/vendor/animacare', icon:'🏪' },
+                  { label:'ANIMA 119 - 1 Hộp', url:'wellkoc.com/products/anima-1', icon:'📦' },
+                  { label:'ANIMA 119 - 3 Hộp', url:'wellkoc.com/products/anima-2', icon:'📦' },
+                  { label:'Toàn bộ sản phẩm', url:'wellkoc.com/marketplace?vendor=animacare', icon:'🛍️' },
+                ].map(l => (
+                  <div key={l.label} style={{ padding:'10px 0', borderBottom:'1px solid var(--border)' }}>
+                    <div style={{ fontSize:'.75rem', color:'var(--text-3)', marginBottom:4 }}>{l.icon} {l.label}</div>
+                    <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                      <input value={l.url} readOnly style={{ flex:1, padding:'6px 10px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-2)', color:'var(--text-2)', fontSize:'.75rem', fontFamily:'monospace' }} />
+                      <button className="btn" style={{ fontSize:'.7rem', padding:'6px 10px', whiteSpace:'nowrap' }} onClick={() => navigator.clipboard?.writeText('https://' + l.url)}>📋 Copy</button>
+                      <a href={'https://' + l.url} target="_blank" rel="noreferrer" style={{ textDecoration:'none' }}>
+                        <button className="btn" style={{ fontSize:'.7rem', padding:'6px 10px' }}>↗️</button>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop:14, padding:'10px 14px', borderRadius:10, background:'rgba(99,102,241,.1)', border:'1px solid rgba(99,102,241,.2)', fontSize:'.75rem', color:'#a5b4fc' }}>
+                  💡 Khi đăng bài marketing, link gian hàng sẽ được tự động gắn kèm theo chính sách WellKOC.
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ────── BÁO CÁO TÀI CHÍNH ────── */
+      case 'reports':
+        return (
+          <div className="flex-col gap-20">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>📋 Báo cáo Tài chính</h2>
+                <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>AI tự động tạo báo cáo. Xuất PDF/Excel cho kế toán và ngân hàng.</p>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button className="btn" style={{ fontSize:'.78rem' }}>📊 Xuất Excel</button>
+                <button className="btn btn-primary" style={{ fontSize:'.78rem' }}>📄 Xuất PDF</button>
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:16 }}>
+              {[
+                { title:'Báo cáo Doanh thu & Lợi nhuận', period:'Tháng 4/2026', icon:'💰', status:'Sẵn sàng' },
+                { title:'Báo cáo Tồn kho & Giá vốn', period:'Tháng 4/2026', icon:'📦', status:'Sẵn sàng' },
+                { title:'Báo cáo Thuế VAT & TNDN', period:'Q1/2026', icon:'📝', status:'Đang tạo' },
+                { title:'Báo cáo KOC & Marketing ROI', period:'Tháng 4/2026', icon:'📣', status:'Sẵn sàng' },
+                { title:'Báo cáo Dòng tiền (Cash flow)', period:'Tháng 4/2026', icon:'💸', status:'Sẵn sàng' },
+                { title:'Báo cáo Hàng hoàn & Refund', period:'Tháng 4/2026', icon:'↩️', status:'Sẵn sàng' },
+              ].map(rpt => (
+                <div key={rpt.title} className="card" style={{ padding:16, display:'flex', alignItems:'center', gap:14 }}>
+                  <div style={{ fontSize:'1.8rem' }}>{rpt.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:700, fontSize:'.85rem', marginBottom:3 }}>{rpt.title}</div>
+                    <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>{rpt.period}</div>
+                  </div>
+                  <div style={{ flexShrink:0, textAlign:'right' }}>
+                    <span style={{ fontSize:'.7rem', padding:'2px 8px', borderRadius:20, background: rpt.status==='Sẵn sàng' ? 'rgba(16,185,129,.15)' : 'rgba(245,158,11,.15)', color: rpt.status==='Sẵn sàng' ? '#10b981' : '#f59e0b', fontWeight:700, display:'block', marginBottom:6 }}>{rpt.status}</span>
+                    <div style={{ display:'flex', gap:4 }}>
+                      <button className="btn" style={{ fontSize:'.68rem', padding:'3px 8px' }}>PDF</button>
+                      <button className="btn" style={{ fontSize:'.68rem', padding:'3px 8px' }}>Excel</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>🤖 Trợ lý Tài chính AI</div>
+              <div style={{ display:'flex', gap:10, marginBottom:12 }}>
+                {['Phân tích P&L','So sánh tháng trước','Dự báo tháng tới','Tối ưu chi phí','Cảnh báo bất thường'].map(q => (
+                  <button key={q} className="btn" style={{ fontSize:'.72rem', padding:'5px 12px', whiteSpace:'nowrap' }}>{q}</button>
+                ))}
+              </div>
+              <div style={{ padding:16, background:'var(--bg-2)', borderRadius:12, fontSize:'.82rem', lineHeight:1.7, color:'var(--text-2)' }}>
+                🤖 <strong>AI nhận xét tháng 4/2026:</strong> Doanh thu tăng <strong style={{ color:'#10b981' }}>+23%</strong> so với tháng 3. Biên lợi nhuận gộp đạt 48.3% — cao hơn mục tiêu 5%. Tuy nhiên chi phí vận chuyển tăng 18%, có thể tối ưu bằng cách gộp đơn. Hoa hồng KOC hiệu quả, ROI trung bình x9.99 — nên tăng ngân sách thêm 20%. Dự báo tháng 5: <strong style={{ color:'var(--c6-400)' }}>145-165 triệu đồng</strong> nếu duy trì momentum.
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ────── CHUYỂN VAI TRÒ ────── */
+      case 'role_switch':
+        return (
+          <div className="flex-col gap-20">
+            <div>
+              <h2 style={{ fontSize:'1.3rem', fontWeight:800, marginBottom:4 }}>🔄 Chuyển vai trò</h2>
+              <p style={{ color:'var(--text-3)', fontSize:'.85rem' }}>Tài khoản của bạn có thể hoạt động ở nhiều vai trò khác nhau trên WellKOC.</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
+              {[
+                {
+                  role: 'Vendor — Nhà bán', icon: '🏪', color: 'var(--c4-500)',
+                  desc: 'Quản lý gian hàng, sản phẩm, đơn hàng, kho hàng, tài chính. Đang hoạt động.',
+                  features: ['Quản lý sản phẩm & kho','Theo dõi đơn hàng','Kế toán & Tài chính','CRM & Marketing','KOC Network'],
+                  active: true, cta: 'Đang ở đây',
+                },
+                {
+                  role: 'KOC — Người tạo nội dung', icon: '⭐', color: 'var(--c5-500)',
+                  desc: 'Quảng cáo sản phẩm, nhận hoa hồng on-chain. Cần đăng ký riêng.',
+                  features: ['Tạo link affiliate','Nhận hoa hồng','Bảng xếp hạng KOC','Quản lý nội dung','Hoa hồng on-chain'],
+                  active: false, cta: 'Vào KOC Hub',
+                },
+                {
+                  role: 'Người mua', icon: '🛒', color: 'var(--c6-500)',
+                  desc: 'Mua sản phẩm, theo dõi đơn hàng, ví điện tử, lịch sử mua hàng.',
+                  features: ['Mua sắm Marketplace','Theo dõi đơn hàng','Ví & Điểm thưởng','Đánh giá sản phẩm','Tham gia mua nhóm AI'],
+                  active: false, cta: 'Đến Marketplace',
+                },
+              ].map(role => (
+                <div key={role.role} className="card" style={{ padding:24, border: role.active ? `2px solid ${role.color}` : '1px solid var(--border)', position:'relative' }}>
+                  {role.active && <div style={{ position:'absolute', top:12, right:12, padding:'2px 8px', borderRadius:20, background:role.color, color:'#fff', fontSize:'.65rem', fontWeight:700 }}>✓ Đang dùng</div>}
+                  <div style={{ fontSize:'2.5rem', marginBottom:12 }}>{role.icon}</div>
+                  <div style={{ fontWeight:800, fontSize:'1rem', marginBottom:6 }}>{role.role}</div>
+                  <div style={{ fontSize:'.78rem', color:'var(--text-3)', marginBottom:14, lineHeight:1.5 }}>{role.desc}</div>
+                  <div style={{ marginBottom:16 }}>
+                    {role.features.map(f => <div key={f} style={{ fontSize:'.75rem', color:'var(--text-2)', marginBottom:4 }}>✓ {f}</div>)}
+                  </div>
+                  <button className="btn btn-primary" style={{ width:'100%', fontSize:'.82rem', background: role.active ? role.color : undefined, borderColor: role.active ? role.color : undefined, opacity: role.active ? 0.8 : 1 }}>{role.cta}</button>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding:20 }}>
+              <div style={{ fontWeight:700, marginBottom:14, fontSize:'.9rem' }}>📊 Tổng quan tài khoản đa vai trò</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12 }}>
+                {[
+                  { label:'Vai trò hiện tại', value:'Vendor + KOC', icon:'🎭' },
+                  { label:'Đơn mua hàng', value:'12 đơn', icon:'🛒' },
+                  { label:'Hoa hồng KOC', value:'2.4tr₫', icon:'💰' },
+                  { label:'Điểm thưởng', value:'1,240 pts', icon:'⭐' },
+                ].map(s => (
+                  <div key={s.label} style={{ padding:'14px 16px', borderRadius:12, background:'var(--bg-2)', textAlign:'center' }}>
+                    <div style={{ fontSize:'1.3rem', marginBottom:6 }}>{s.icon}</div>
+                    <div style={{ fontWeight:700, fontSize:'.9rem', marginBottom:2 }}>{s.value}</div>
+                    <div style={{ fontSize:'.72rem', color:'var(--text-3)' }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         );
 
       default:

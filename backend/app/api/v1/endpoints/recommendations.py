@@ -341,6 +341,6 @@ async def track_behavior_event(
         context=body.context,
     )
     db.add(event)
-    await db.flush()
+    await db.commit()
 
     return BehaviorEventResponse(status="tracked", event_id=event.id)

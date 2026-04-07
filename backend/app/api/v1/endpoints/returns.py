@@ -118,7 +118,7 @@ async def create_return_request(
         status=ReturnStatus.PENDING,
     )
     db.add(return_req)
-    await db.flush()
+    await db.commit()
 
     return _return_dict(return_req)
 
@@ -215,6 +215,7 @@ async def vendor_decision(
     if body.decision == ReturnStatus.APPROVED and body.refund_amount is not None:
         ret.refund_amount = body.refund_amount
     db.add(ret)
+    await db.commit()
 
     return _return_dict(ret)
 
@@ -260,6 +261,8 @@ async def process_refund(
             }
         ]
         db.add(order)
+
+    await db.commit()
 
     return {
         "refunded": True,

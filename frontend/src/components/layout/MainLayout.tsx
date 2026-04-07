@@ -326,7 +326,7 @@ export default function MainLayout() {
           display: isAgentsPage ? 'none' : 'flex',
           alignItems: 'center',
           padding: '0 20px',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         {/* Logo — hidden on agents page */}

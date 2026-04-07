@@ -141,7 +141,7 @@ async def publish_multi(
         db.add(job)
         jobs.append(job)
 
-    await db.flush()
+    await db.commit()
 
     # Dispatch to Celery workers
     from app.workers.publisher_worker import publish_to_platform
@@ -221,7 +221,7 @@ async def cancel_publish_job(
 
     job.status = PublishStatus.CANCELLED
     db.add(job)
-    await db.flush()
+    await db.commit()
 
     return {"message": "Đã huỷ lệnh đăng bài", "job": _job_dict(job)}
 
@@ -297,7 +297,7 @@ async def connect_platform(
             is_active=False,
         )
         db.add(conn)
-        await db.flush()
+        await db.commit()
 
     return {"platform": platform, "oauth_url": oauth_url}
 

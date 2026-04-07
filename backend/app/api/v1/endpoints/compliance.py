@@ -263,7 +263,7 @@ async def export_report(
         sha256_hash=sha,
     )
     db.add(report)
-    await db.flush()
+    await db.commit()
 
     return {
         "report_id": str(report.id),
