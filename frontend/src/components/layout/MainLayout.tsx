@@ -744,13 +744,15 @@ export default function MainLayout() {
           transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 300ms var(--ease-smooth)',
           overflowY: 'auto',
+          overflowX: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           backdropFilter: 'blur(30px)',
+          isolation: 'isolate',
         }}
       >
         {/* Chakra energy background effects */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', clipPath: 'inset(0)', pointerEvents: 'none', zIndex: 0 }}>
           {/* C4 Heart - green glow top */}
           <div style={{ position: 'absolute', top: '5%', left: '-30%', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,.12) 0%, transparent 70%)', animation: 'pulse 4s ease-in-out infinite' }} />
           {/* C5 Throat - cyan glow */}
