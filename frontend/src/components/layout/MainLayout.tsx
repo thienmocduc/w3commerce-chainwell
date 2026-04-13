@@ -430,28 +430,30 @@ export default function MainLayout() {
                   <ChevronDown size={12} style={{ transition: 'transform .2s', transform: openDropdown === i ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                 </button>
 
-                {/* Mega dropdown panel */}
+                {/* Mega dropdown panel — constrained, not full-screen */}
                 {openDropdown === i && (
                   <div
                     onMouseEnter={() => handleDropdownEnter(i)}
                     onMouseLeave={handleDropdownLeave}
                     style={{
-                      position: 'fixed', top: TOPBAR_H, left: 0, right: 0,
-                      background: 'var(--surface-card)', borderBottom: '1px solid var(--border)',
-                      borderTop: '1px solid var(--border)',
-                      boxShadow: 'var(--shadow-float, 0 8px 32px rgba(0,0,0,.3))',
+                      position: 'absolute', top: '100%', left: 0,
+                      minWidth: 560,
+                      background: 'var(--surface-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '0 0 14px 14px',
+                      boxShadow: '0 12px 40px rgba(0,0,0,.25)',
                       zIndex: 990,
                       animation: 'slideDown .15s ease',
+                      overflow: 'hidden',
                     }}
                   >
                     <div style={{
-                      maxWidth: 1100, margin: '0 auto',
                       display: 'grid',
-                      gridTemplateColumns: `repeat(${nav.sections.length + 1}, auto) 1fr`,
-                      gap: 0, padding: '28px 24px',
+                      gridTemplateColumns: `repeat(${nav.sections.length + 1}, auto)`,
+                      gap: 0, padding: '22px 20px',
                     }}>
                       {nav.sections.map((sec) => (
-                        <div key={sec.title} style={{ paddingRight: 48, minWidth: 200 }}>
+                        <div key={sec.title} style={{ paddingRight: 28, minWidth: 190 }}>
                           <div style={{
                             fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em',
                             textTransform: 'uppercase', color: 'var(--text-3)',
@@ -488,7 +490,7 @@ export default function MainLayout() {
                         </div>
                       ))}
                       {/* Explore column */}
-                      <div style={{ paddingLeft: 32, borderLeft: '1px solid var(--border)' }}>
+                      <div style={{ paddingLeft: 24, borderLeft: '1px solid var(--border)', minWidth: 160 }}>
                         <div style={{
                           fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em',
                           textTransform: 'uppercase', color: 'var(--text-3)',
@@ -519,10 +521,10 @@ export default function MainLayout() {
                     {/* Bottom bar */}
                     <div style={{
                       borderTop: '1px solid var(--border)',
-                      padding: '12px 24px',
+                      padding: '10px 20px',
                       background: 'var(--bg-2)',
                     }}>
-                      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>Xem tất cả tính năng</span>
                         <Link to="/pricing" onClick={() => setOpenDropdown(null)} style={{ fontSize: '0.8rem', color: 'var(--primary, #22c55e)', textDecoration: 'none', fontWeight: 600 }}>
                           Bảng giá →

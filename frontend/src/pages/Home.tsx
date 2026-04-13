@@ -1,401 +1,1394 @@
-/**
- * WellKOC — Landing Page (GitHub-style informational)
- */
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { productsApi } from '../lib/api';
+import { useI18n } from '@hooks/useI18n';
 
-/* ── Animated counter ── */
+/* ── Animated counter hook (IntersectionObserver) ── */
 function useCounter(target: number, duration = 2000) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const el = ref.current; if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      const start = performance.now();
-      const step = (now: number) => {
-        const p = Math.min((now - start) / duration, 1);
-        setCount(Math.floor((1 - Math.pow(1 - p, 3)) * target));
-        if (p < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-      obs.disconnect();
-    }, { threshold: 0.3 });
-    obs.observe(el);
-    return () => obs.disconnect();
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const start = performance.now();
+          const step = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * target));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [target, duration]);
+
   return { count, ref };
 }
-function Stat({ value, suffix, label }: { value: number; suffix?: string; label: string }) {
+
+/* ── Stat counter component ── */
+function StatCounter({
+  value,
+  suffix,
+  label,
+}: {
+  value: number;
+  suffix: string;
+  label: React.ReactNode;
+}) {
   const { count, ref } = useCounter(value);
-  const display = suffix === 'B₫' ? `${count}B₫` : suffix === 'K' ? `${count}K` : suffix === 'M' ? `${count}M` : `${count}${suffix ?? ''}`;
   return (
-    <div ref={ref} style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 900, background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1 }}>{display}</div>
-      <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginTop: 6, letterSpacing: '0.05em' }}>{label}</div>
+    <div className="stat-item" ref={ref}>
+      <div className="stat-val">
+        {suffix === '₫'
+          ? `₫${count}B`
+          : suffix === 'K'
+            ? `${count}K`
+            : count.toLocaleString()}
+      </div>
+      <div className="stat-lbl">{label}</div>
     </div>
   );
 }
 
-const FEATURES = [
-  {
-    color: '#22c55e',
-    icon: '⬡',
-    title: 'Marketplace Web3',
-    desc: 'Hàng ngàn sản phẩm được xác thực on-chain. Mỗi giao dịch minh bạch, không thể giả mạo.',
-    items: ['DPP Passport cho từng sản phẩm', 'Thanh toán crypto & fiat', 'Escrow tự động qua Smart Contract'],
-    to: '/marketplace',
-    cta: 'Khám phá Marketplace',
-  },
-  {
-    color: '#06b6d4',
-    icon: '◉',
-    title: 'Live Commerce',
-    desc: 'Mua sắm qua livestream real-time. KOC review trực tiếp, người mua đặt hàng ngay trong khi xem.',
-    items: ['Tích hợp TikTok, Shopee, Facebook', 'Đặt hàng 1-click trong livestream', 'Analytics real-time cho host'],
-    to: '/live',
-    cta: 'Xem livestream ngay',
-  },
-  {
-    color: '#6366f1',
-    icon: '⭐',
-    title: 'KOC Platform',
-    desc: 'Nền tảng đầu tiên tại Việt Nam trả hoa hồng on-chain. Hoa hồng T1 40%, T2 13% — tự động qua Smart Contract.',
-    items: ['Hoa hồng 40% tầng 1, 13% tầng 2', 'Thanh toán tức thì, không trung gian', 'Creator Token cá nhân hóa'],
-    to: '/koc',
-    cta: 'Trở thành KOC',
-  },
-  {
-    color: '#a855f7',
-    icon: '⚙',
-    title: '333 AI Agents',
-    desc: 'Hệ thống marketing tự động hoàn toàn: từ nghiên cứu xu hướng đến xuất bản nội dung đa kênh chỉ với 1 click.',
-    items: ['9-Stage pipeline tự động', 'Tích hợp TikTok, Instagram, Zalo', 'Báo cáo ROI real-time'],
-    to: '/agents',
-    cta: 'Khám phá AI Agents',
-  },
+const PRODUCT_GRADIENTS = [
+  'linear-gradient(135deg, #1e3a5f, #1e293b)',
+  'linear-gradient(135deg, #2d1b69, #1e293b)',
+  'linear-gradient(135deg, #14532d, #1e293b)',
+  'linear-gradient(135deg, #7c2d12, #1e293b)',
+  'linear-gradient(135deg, #1e293b, #334155)',
+  'linear-gradient(135deg, #0c4a6e, #1e293b)',
 ];
 
-const HOW_IT_WORKS = [
-  { step: '01', title: 'Đăng ký tài khoản', desc: 'Tạo hồ sơ trong 2 phút. Chọn vai trò: Người mua, KOC, hoặc Vendor.', icon: '◈', color: '#22c55e' },
-  { step: '02', title: 'Khám phá & chia sẻ', desc: 'Mua sắm, review sản phẩm, chia sẻ link affiliate. Mỗi lượt mua thành công = hoa hồng on-chain.', icon: '◎', color: '#06b6d4' },
-  { step: '03', title: 'Nhận hoa hồng tự động', desc: 'Smart Contract phân phối hoa hồng ngay lập tức, 100% minh bạch, không trung gian.', icon: '◆', color: '#a855f7' },
-];
+const formatVND = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
 
-const TESTIMONIALS = [
-  { name: 'Linh Nguyễn', role: 'KOC Top 1 · Beauty', avatar: '🌸', text: '"Tháng đầu tôi kiếm được 18 triệu chỉ từ việc review son môi. Hoa hồng vào ví ngay lập tức, không cần chờ duyệt."', earnings: '42.5M/tháng' },
-  { name: 'Minh Tú', role: 'KOC Tech · 96K followers', avatar: '🔥', text: '"WellKOC là nền tảng duy nhất trả commission on-chain. Tôi có thể verify từng giao dịch trên Polygon."', earnings: '38.1M/tháng' },
-  { name: 'Thy Ngọc', role: 'Vendor · Wellness', avatar: '🌿', text: '"Doanh số tăng 340% sau 3 tháng nhờ mạng lưới KOC của WellKOC. Chi phí marketing giảm 60%."', earnings: '+340% GMV' },
-];
-
-const CHAIN_STATS = [
-  { label: 'Giao dịch on-chain', value: '2.4M+', color: '#22c55e' },
-  { label: 'Smart Contracts deploy', value: '12', color: '#06b6d4' },
-  { label: 'Hoa hồng đã chi trả', value: '48B₫', color: '#6366f1' },
-  { label: 'Uptime SLA', value: '99.9%', color: '#a855f7' },
+// Fallback products shown while API is loading (Render free tier cold start)
+const FALLBACK_FEATURED = [
+  { id: 'f1', name: 'ANIMA 119 - Thức Thể Phân Tử Sống', price: 1868000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f2', name: 'ANIMA 119 - Liệu Trình 3 Hộp (30 Gói)', price: 5604000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f3', name: 'ANIMA 119 - Phục Hưng Toàn Diện 12 Hộp', price: 22416000, compare_at_price: null, category: 'food', dpp_verified: false, thumbnail_url: null },
+  { id: 'f4', name: 'Trà Hoa Cúc Organic', price: 120000, compare_at_price: 160000, category: 'food', dpp_verified: false, thumbnail_url: null },
 ];
 
 export default function Home() {
-  const [activeFeature, setActiveFeature] = useState(0);
+  const { t } = useI18n();
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>(FALLBACK_FEATURED);
+
+  useEffect(() => {
+    productsApi.list({ per_page: '6', sort: 'newest' } as any)
+      .then((res: any) => {
+        const items = res?.items ?? (Array.isArray(res) ? res : []);
+        if (items.length > 0) setFeaturedProducts(items.slice(0, 6));
+      })
+      .catch(() => {}); // Keep fallback on error
+  }, []);
 
   return (
-    <div style={{ background: 'var(--bg-1)', color: 'var(--text-1)', fontFamily: 'var(--ff-body, Inter, system-ui)' }}>
+    <>
+      {/* ═══════════════════════════════════════════
+          SECTION 1 — HERO
+      ═══════════════════════════════════════════ */}
+      <section className="hero">
+        <div className="hero-bg" />
 
-      {/* ── HERO ── */}
-      <section style={{
-        minHeight: '88vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        textAlign: 'center', padding: '60px 24px 80px',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Background glows */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '10%', left: '15%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,.08) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,.08) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 800, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(168,85,247,.05) 0%, transparent 70%)' }} />
+        <div className="chakra-rings">
+          <div className="ring ring-1" />
+          <div className="ring ring-2" />
+          <div className="ring ring-3" />
+          <div className="ring ring-4" />
         </div>
 
-        <div style={{ maxWidth: 860, position: 'relative', zIndex: 1 }}>
-          {/* Badge */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 16px', borderRadius: 20,
-            border: '1px solid rgba(34,197,94,.3)',
-            background: 'rgba(34,197,94,.06)',
-            fontSize: '0.78rem', color: '#22c55e', fontWeight: 600,
-            marginBottom: 28,
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-            Nền tảng KOC Web3 đầu tiên tại Việt Nam
+        <div className="hero-content" style={{ maxWidth: 1100, padding: 'clamp(8px,2vw,16px) 16px clamp(20px,3vw,40px)', boxSizing: 'border-box', width: '100%' }}>
+          <div className="section-badge" style={{ marginBottom: 'clamp(10px,2vw,24px)', flexWrap: 'wrap', textAlign: 'center' }}>
+            <span className="dot-pulse dot-indigo" /> Conscious Community Commerce · Polygon
           </div>
 
-          <h1 style={{
-            fontSize: 'clamp(2.4rem, 6vw, 4.8rem)', fontWeight: 900, lineHeight: 1.1,
-            marginBottom: 20, letterSpacing: '-0.02em',
-          }}>
-            <span style={{ color: 'var(--text-1)' }}>Thương mại cộng đồng</span>
-            <br />
-            <span style={{ background: 'var(--chakra-text, linear-gradient(135deg,#22c55e,#06b6d4,#6366f1,#a855f7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              trên Blockchain
-            </span>
+          <h1 className="display-xl" style={{ marginBottom: 'clamp(8px,1.5vw,16px)', lineHeight: 1.15, fontSize: 'clamp(1.7rem, 7vw, 5rem)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+            <span className="gradient-text">{t('home.hero.title')}</span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: 'var(--text-3)', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 36px', fontWeight: 400 }}>
-            Kết nối <strong style={{ color: 'var(--text-2)' }}>Người mua · KOC · Vendor</strong> trên blockchain Polygon.
-            Hoa hồng tự động qua Smart Contract. 333 AI Agents marketing 24/7.
+          <div style={{ textAlign: 'center', marginBottom: 'clamp(14px,3vw,36px)', display: 'flex', flexDirection: 'column', gap: 'clamp(6px,1.5vw,14px)', alignItems: 'center', width: '100%' }}>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(0.95rem, 4vw, 2.4rem)', fontWeight: 700, letterSpacing: '.03em', wordBreak: 'keep-all', overflowWrap: 'break-word', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              "{t('home.hero.line1')}"
+            </div>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(0.95rem, 4vw, 2.4rem)', fontWeight: 700, letterSpacing: '.03em', wordBreak: 'keep-all', overflowWrap: 'break-word', background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              "{t('home.hero.line2')}"
+            </div>
+            <div style={{ fontStyle: 'italic', fontSize: 'clamp(0.95rem, 4.2vw, 2.6rem)', fontWeight: 800, letterSpacing: '.03em', wordBreak: 'keep-all', overflowWrap: 'break-word', background: 'linear-gradient(135deg, #22c55e, #06b6d4, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              "{t('home.hero.line3')}"
+            </div>
+          </div>
+
+          <p
+            style={{
+              fontSize: 'clamp(0.88rem, 2.5vw, 1.35rem)',
+              color: 'var(--text-2)',
+              lineHeight: 1.7,
+              maxWidth: 680,
+              margin: '0 auto clamp(18px,3vw,40px)',
+            }}
+          >
+            {t('home.hero.desc.prefix')} <strong style={{ color: 'var(--text-1)' }}>{t('home.hero.desc.buyer')}</strong> ·{' '}
+            <strong style={{ color: 'var(--text-1)' }}>KOC</strong> ·{' '}
+            <strong style={{ color: 'var(--text-1)' }}>Vendor</strong> {t('home.hero.desc.suffix')}
           </p>
 
-          {/* CTA buttons */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
-            <Link to="/register" style={{
-              padding: '14px 32px', borderRadius: 12,
-              background: 'linear-gradient(135deg,#22c55e,#06b6d4)',
-              color: '#fff', fontSize: '0.95rem', fontWeight: 700,
-              textDecoration: 'none', boxShadow: '0 0 24px rgba(34,197,94,.3)',
-              transition: 'transform .2s, box-shadow .2s',
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
             }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 32px rgba(34,197,94,.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 24px rgba(34,197,94,.3)'; }}
-            >
-              Bắt đầu miễn phí →
+          >
+            <Link to="/login" className="btn btn-primary btn-lg" style={{ background: 'linear-gradient(135deg, #22c55e, #06b6d4)', fontSize: 'clamp(0.9rem,2.5vw,1.05rem)', padding: 'clamp(10px,2vw,14px) clamp(20px,4vw,36px)' }}>
+              Bắt đầu →
             </Link>
-            <Link to="/marketplace" style={{
-              padding: '14px 28px', borderRadius: 12,
-              border: '1px solid var(--border)', background: 'transparent',
-              color: 'var(--text-2)', fontSize: '0.95rem', fontWeight: 600,
-              textDecoration: 'none', transition: 'border-color .2s, color .2s',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-2)'; e.currentTarget.style.color = 'var(--text-1)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
-            >
-              Khám phá Marketplace
+            <Link to="/marketplace" className="btn btn-ghost btn-lg" style={{ border: '1px solid var(--border)', fontSize: 'clamp(0.9rem,2.5vw,1.05rem)', padding: 'clamp(10px,2vw,14px) clamp(20px,4vw,36px)' }}>
+              {t('home.hero.cta.explore')}
             </Link>
           </div>
 
-          {/* Stats row */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32,
-            padding: '28px 40px',
-            background: 'var(--surface-card)', borderRadius: 20,
-            border: '1px solid var(--border)',
-          }}>
-            <Stat value={480} suffix="B₫" label="GMV Mục tiêu" />
-            <Stat value={333} label="AI Agents 24/7" />
-            <Stat value={40} suffix="%" label="Hoa hồng T1 KOC" />
-            <Stat value={12} label="Blockchain Networks" />
+          {/* Stats bar */}
+          <div className="stats-bar" style={{ marginTop: 'clamp(20px,4vw,48px)' }}>
+            <StatCounter value={142} suffix="₫" label="GMV · YTD" />
+            <StatCounter value={12847} suffix="" label="Active KOCs" />
+            <StatCounter value={890} suffix="K" label={<span style={{ whiteSpace: 'nowrap' }}>DPP Minted</span>} />
+            <StatCounter value={333} suffix="" label={<span style={{ whiteSpace: 'nowrap' }}>AI Agents</span>} />
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section style={{ padding: '80px 24px', background: 'var(--bg-2)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 2 — TRIẾT LÝ THIỆN LÀNH
+      ═══════════════════════════════════════════ */}
+      <section className="section" style={{ background: 'var(--bg-1)' }}>
+        <div className="container">
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 12 }}>NỀN TẢNG TOÀN DIỆN</div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 800, letterSpacing: '-0.02em' }}>
-              Mọi thứ bạn cần để<br />
-              <span style={{ background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>phát triển trong Web3</span>
+            <div className="section-badge">
+              <span className="dot-pulse dot-green" /> {t('home.philosophy.badge')}
+            </div>
+            <h2 className="display-lg" style={{ marginBottom: 12 }}>
+              {t('home.philosophy.title.prefix')} <span className="gradient-text">{t('home.philosophy.title.highlight')}</span>
+            </h2>
+            <p
+              style={{
+                fontSize: '1.05rem',
+                color: 'var(--text-2)',
+                maxWidth: 560,
+                margin: '0 auto',
+                lineHeight: 1.7,
+              }}
+            >
+              {t('home.philosophy.desc')}
+            </p>
+          </div>
+
+          <div className="grid-3">
+            {/* Principle 1 — Minh bạch */}
+            <div className="card card-glass card-hover" style={{ padding: 36, textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--c4-500), var(--c5-500))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  margin: '0 auto 20px',
+                  color: '#fff',
+                  boxShadow: '0 4px 20px rgba(34,197,94,.3)',
+                }}
+              >
+                ⬡
+              </div>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                {t('home.philosophy.transparency.title')}
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 16,
+                }}
+              >
+                {t('home.philosophy.transparency.desc').replace(/on-chain/gi, 'on\u2011chain')}
+              </p>
+              <div
+                style={{
+                  width: 40,
+                  height: 3,
+                  borderRadius: 2,
+                  background: 'linear-gradient(90deg, var(--c4-500), var(--c5-500))',
+                  margin: '0 auto',
+                }}
+              />
+            </div>
+
+            {/* Principle 2 — Công bằng */}
+            <div className="card card-glass card-hover" style={{ padding: 36, textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--c5-500), var(--c6-500))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  margin: '0 auto 20px',
+                  color: '#fff',
+                  boxShadow: '0 4px 20px rgba(6,182,212,.3)',
+                }}
+              >
+                ⚖️
+              </div>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                {t('home.philosophy.fairness.title')}
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 16,
+                }}
+              >
+                {t('home.philosophy.fairness.desc')}
+              </p>
+              <div
+                style={{
+                  width: 40,
+                  height: 3,
+                  borderRadius: 2,
+                  background: 'linear-gradient(90deg, var(--c5-500), var(--c6-500))',
+                  margin: '0 auto',
+                }}
+              />
+            </div>
+
+            {/* Principle 3 — Trí tuệ */}
+            <div className="card card-glass card-hover" style={{ padding: 36, textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--c6-500), var(--c7-500))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  margin: '0 auto 20px',
+                  color: '#fff',
+                  boxShadow: '0 4px 20px rgba(99,102,241,.3)',
+                }}
+              >
+                🧠
+              </div>
+              <h3
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                {t('home.philosophy.intelligence.title')}
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 16,
+                }}
+              >
+                {t('home.philosophy.intelligence.desc')}
+              </p>
+              <div
+                style={{
+                  width: 40,
+                  height: 3,
+                  borderRadius: 2,
+                  background: 'linear-gradient(90deg, var(--c6-500), var(--c7-500))',
+                  margin: '0 auto',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 3 — HỆ SINH THÁI 3 VAI TRÒ
+      ═══════════════════════════════════════════ */}
+      <section className="section" style={{ background: 'var(--bg-0)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div className="section-badge">
+              <span className="dot-pulse dot-blue" /> {t('home.ecosystem.badge')}
+            </div>
+            <h2 className="display-lg" style={{ marginBottom: 12 }}>
+              {t('home.ecosystem.title.prefix')}{' '}
+              <span className="gradient-text">{t('home.ecosystem.title.highlight')}</span>
+            </h2>
+            <p
+              style={{
+                fontSize: '1.05rem',
+                color: 'var(--text-2)',
+                maxWidth: 560,
+                margin: '0 auto',
+                lineHeight: 1.7,
+              }}
+            >
+              {t('home.ecosystem.desc')}
+            </p>
+          </div>
+
+          <div className="grid-3">
+            {/* ── Buyer Card ── */}
+            <div className="role-card role-buyer card-hover" style={{ padding: 32 }}>
+              <div className="role-icon">🛍️</div>
+              <h3
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                {t('home.ecosystem.buyer.title')}
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 20,
+                }}
+              >
+                {t('home.ecosystem.buyer.desc')}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                <span className="badge badge-c4" style={{ whiteSpace: 'nowrap' }}>DPP Verify</span>
+                <span className="badge badge-c5" style={{ whiteSpace: 'nowrap' }}>Group Buy</span>
+                <span className="badge badge-c4" style={{ whiteSpace: 'nowrap' }}>Follow KOC</span>
+                <span className="badge badge-c5" style={{ whiteSpace: 'nowrap' }}>Copy Cart</span>
+              </div>
+              <div
+                style={{
+                  fontSize: '.72rem',
+                  color: 'var(--text-3)',
+                  borderTop: '1px solid var(--border)',
+                  paddingTop: 14,
+                  fontWeight: 600,
+                  letterSpacing: '.04em',
+                }}
+              >
+                <span style={{ whiteSpace: 'nowrap' }}>Discover → Verify → Buy → Review</span>
+              </div>
+            </div>
+
+            {/* ── KOC Card (highlighted) ── */}
+            <div
+              className="role-card role-koc card-hover"
+              style={{
+                padding: 32,
+                position: 'relative',
+                transform: 'scale(1.04)',
+                zIndex: 2,
+                boxShadow: '0 8px 40px rgba(99,102,241,.15)',
+              }}
+            >
+              <div
+                className="badge badge-gold"
+                style={{ position: 'absolute', top: 16, right: 16, fontSize: '.65rem' }}
+              >
+                {t('home.ecosystem.koc.badge')}
+              </div>
+              <div className="role-icon">⭐</div>
+              <h3
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                KOC / KOL
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 20,
+                }}
+              >
+                {t('home.ecosystem.koc.desc')}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>T1 40%</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>T2 13%</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>Creator Token</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>Reputation NFT</span>
+              </div>
+              <div
+                style={{
+                  fontSize: '.72rem',
+                  color: 'var(--text-3)',
+                  borderTop: '1px solid var(--border)',
+                  paddingTop: 14,
+                  fontWeight: 600,
+                  letterSpacing: '.04em',
+                }}
+              >
+                <span style={{ whiteSpace: 'nowrap' }}>Create → Promote → Convert → Earn</span>
+              </div>
+            </div>
+
+            {/* ── Vendor Card ── */}
+            <div className="role-card role-vendor card-hover" style={{ padding: 32 }}>
+              <div className="role-icon">🏪</div>
+              <h3
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  color: 'var(--text-1)',
+                }}
+              >
+                Vendor
+              </h3>
+              <p
+                style={{
+                  fontSize: '.9rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 20,
+                }}
+              >
+                {t('home.ecosystem.vendor.desc')}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>DPP Mint</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>AI Live</span>
+                <span className="badge badge-c7" style={{ whiteSpace: 'nowrap' }}>Analytics</span>
+                <span className="badge badge-c6" style={{ whiteSpace: 'nowrap' }}>333 Agents</span>
+              </div>
+              <div
+                style={{
+                  fontSize: '.72rem',
+                  color: 'var(--text-3)',
+                  borderTop: '1px solid var(--border)',
+                  paddingTop: 14,
+                  fontWeight: 600,
+                  letterSpacing: '.04em',
+                }}
+              >
+                <span style={{ whiteSpace: 'nowrap' }}>List → Mint DPP → KOC Sell → Earn</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 4 — HOA HỒNG ON-CHAIN
+      ═══════════════════════════════════════════ */}
+      <section className="section" style={{ background: 'var(--bg-1)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div className="section-badge">
+              <span className="dot-pulse dot-violet" /> <span style={{ whiteSpace: 'nowrap' }}>On-chain Commission</span>
+            </div>
+            <h2 className="display-lg" style={{ marginBottom: 12 }}>
+              {t('home.commission.title.prefix').replace(/Hoa hồng/g, 'Hoa\u00A0hồng').replace(/minh bạch/g, 'minh\u00A0bạch')}{' '}
+              <span className="gradient-text">{t('home.commission.title.highlight')}</span>
+            </h2>
+            <p
+              style={{
+                fontSize: '1.05rem',
+                color: 'var(--text-2)',
+                maxWidth: 520,
+                margin: '0 auto',
+              }}
+            >
+              {t('home.commission.desc')}
+            </p>
+          </div>
+
+          {/* Horizontal flow */}
+          <div className="commission-flow" style={{ padding: '48px 32px', borderRadius: 28 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0,
+                position: 'relative',
+                zIndex: 1,
+                flexWrap: 'wrap',
+              }}
+            >
+              {/* Step 1 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  minWidth: 100,
+                  padding: '8px 12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--c4-500), var(--c5-500))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    marginBottom: 12,
+                    boxShadow: '0 4px 20px rgba(34,197,94,.3)',
+                  }}
+                >
+                  🛍️
+                </div>
+                <span
+                  style={{
+                    fontSize: '.82rem',
+                    fontWeight: 600,
+                    color: 'var(--text-1)',
+                    marginBottom: 2,
+                  }}
+                >
+                  {t('home.commission.step1')}
+                </span>
+                <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
+                  {t('home.commission.step1.label')}
+                </span>
+              </div>
+
+              {/* Arrow */}
+              <div
+                style={{
+                  width: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: 2,
+                    background: 'var(--chakra-flow)',
+                    borderRadius: 1,
+                  }}
+                />
+                <span style={{ position: 'absolute', color: 'var(--text-3)', fontSize: '.8rem' }}>
+                  →
+                </span>
+              </div>
+
+              {/* Step 2 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  minWidth: 100,
+                  padding: '8px 12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--c5-500), var(--c5-700))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    marginBottom: 12,
+                    boxShadow: '0 4px 20px rgba(6,182,212,.3)',
+                  }}
+                >
+                  📦
+                </div>
+                <span
+                  style={{
+                    fontSize: '.82rem',
+                    fontWeight: 600,
+                    color: 'var(--text-1)',
+                    marginBottom: 2,
+                  }}
+                >
+                  {t('home.commission.step2')}
+                </span>
+                <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
+                  {t('home.commission.step2.label')}
+                </span>
+              </div>
+
+              {/* Arrow */}
+              <div
+                style={{
+                  width: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: 2,
+                    background: 'var(--chakra-flow)',
+                    borderRadius: 1,
+                  }}
+                />
+                <span style={{ position: 'absolute', color: 'var(--text-3)', fontSize: '.8rem' }}>
+                  →
+                </span>
+              </div>
+
+              {/* Step 3 — Highlight */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  minWidth: 110,
+                  padding: '8px 12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--c6-500), var(--c7-500))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.6rem',
+                    marginBottom: 12,
+                    boxShadow: 'var(--chakra-glow)',
+                    border: '2px solid rgba(99,102,241,.4)',
+                  }}
+                >
+                  ⛓️
+                </div>
+                <span
+                  style={{
+                    fontSize: '.82rem',
+                    fontWeight: 700,
+                    color: 'var(--text-1)',
+                    marginBottom: 2,
+                  }}
+                >
+                  {t('home.commission.step3')}
+                </span>
+                <span className="mono" style={{ color: 'var(--c6-300)', fontSize: '.68rem' }}>
+                  Polygon
+                </span>
+              </div>
+
+              {/* Arrow */}
+              <div
+                style={{
+                  width: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: 2,
+                    background: 'var(--chakra-flow)',
+                    borderRadius: 1,
+                  }}
+                />
+                <span style={{ position: 'absolute', color: 'var(--text-3)', fontSize: '.8rem' }}>
+                  →
+                </span>
+              </div>
+
+              {/* Step 4 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  minWidth: 100,
+                  padding: '8px 12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--c6-500), var(--c7-500))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    marginBottom: 12,
+                    boxShadow: '0 4px 20px rgba(99,102,241,.3)',
+                  }}
+                >
+                  ⭐
+                </div>
+                <span
+                  style={{
+                    fontSize: '.82rem',
+                    fontWeight: 600,
+                    color: 'var(--text-1)',
+                    marginBottom: 2,
+                  }}
+                >
+                  {t('home.commission.step4')}
+                </span>
+                <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
+                  <span style={{ whiteSpace: 'nowrap' }}>T1 40%</span> · <span style={{ whiteSpace: 'nowrap' }}>T2 13%</span>
+                </span>
+              </div>
+
+              {/* Arrow */}
+              <div
+                style={{
+                  width: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: 2,
+                    background: 'var(--chakra-flow)',
+                    borderRadius: 1,
+                  }}
+                />
+                <span style={{ position: 'absolute', color: 'var(--text-3)', fontSize: '.8rem' }}>
+                  →
+                </span>
+              </div>
+
+              {/* Step 5 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  minWidth: 100,
+                  padding: '8px 12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--c7-500), var(--c4-500))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    marginBottom: 12,
+                    boxShadow: '0 4px 20px rgba(168,85,247,.3)',
+                  }}
+                >
+                  ✓
+                </div>
+                <span
+                  style={{
+                    fontSize: '.82rem',
+                    fontWeight: 600,
+                    color: 'var(--text-1)',
+                    marginBottom: 2,
+                  }}
+                >
+                  {t('home.commission.step5').replace(/on-chain/gi, 'on\u2011chain')}
+                </span>
+                <span className="mono" style={{ color: 'var(--text-3)', fontSize: '.68rem' }}>
+                  Immutable
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Verified strip */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 24,
+              marginTop: 24,
+              padding: '14px 24px',
+              borderRadius: 14,
+              background: 'var(--badge-verified-bg)',
+              border: '1px solid rgba(34,197,94,.2)',
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '.78rem',
+                fontWeight: 700,
+                color: 'var(--badge-verified-clr)',
+              }}
+            >
+              <span style={{ whiteSpace: 'nowrap' }}>⬡ Verified on Polygon</span>
+            </span>
+            <span className="mono" style={{ color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+              0x7A3b...2eF8::CommissionSplit
+            </span>
+            <span
+              style={{
+                fontSize: '.78rem',
+                fontWeight: 700,
+                color: 'var(--badge-verified-clr)',
+              }}
+            >
+              ✓ Immutable
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 5 — CON SỐ ẤN TƯỢNG
+      ═══════════════════════════════════════════ */}
+      <section
+        style={{
+          padding: '96px 0',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Gradient background */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(135deg, rgba(34,197,94,.1) 0%, rgba(6,182,212,.12) 25%, rgba(99,102,241,.14) 50%, rgba(168,85,247,.1) 75%, rgba(34,197,94,.08) 100%)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'var(--bg-0)',
+            opacity: 0.82,
+          }}
+        />
+
+        <div
+          className="container"
+          style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}
+        >
+          <div style={{ marginBottom: 56 }}>
+            <div className="section-badge">
+              <span className="dot-pulse dot-indigo" /> Social Proof
+            </div>
+            <h2 className="display-lg">
+              {t('home.stats.title.prefix')} <span className="gradient-text">{t('home.stats.title.highlight')}</span>
             </h2>
           </div>
 
-          {/* Feature tabs */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
-            {FEATURES.map((f, i) => (
-              <button key={f.title} onClick={() => setActiveFeature(i)} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 24,
-                border: `1px solid ${activeFeature === i ? f.color : 'var(--border)'}`,
-                background: activeFeature === i ? `${f.color}15` : 'transparent',
-                color: activeFeature === i ? f.color : 'var(--text-3)',
-                fontSize: '0.88rem', fontWeight: activeFeature === i ? 700 : 500,
-                cursor: 'pointer', transition: 'all .2s',
-              }}>
-                <span>{f.icon}</span>{f.title}
-              </button>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+              gap: 16,
+              maxWidth: 960,
+              margin: '0 auto',
+            }}
+          >
+            {[
+              { value: 142, suffix: '₫', label: t('home.stats.gmv') },
+              { value: 12847, suffix: '', label: 'Active\u00A0KOCs' },
+              { value: 890, suffix: 'K', label: 'DPP\u00A0Minted' },
+              { value: 333, suffix: '', label: 'AI\u00A0Agents' },
+              { value: 2400, suffix: '', label: 'Live\u00A0Sessions' },
+              { value: 38, suffix: '₫', label: t('home.stats.commissionPaid') },
+            ].map((stat, i) => (
+              <MetricCounter
+                key={i}
+                value={stat.value}
+                suffix={stat.suffix}
+                label={stat.label}
+              />
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Active feature panel */}
-          {FEATURES.map((f, i) => i === activeFeature && (
-            <div key={f.title} style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48,
-              padding: '48px', borderRadius: 20,
-              border: `1px solid ${f.color}33`,
-              background: `linear-gradient(135deg, ${f.color}08 0%, var(--surface-card) 100%)`,
-              animation: 'fadeIn .2s ease',
-            }}>
-              <div>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 10,
-                  padding: '6px 14px', borderRadius: 8,
-                  background: `${f.color}15`, border: `1px solid ${f.color}33`,
-                  fontSize: '0.78rem', fontWeight: 700, color: f.color, marginBottom: 20,
-                }}>
-                  <span style={{ fontSize: '1.1rem' }}>{f.icon}</span>{f.title}
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 6 — CÔNG NGHỆ ĐÁNG TIN
+      ═══════════════════════════════════════════ */}
+      <section className="section" style={{ background: 'var(--bg-1)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <div className="section-badge">
+              <span className="dot-pulse dot-indigo" /> {t('home.tech.badge')}
+            </div>
+            <h2 className="display-lg">
+              {t('home.tech.title.prefix')} <span className="gradient-text">{t('home.tech.title.highlight')}</span>
+            </h2>
+          </div>
+
+          {/* Tech badges */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: 12,
+              marginBottom: 48,
+            }}
+          >
+            {['Polygon', 'IPFS', 'OpenAI', 'Supabase', 'React', 'Solidity'].map(
+              (tech) => (
+                <div
+                  key={tech}
+                  className="card"
+                  style={{
+                    padding: '12px 24px',
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: '.85rem',
+                    fontWeight: 600,
+                    color: 'var(--text-2)',
+                    transition: 'var(--t-base)',
+                    cursor: 'default',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--ff-mono)',
+                      fontSize: '.75rem',
+                      color: 'var(--text-3)',
+                    }}
+                  >
+                    {'<>'}
+                  </span>
+                  {tech}
                 </div>
-                <h3 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 16, lineHeight: 1.25 }}>{f.desc}</h3>
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {f.items.map(item => (
-                    <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.9rem', color: 'var(--text-2)' }}>
-                      <span style={{ width: 18, height: 18, borderRadius: '50%', background: f.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 900, flexShrink: 0 }}>✓</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link to={f.to} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '11px 24px', borderRadius: 10,
-                  background: f.color, color: '#fff',
-                  fontSize: '0.88rem', fontWeight: 700, textDecoration: 'none',
-                }}>{f.cta} →</Link>
-              </div>
-              {/* Visual panel */}
-              <div style={{
-                borderRadius: 16, overflow: 'hidden',
-                background: 'var(--bg-1)', border: `1px solid ${f.color}22`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: 280, fontSize: '8rem',
-                position: 'relative',
-              }}>
-                <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at center, ${f.color}10 0%, transparent 70%)` }} />
-                <span style={{ filter: `drop-shadow(0 0 40px ${f.color})`, position: 'relative', zIndex: 1 }}>{f.icon}</span>
+              ),
+            )}
+          </div>
+
+          {/* Trust indicators */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 24,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '16px 28px',
+                borderRadius: 16,
+                background: 'var(--badge-verified-bg)',
+                border: '1px solid rgba(34,197,94,.2)',
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>⬡</span>
+              <div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '.85rem',
+                    color: 'var(--badge-verified-clr)',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap' }}>100% On-chain</span>
+                </div>
+                <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
+                  {t('home.tech.onchain.desc')}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 12 }}>CÁCH HOẠT ĐỘNG</div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800 }}>Bắt đầu kiếm thu nhập<br />chỉ trong 3 bước</h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, position: 'relative' }}>
-            {/* Connector line */}
-            <div style={{ position: 'absolute', top: 32, left: '20%', right: '20%', height: 2, background: 'linear-gradient(90deg, #22c55e, #06b6d4, #a855f7)', opacity: 0.3, zIndex: 0 }} />
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.step} style={{
-                textAlign: 'center', padding: '36px 24px',
-                background: 'var(--surface-card)', borderRadius: 16,
-                border: '1px solid var(--border)', position: 'relative', zIndex: 1,
-              }}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: '50%',
-                  background: `${step.color}15`, border: `2px solid ${step.color}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.4rem', margin: '0 auto 16px',
-                  boxShadow: `0 0 20px ${step.color}33`,
-                }}>{step.icon}</div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: step.color, letterSpacing: '0.1em', marginBottom: 8 }}>BƯỚC {step.step}</div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: 10 }}>{step.title}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-3)', lineHeight: 1.6 }}>{step.desc}</p>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '16px 28px',
+                borderRadius: 16,
+                background: 'rgba(99,102,241,.08)',
+                border: '1px solid rgba(99,102,241,.2)',
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>⛓️</span>
+              <div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '.85rem',
+                    color: 'var(--c6-300)',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap' }}>Smart Contract Audited</span>
+                </div>
+                <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
+                  {t('home.tech.audit.desc')}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── BLOCKCHAIN STATS ── */}
-      <section style={{
-        padding: '60px 24px',
-        background: 'linear-gradient(135deg, rgba(10,12,20,.97) 0%, rgba(15,18,30,.98) 100%)',
-        borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
-      }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10 }}>BLOCKCHAIN TRANSPARENCY</div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Mọi số liệu đều <span style={{ color: '#22c55e' }}>on-chain</span></h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {CHAIN_STATS.map(s => (
-              <div key={s.label} style={{
-                textAlign: 'center', padding: '24px 16px',
-                borderRadius: 16, border: `1px solid ${s.color}22`,
-                background: `${s.color}08`,
-              }}>
-                <div style={{ fontSize: '2rem', fontWeight: 900, color: s.color, marginBottom: 6 }}>{s.value}</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>{s.label}</div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '16px 28px',
+                borderRadius: 16,
+                background: 'rgba(168,85,247,.08)',
+                border: '1px solid rgba(168,85,247,.2)',
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>🧠</span>
+              <div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '.85rem',
+                    color: 'var(--c7-300)',
+                  }}
+                >
+                  <span style={{ whiteSpace: 'nowrap' }}>333 AI Agents</span> <span style={{ whiteSpace: 'nowrap' }}>24/7</span>
+                </div>
+                <div style={{ fontSize: '.72rem', color: 'var(--text-3)' }}>
+                  {t('home.tech.ai.desc')}
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section style={{ padding: '80px 24px', background: 'var(--bg-2)' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 12 }}>THÀNH CÔNG THỰC TẾ</div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 800 }}>KOC nói gì về WellKOC?</h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-            {TESTIMONIALS.map((t, i) => {
-              const colors = ['#22c55e', '#06b6d4', '#a855f7'];
-              const c = colors[i % colors.length];
-              return (
-                <div key={t.name} style={{
-                  padding: '28px', borderRadius: 16,
-                  background: 'var(--surface-card)',
-                  border: `1px solid ${c}22`,
-                  display: 'flex', flexDirection: 'column', gap: 16,
-                }}>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--text-2)', lineHeight: 1.65, fontStyle: 'italic' }}>{t.text}</div>
-                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 7 — SẢN PHẨM NỔI BẬT
+      ═══════════════════════════════════════════ */}
+      <section className="section" style={{ background: 'var(--bg-0)' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: 48 }}>
+              <div className="section-badge" style={{ marginBottom: 12 }}>
+                <span className="dot-pulse dot-green" /> Sản phẩm trên WellKOC
+              </div>
+              <h2 className="display-lg" style={{ marginBottom: 16 }}>
+                Sản phẩm <span className="gradient-text">nổi bật</span>
+              </h2>
+              <p style={{ color: 'var(--text-2)', maxWidth: 500, margin: '0 auto' }}>
+                Sản phẩm được xác thực nguồn gốc DPP on-chain, minh bạch tuyệt đối.
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: 20,
+            }}>
+              {featuredProducts.map((p: any, i: number) => (
+                <Link
+                  key={p.id}
+                  to={`/marketplace`}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div style={{
+                    background: 'var(--bg-1)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    transition: 'transform .2s, box-shadow .2s',
+                    cursor: 'pointer',
+                  }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,.25)';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.transform = '';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '';
+                    }}
+                  >
+                    {/* Product image / gradient placeholder */}
                     <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: `${c}15`, border: `2px solid ${c}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-                    }}>{t.avatar}</div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{t.role}</div>
+                      height: 180,
+                      background: p.thumbnail_url ? `url(${p.thumbnail_url}) center/cover` : PRODUCT_GRADIENTS[i % PRODUCT_GRADIENTS.length],
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {!p.thumbnail_url && (
+                        <span style={{ fontSize: 40 }}>🌿</span>
+                      )}
+                      {p.dpp_verified && (
+                        <span style={{
+                          position: 'absolute', top: 10, left: 10,
+                          background: 'rgba(34,197,94,.9)', color: '#fff',
+                          fontSize: '.7rem', fontWeight: 700,
+                          padding: '3px 8px', borderRadius: 20,
+                        }}>DPP ✓</span>
+                      )}
+                      {p.compare_at_price && p.compare_at_price > p.price && (
+                        <span style={{
+                          position: 'absolute', top: 10, right: 10,
+                          background: 'rgba(239,68,68,.9)', color: '#fff',
+                          fontSize: '.7rem', fontWeight: 700,
+                          padding: '3px 8px', borderRadius: 20,
+                        }}>
+                          -{Math.round((1 - p.price / p.compare_at_price) * 100)}%
+                        </span>
+                      )}
                     </div>
-                    <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: c }}>{t.earnings}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>thu nhập</div>
+
+                    {/* Info */}
+                    <div style={{ padding: '14px 16px' }}>
+                      <div style={{
+                        fontSize: '.75rem', color: 'var(--text-3)',
+                        textTransform: 'uppercase', letterSpacing: '.05em',
+                        marginBottom: 6,
+                      }}>{p.category}</div>
+                      <div style={{
+                        fontWeight: 600, color: 'var(--text-1)',
+                        fontSize: '.95rem', lineHeight: 1.4, marginBottom: 10,
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontWeight: 700, color: '#22c55e', fontSize: '1rem' }}>
+                          {formatVND(p.price)}
+                        </span>
+                        {p.compare_at_price && p.compare_at_price > p.price && (
+                          <span style={{ fontSize: '.8rem', color: 'var(--text-3)', textDecoration: 'line-through' }}>
+                            {formatVND(p.compare_at_price)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                </Link>
+              ))}
+            </div>
 
-      {/* ── FINAL CTA ── */}
-      <section style={{ padding: '100px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,.06) 0%, transparent 70%)' }} />
-        </div>
-        <div style={{ maxWidth: 640, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, lineHeight: 1.15, marginBottom: 20 }}>
-            Sẵn sàng tham gia<br />
-            <span style={{ background: 'var(--chakra-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>cộng đồng WellKOC?</span>
+            <div style={{ textAlign: 'center', marginTop: 40 }}>
+              <Link to="/marketplace" className="btn btn-primary btn-lg">
+                Xem tất cả sản phẩm →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+      <div className="chakra-divider" />
+
+      {/* ═══════════════════════════════════════════
+          SECTION 8 — CTA BOTTOM
+      ═══════════════════════════════════════════ */}
+      <section
+        style={{
+          padding: '96px 24px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Warm gradient background */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(135deg, rgba(34,197,94,.1) 0%, rgba(6,182,212,.12) 25%, rgba(99,102,241,.14) 50%, rgba(168,85,247,.1) 75%, rgba(34,197,94,.08) 100%)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'var(--bg-0)',
+            opacity: 0.85,
+          }}
+        />
+
+        <div
+          className="container"
+          style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}
+        >
+          <h2 className="display-lg" style={{ marginBottom: 16 }}>
+            {t('home.cta.title.prefix')}{' '}
+            <span className="gradient-text">{t('home.cta.title.highlight')}</span>
           </h2>
-          <p style={{ fontSize: '1rem', color: 'var(--text-3)', marginBottom: 36, lineHeight: 1.6 }}>
-            Hơn <strong style={{ color: 'var(--text-1)' }}>10,000+</strong> KOC và Vendor đang phát triển cùng nền tảng blockchain đầu tiên tại Việt Nam.
+          <p
+            style={{
+              fontSize: '1.05rem',
+              color: 'var(--text-2)',
+              maxWidth: 520,
+              margin: '0 auto 40px',
+              lineHeight: 1.7,
+            }}
+          >
+            {t('home.cta.desc')}
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/register" style={{
-              padding: '16px 40px', borderRadius: 12,
-              background: 'linear-gradient(135deg,#22c55e,#06b6d4)',
-              color: '#fff', fontSize: '1rem', fontWeight: 700,
-              textDecoration: 'none', boxShadow: '0 0 32px rgba(34,197,94,.35)',
-            }}>Đăng ký miễn phí →</Link>
-            <Link to="/koc" style={{
-              padding: '16px 32px', borderRadius: 12,
-              border: '1px solid var(--border)', background: 'transparent',
-              color: 'var(--text-2)', fontSize: '1rem', fontWeight: 600, textDecoration: 'none',
-            }}>Tìm hiểu về KOC</Link>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Link to="/login" className="btn btn-primary btn-lg">
+              {t('home.cta.login')}
+            </Link>
+            <Link to="/register" className="btn btn-secondary btn-lg">
+              {t('home.cta.register')}
+            </Link>
           </div>
+
+          <p style={{ marginTop: 24, fontSize: '.78rem', color: 'var(--text-3)' }}>
+            {t('home.cta.footnote')}
+          </p>
         </div>
       </section>
 
+      {/* Inline animation keyframes */}
       <style>{`
-        @keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        @media (max-width: 768px) {
+          .grid-6-metrics {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
       `}</style>
+    </>
+  );
+}
+
+/* ── Metric counter for Section 5 ── */
+function MetricCounter({
+  value,
+  suffix,
+  label,
+}: {
+  value: number;
+  suffix: string;
+  label: React.ReactNode;
+}) {
+  const { count, ref } = useCounter(value);
+  return (
+    <div
+      ref={ref}
+      style={{
+        textAlign: 'center',
+        padding: '24px 8px',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'var(--ff-display)',
+          fontWeight: 800,
+          fontSize: 'clamp(1.6rem, 3vw, 2.2rem)',
+          lineHeight: 1,
+          background: 'var(--chakra-text)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          marginBottom: 8,
+        }}
+      >
+        {suffix === '₫'
+          ? `₫${count}B`
+          : suffix === 'K'
+            ? `${count.toLocaleString()}K`
+            : count.toLocaleString()}
+      </div>
+      <div
+        style={{
+          fontSize: '.68rem',
+          fontWeight: 600,
+          color: 'var(--text-3)',
+          letterSpacing: '.06em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </div>
     </div>
   );
 }
