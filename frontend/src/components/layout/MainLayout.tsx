@@ -355,7 +355,7 @@ export default function MainLayout() {
     setOpenDropdown(i);
   };
   const handleDropdownLeave = () => {
-    closeTimer.current = setTimeout(() => setOpenDropdown(null), 150);
+    closeTimer.current = setTimeout(() => setOpenDropdown(null), 300);
   };
 
   /* ── Agents page: full-screen ── */
@@ -438,23 +438,24 @@ export default function MainLayout() {
                   <ChevronDown size={12} style={{ transition: 'transform .2s', transform: openDropdown === i ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                 </button>
 
-                {/* Mega dropdown panel — constrained, not full-screen */}
-                {openDropdown === i && (
-                  <div
-                    onMouseEnter={() => handleDropdownEnter(i)}
-                    onMouseLeave={handleDropdownLeave}
-                    style={{
-                      position: 'absolute', top: '100%', left: 0,
-                      minWidth: 560,
-                      background: 'var(--surface-card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '0 0 14px 14px',
-                      boxShadow: '0 12px 40px rgba(0,0,0,.25)',
-                      zIndex: 990,
-                      animation: 'slideDown .15s ease',
-                      overflow: 'hidden',
-                    }}
-                  >
+                {/* Mega dropdown panel — always rendered, CSS visibility controlled */}
+                <div
+                  style={{
+                    position: 'absolute', top: '100%', left: 0,
+                    minWidth: 560,
+                    background: 'var(--surface-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0 0 14px 14px',
+                    boxShadow: '0 12px 40px rgba(0,0,0,.25)',
+                    zIndex: 990,
+                    overflow: 'hidden',
+                    opacity: openDropdown === i ? 1 : 0,
+                    visibility: openDropdown === i ? 'visible' : 'hidden',
+                    pointerEvents: openDropdown === i ? 'auto' : 'none',
+                    transform: openDropdown === i ? 'translateY(0)' : 'translateY(-6px)',
+                    transition: 'opacity .15s ease, transform .15s ease, visibility .15s',
+                  }}
+                >
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: `repeat(${nav.sections.length + 1}, auto)`,
@@ -539,8 +540,7 @@ export default function MainLayout() {
                         </Link>
                       </div>
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             ))}
             <Link to="/pricing" style={{
