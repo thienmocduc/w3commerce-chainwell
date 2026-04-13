@@ -443,7 +443,7 @@ export default function MainLayout() {
                   style={{
                     position: 'absolute', top: '100%', left: 0,
                     minWidth: 560,
-                    background: 'var(--surface-card)',
+                    background: 'var(--bg-2)',
                     border: '1px solid var(--border)',
                     borderRadius: '0 0 14px 14px',
                     boxShadow: '0 12px 40px rgba(0,0,0,.25)',
@@ -531,7 +531,7 @@ export default function MainLayout() {
                     <div style={{
                       borderTop: '1px solid var(--border)',
                       padding: '10px 20px',
-                      background: 'var(--bg-2)',
+                      background: 'var(--bg-3)',
                     }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>Xem tất cả tính năng</span>
